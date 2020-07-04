@@ -1,0 +1,19 @@
+{
+  "name": "pd-be-store",
+  "version": "0.0.1",
+  "description": "Pan Demos Store Frontend App",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zebedeeLewis/pd-be-store.git"
+  },
+  "author": "Zebedee Lewis <zebedeeslewis@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zebedeeLewis/pd-be-store/issues"
+  },
+  "homepage": "https://github.com/zebedeeLewis/pd-be-store#readme"
+}
