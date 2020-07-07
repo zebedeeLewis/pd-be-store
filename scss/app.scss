@@ -1,13 +1,8 @@
 
-@use '@material/button/mdc-button';
-@use '@material/button';
+@use "@material/theme" with (
+  $primary: #0091ea,
+  $secondary: #76ff03,
+  $background: #fff,
+);
 
-.foo-button {
-  @include button.container-fill-color(darksalmon);
-}
-
-/*
-body {
-  color: green!important;
-}
-*/
+@use "@material/button/mdc-button";

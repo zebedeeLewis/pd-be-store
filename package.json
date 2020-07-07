@@ -6,6 +6,7 @@
   "dependencies": {
     "@material/button": "^7.0.0",
     "@material/ripple": "^7.0.0",
+    "@material/theme": "^7.0.0",
     "material-components-web": "^7.0.0",
     "material-components-web-elm": "^4.0.0"
   },

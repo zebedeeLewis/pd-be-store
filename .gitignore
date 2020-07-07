@@ -5,3 +5,5 @@ repl-temp-*
 
 node_modules
 dist
+
+*.swp
