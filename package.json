@@ -7,8 +7,10 @@
     "@material/button": "^7.0.0",
     "@material/ripple": "^7.0.0",
     "@material/theme": "^7.0.0",
+    "csstype": "^2.6.11",
     "material-components-web": "^7.0.0",
     "material-components-web-elm": "^4.0.0",
+    "material-design-icons": "^3.0.1",
     "reset-css": "^5.0.1"
   },
   "devDependencies": {
@@ -29,14 +31,15 @@
     "ts-loader": "^6.2.2",
     "ts-node": "^8.10.2",
     "typescript": "^3.8.3",
+    "url-loader": "^4.1.0",
     "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11",
     "webpack-serve": "^3.2.0"
   },
   "scripts": {
-    "start": "elm-typescript-interop && webpack-serve --open",
+    "start": "webpack-serve --open",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "elm-typescript-interop && webpack -p"
+    "build": "webpack -p"
   },
   "keywords": [],
   "author": "",

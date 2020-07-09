@@ -8,7 +8,9 @@ const MODE =
 module.exports = function(env) {
   return {
     mode: MODE,
-    entry: { main: "./index.ts" },
+    entry: {
+      main: "./index.js",
+    },
     context: path.resolve(__dirname),
     output: {
       path: path.resolve(__dirname, "dist"),
@@ -26,17 +28,28 @@ module.exports = function(env) {
     module: {
       rules: [
         {
+          test: /\.(svg|woff|eot|woff2|ttf)$/i,
+          use: [
+            {
+              loader: 'file-loader',
+              options: {
+                name: '[name].[hash].[ext]',
+              }
+            },
+          ],
+        },
+        {
           test: /\.html$/,
           exclude: /node_modules/,
           loader: "file-loader?name=[name].[ext]"
         },
         {
-          test: /\.scss$/,
+          test: /\.s?css$/,
           use: [
             {
               loader: 'file-loader',
               options: {
-                name: 'bundle.css',
+                name: '[name].css',
               }
             },
             { loader: 'extract-loader' },
@@ -78,7 +91,7 @@ module.exports = function(env) {
       ]
     },
     resolve: {
-      extensions: [".js", ".ts", ".elm", ".scss"]
+      extensions: [".js", ".ts", ".elm", ".scss", ".css"]
     },
     serve: {
       inline: true,

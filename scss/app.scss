@@ -1,8 +1,42 @@
 
 @use "@material/theme" with (
-  $primary: #0091ea,
-  $secondary: #76ff03,
-  $background: #fff,
+  $secondary: #F68139,
+
+  /* Walmart Blue */
+  $primary: #041E42,
+
+  $background: #f5f5f6,
+  $on_primary: #fff,
+
+  $on_surface: #041E42,
 );
 
+/* @use "material-components-web"; */
+
+@use "reset-css/sass/reset";
+
+@use "@material/theme/mdc-theme";
+
+@use "@material/typography";
+@use "@material/button";
 @use "@material/button/mdc-button";
+@use "@material/icon-button";
+@use "@material/icon-button/mdc-icon-button";
+@use "@material/top-app-bar/mdc-top-app-bar";
+@use "@material/elevation/mdc-elevation";
+@use "@material/drawer";
+@use "@material/typography/mdc-typography";
+@use "@material/list";
+
+
+@include icon-button.core-styles;
+@include button.core-styles;
+
+@include drawer.core-styles;
+@include drawer.dismissible-core-styles;
+@include drawer.modal-core-styles;
+@include list.core-styles;
+
+.mdc-drawer {
+  @include drawer.width(240px);
+}
