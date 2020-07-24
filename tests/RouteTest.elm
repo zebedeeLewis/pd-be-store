@@ -5,6 +5,7 @@ import Test exposing (..)
 import Url
 
 import Route
+import View
 
 
 -----------------------------------------------------------------------
@@ -56,3 +57,24 @@ fromUrl = describe "fromUrl"
           (Expect.equal Route.SearchResults (Route.fromUrl rootUrl))
         )
     ]
+
+
+rout = describe "route"
+  [ test "Should produce View.NotFound when given Route.NotFound"
+      (\_ ->
+        (Expect.equal View.NotFound (Route.route Route.NotFound))
+      )
+  , test "Should produce View.SearchResults when given Route.SearchResults"
+      (\_ ->
+        (Expect.equal View.SearchResults (Route.route Route.SearchResults))
+      )
+  ]
+
+
+toUrl = describe "toMaybeUrl"
+  [ todo "write tests for toMaybeUrl"
+  ]
+
+
+toString = describe "toString"
+  [ todo "write tests for toString" ]

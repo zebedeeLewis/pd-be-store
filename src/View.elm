@@ -1,4 +1,6 @@
 module View exposing (View(..))
 
 
-type View = View
+type View
+  = NotFound
+  | SearchResults
