@@ -1,5 +1,6 @@
 module ItemSummary exposing
   ( ItemSummary
+  , ItemSummaryDataRecord
   , newItemSummary
   , filterByDepartment
   , newDeptTag
@@ -24,6 +25,24 @@ gram = 1000            -- mg
 kilogram = 1000000     -- mg
 centimetre = 10        -- mm
 metre = 1000           -- mm
+
+
+blankItemSummaryRecord : ItemSummaryRecord
+blankItemSummaryRecord =
+  { name            = ""
+  , id              = ""
+  , imageThumbnail  = ""
+  , brand           = ""
+  , variant         = ""
+  , price           = 0.0
+  , size            = LG
+  , departmentTags  = []
+  , categoryTags    = []
+  , subCategoryTags = []
+  , searchTags      = []
+  , availability    = OUT_STOCK
+  , discount        = Nothing
+  }
 
 
 
@@ -82,7 +101,7 @@ example:
                         ]
     , searchTags      = [ searchTag ]
     , availability    = IN_STOCK
-    , discount        = discount
+    , discount        = Just discount
     }
 -}
 type alias ItemSummaryRecord =
@@ -98,7 +117,67 @@ type alias ItemSummaryRecord =
   , subCategoryTags : List Tag
   , searchTags      : List Tag
   , availability    : Availability
-  , discount        : ItemDiscountRecord
+  , discount        : Maybe ItemDiscountRecord
+  }
+
+
+{-| Represents the information necessary to build a new
+ItemSummaryRecord. All fields hold simple string data or "subrecords".
+
+All fields match one to one with the fields in ItemSummaryRecord.
+
+example:
+  data =
+    { name            = "chicken legs"
+    , id              = "CHKCCS1233"
+    , imageThumbnail  = "https://www.example.com/chicken.jpg"
+    , brand           = "caribbean chicken"
+    , variant         = "bag"
+    , price           = "15.93"
+    , size            = "1000.5 mg"
+    , departmentTags  = [ { id = "UID789"
+                          , name = "deptTag"
+                          }
+                        ]
+    , categoryTags    = [ { id = "UID456"
+                          , name = "catTag"
+                          }
+                        ]
+    , subCategoryTags = [ { id   = "UID4123"
+                          , name = "subCatTag"
+                          }
+                        ]
+    , searchTags      = [ { id   = "UID333"
+                          , name = "searchTag"
+                          }
+                        ]
+    , availability    = "in_stock"
+    , discount        = { discount_code = "UXDS9y3"
+                        , name          = "seafood giveaway"
+                        , value         = "15"
+                        , iems          = ["CHKCCS1233"]
+                        }
+    }
+
+-}
+type alias ItemSummaryDataRecord =
+  { name            : String
+  , id              : String
+  , imageThumbnail  : String
+  , brand           : String
+  , variant         : String
+  , price           : String
+  , size            : String
+  , departmentTags  : List { id : String, name : String }
+  , categoryTags    : List { id : String, name : String }
+  , subCategoryTags : List { id : String, name : String }
+  , searchTags      : List { id : String, name : String }
+  , availability    : String
+  , discount        : { discount_code : String
+                      , name          : String
+                      , value         : String
+                      , iems          : List String
+                      }
   }
 
 
@@ -498,7 +577,7 @@ newItemDiscount  code name value items =
                }
 
 
-{-| produce a new ItemSummary from the given record
+{-| produce a new ItemSummary from the given record.
 
 example:
 
@@ -568,35 +647,65 @@ example:
     }
 
 -}
-newItemSummary record =
-  let
-    price = String.toFloat record.price
-    size = stringToMaybeSize record.size
-    availability = stringToMaybeAvailability record.availability
-    departmentTags = List.map (\tag -> DepartmentTag tag)
-                              record.departpmentTags
-    categoryTags = List.map (\tag -> CategoryTag tag)
-                            record.categoryTags
-    subCategoryTags = List.map (\tag -> SubCategoryTag tag)
-                               record.subCategoryTags
-    searchTags = List.map (\tag -> SearchTag tag)
-                          record.searchTag
-  in
-    ItemSummary
-      { name            = record.name           
-      , id              = record.id             
-      , imageThumbnail  = record.imageThumbnail 
-      , brand           = record.brand          
-      , variant         = record.variant        
-      , price           = price
-      , size            = size
-      , departmentTags  = departmentTags 
-      , categoryTags    = categoryTags   
-      , subCategoryTags = subCategoryTags
-      , searchTags      = searchTags     
-      , availability    = availability
-      , discount        = record.discount       
-      }
+newItemSummary record = Nothing
+  -- let
+  --   validatePrice record.price blankItemSummaryRecord
+  --     |> andThen validateSize record.size
+  --     |> andThen validateAvailability record.availability
+
+  -- let
+  --   availability = stringToMaybeAvailability record.availability
+  --   departmentTags = List.map (\tag -> newDeptTag tag.id tag.name )
+  --                             record.departpmentTags
+  --   categoryTags = List.map (\tag -> newCatTag tag.id tag.name)
+  --                           record.categoryTags
+  --   subCategoryTags = List.map (\tag -> newSubCatTag tag.id tag.name)
+  --                              record.subCategoryTags
+  --   searchTags = List.map (\tag -> newSearchTag tag.id tag.name)
+  --                         record.searchTag
+  -- in
+  --   ItemSummary
+  --     { name            = record.name           
+  --     , id              = record.id             
+  --     , imageThumbnail  = record.imageThumbnail 
+  --     , brand           = record.brand          
+  --     , variant         = record.variant        
+  --     , price           = price
+  --     , size            = size
+  --     , departmentTags  = departmentTags 
+  --     , categoryTags    = categoryTags   
+  --     , subCategoryTags = subCategoryTags
+  --     , searchTags      = searchTags     
+  --     , availability    = availability
+  --     , discount        = Just record.discount       
+  --     }
+
+
+{-| take a string representation of an Availability and try to convert
+it to an actual Availability value.
+TODO!!!
+-}
+validateAvailability
+  : String
+  -> ItemSummaryRecord
+  -> Maybe ItemSummaryRecord
+validateAvailability strAvailability initialItem = Nothing
+
+
+{-| take a string representation of a size and convert it to an
+actual Size
+TODO!!!
+-}
+validateSize : String -> ItemSummaryRecord -> Maybe ItemSummaryRecord
+validateSize strSize initialItem = Nothing
+
+
+{-| take a string representation of a float and try to convert it
+to an actual float value
+TODO!!!
+-}
+validatePrice : String -> ItemSummaryRecord -> Maybe ItemSummaryRecord
+validatePrice strPrice initialItem = Nothing
 
 
 {-| convert a string to Maybe size
