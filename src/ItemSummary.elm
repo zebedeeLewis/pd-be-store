@@ -71,43 +71,6 @@ sub-devide individual departments.
 
 **searchTags:** A collection of tags, these are tags used to aid in
 searching for this item.
-
-example:
-  deptTag = newDeptTag "UID123" "whole foods"
-  deptTag2 = newDeptTag "UID456" "foods"
-
-  catTag = newCatTag "UIDC123" "meats"
-  catTag2 = newCatTag "UIDC456" "vegan"
-  subCatTag = newSubCatTag "UIDSC123" "poultry"
-  subCatTag2 = newSubCatTag "UIDSC456" "organic"
-
-  searchTag = newSearchTag "UIDS123" "chicken"
-
-  discount =
-    newItemDiscount "UXDS9y3" "seafood giveaway" 15.0 ["CHKCCS1233"]
-
-  itemSummary1 : ItemSummaryRecord
-  itemSummary1 =
-    { name            = "chicken legs"
-    , id              = "CHKCCS1233"
-    , imageThumbnail  = "https://www.example.com/chicken.jpg"
-    , brand           = "caribbean chicken"
-    , variant         = "bag"
-    , price           = 15.93
-    , size            = Grad 1000.5 MG
-    , departmentTags  = [ deptTag
-                        , deptTag2
-                        ]
-    , categoryTags    = [ catTag
-                        , catTag2
-                        ]
-    , subCategoryTags = [ subCatTag
-                        , subCatTag2
-                        ]
-    , searchTags      = [ searchTag ]
-    , availability    = IN_STOCK
-    , discount        = Just discount
-    }
 -}
 type alias ItemSummaryRecord =
   { name            : String
@@ -431,6 +394,7 @@ type alias ShoppingCart = List ShoppingCartEntryM
 
 {-|
   produce a list of all Entity with the given tagName.
+  TODO!!!
 -}
 filterByDepartment
   : TagRecord
@@ -537,57 +501,12 @@ getTagRecord tag =
     SearchTag tag_ -> tag_
 
 
-{-| produce a new department tag from the given tuple
-
-example:
-
-  tag = newDeptTag "UID123" "foods"
-
--}
-newDeptTag : String -> String -> Tag
-newDeptTag id name = DepartmentTag { id = id, name = name }
-
-
-{-| produce a new category tag from the given tuple
-
-example:
-
-  tag = newCatTag "UID123" "foods"
-
--}
-newCatTag : String -> String -> Tag
-newCatTag id name = CategoryTag { id = id, name = name }
-
-
-{-| produce a new sub-category tag from the given tuple
-
-example:
-
-  tag = newSubCatTag "UID123" "foods"
-
--}
-newSubCatTag : String -> String -> Tag
-newSubCatTag id name = SubCategoryTag { id = id, name = name }
-
-
-{-| produce a new search tag from the given tuple
-
-example:
-
-  tag = newSearchTag "UID123" "foods"
-
--}
-newSearchTag : String -> String -> Tag
-newSearchTag id name = SearchTag { id = id, name = name }
-
-
 {-| produce a new ItemDiscount from the given tuple
 
 example:
 
   discount = 
     ewItemDiscount "UXDS9y3" "seafood giveaway" 15.0 ["CHKCCS1233"]
-
 -}
 newItemDiscount
   : String
@@ -674,7 +593,6 @@ example:
                             , items         = ["CHKCCS1233"]
                             }
       }
-
 -}
 newItemSummary
   : ItemSummaryDataRecord
@@ -752,7 +670,6 @@ newItemSummary itemData =
 to an actual float value. On success, produce the given
 ItemSummaryRecord with the "price" field set to the results of the
 convertion. On Failure produce an InvalidItemData on the "price" field.
-
 -}
 validatePrice
   : String
@@ -805,7 +722,6 @@ On success, produce the given ItemSummaryRecord with the "discount"
 field set to the results of the convertion. On failure produce an
 InvalidItemData on the "discount.<subfield>" field (e.g.
 InvalidItemData "UID123" "discount.value").
-TODO!!!
 -}
 validateDiscount
   : String
@@ -884,9 +800,3 @@ strToMaybeGrad strGrad =
               "mg" -> Just <| Grad val MG
               _    -> Nothing
 
-
-{-| convert a string to Maybe Availability
-TODO!!!
--}
-stringToMaybeAvailability : String -> Maybe Availability
-stringToMaybeAvailability strAvailability = Nothing
