@@ -18,14 +18,14 @@ it = test
 -- SAMPLE DATA
 -----------------------------------------------------------------------
 
-itemInvalidPriceData : ItemSummary.ItemSummaryDataRecord
-itemInvalidPriceData =
+itemSummaryData : ItemSummary.ItemSummaryDataRecord
+itemSummaryData =
   { name            = "chicken legs"
   , id              = "CHKCCS1233"
   , imageThumbnail  = "https://www.example.com/chicken.jpg"
   , brand           = "caribbean chicken"
   , variant         = "bag"
-  , price           = "$15.93"
+  , price           = "15.93"
   , size            = "1000.5 mg"
   , departmentTags  = [ { id = "UID789"
                         , name = "deptTag"
@@ -59,12 +59,24 @@ itemInvalidPriceData =
 newItemSummary =
   describe "newItemSummary"
     [ it ( "produces InvalidItemData on \"price\" field on NaN " ++
-            "price data" )
-         (\_ ->
-           Expect.equal
-             (ItemSummary.newItemSummary itemInvalidPriceData)
-             (Err
-               <| ItemSummary.InvalidItemData itemInvalidPriceData.id
-                                              "price")
-         )
+           "price data")
+         <| \_ ->
+              Expect.equal
+                ( ItemSummary.newItemSummary
+                    { itemSummaryData | price = "$123.30" } )
+                ( Err
+                     <| ItemSummary.InvalidItemData
+                          itemSummaryData.id
+                          "price" )
+
+    , it ( "produces InvalidItemData on \"size\" field on invalid " ++
+           "size data")
+         <| \_ ->
+              Expect.equal
+                ( ItemSummary.newItemSummary
+                    { itemSummaryData | size = "invalid size" } )
+                ( Err
+                     <| ItemSummary.InvalidItemData
+                          itemSummaryData.id
+                          "size" )
     ]

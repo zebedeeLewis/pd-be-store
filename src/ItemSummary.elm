@@ -667,38 +667,47 @@ newItemSummary
   : ItemSummaryDataRecord
   -> Result InvalidItemData ItemSummary
 newItemSummary itemData =
-  Err <| InvalidItemData itemData.id "price"
-  -- let
-  --   validatePrice record.price blankItemSummaryRecord
-  --     |> andThen validateSize record.size
-  --     |> andThen validateAvailability record.availability
+  let
+    result =
+      validatePrice itemData.id itemData.price blankItemSummaryRecord
+        |> Result.andThen
+             (validateSize itemData.id itemData.size)
+  in
+    case result of
+      Err err -> Err err
+      Ok val ->  Ok <| ItemSummary val
 
-  -- let
-  --   availability = stringToMaybeAvailability record.availability
-  --   departmentTags = List.map (\tag -> newDeptTag tag.id tag.name )
-  --                             record.departpmentTags
-  --   categoryTags = List.map (\tag -> newCatTag tag.id tag.name)
-  --                           record.categoryTags
-  --   subCategoryTags = List.map (\tag -> newSubCatTag tag.id tag.name)
-  --                              record.subCategoryTags
-  --   searchTags = List.map (\tag -> newSearchTag tag.id tag.name)
-  --                         record.searchTag
-  -- in
-  --   ItemSummary
-  --     { name            = record.name           
-  --     , id              = record.id             
-  --     , imageThumbnail  = record.imageThumbnail 
-  --     , brand           = record.brand          
-  --     , variant         = record.variant        
-  --     , price           = price
-  --     , size            = size
-  --     , departmentTags  = departmentTags 
-  --     , categoryTags    = categoryTags   
-  --     , subCategoryTags = subCategoryTags
-  --     , searchTags      = searchTags     
-  --     , availability    = availability
-  --     , discount        = Just record.discount       
-  --     }
+
+{-| Take a string representation of a float and try to convert it
+to an actual float value. On success, produce the given
+ItemSummaryRecord with the "price" field set to the results of the
+convertion. On Failure produce an InvalidItemData on the "price" field.
+
+-}
+validatePrice
+  : String
+  -> String
+  -> ItemSummaryRecord
+  -> Result InvalidItemData ItemSummaryRecord
+validatePrice itemId strPrice initialItem = 
+  case String.toFloat strPrice of
+    Nothing -> Err <| InvalidItemData itemId "price" 
+    Just price -> Ok { initialItem | price = price }
+
+
+{-| Take a string representation of a size and convert it to an actual
+Size. On success, produce the given ItemSummaryRecord with the "size"
+field set to the results of the convertion. On failure, produce an
+InvalidItemData on the "size" field.
+TODO!!!
+-}
+validateSize
+  : String
+  -> String
+  -> ItemSummaryRecord
+  -> Result InvalidItemData ItemSummaryRecord
+validateSize itemId strSize initialItem =
+  Err <| InvalidItemData itemId "size" 
 
 
 {-| take a string representation of an Availability and try to convert
@@ -708,24 +717,9 @@ TODO!!!
 validateAvailability
   : String
   -> ItemSummaryRecord
-  -> Maybe ItemSummaryRecord
-validateAvailability strAvailability initialItem = Nothing
-
-
-{-| take a string representation of a size and convert it to an
-actual Size
-TODO!!!
--}
-validateSize : String -> ItemSummaryRecord -> Maybe ItemSummaryRecord
-validateSize strSize initialItem = Nothing
-
-
-{-| take a string representation of a float and try to convert it
-to an actual float value
-TODO!!!
--}
-validatePrice : String -> ItemSummaryRecord -> Maybe ItemSummaryRecord
-validatePrice strPrice initialItem = Nothing
+  -> Result InvalidItemData ItemSummaryRecord
+validateAvailability strAvailability initialItem = 
+  Err <| InvalidItemData "test" "availability"
 
 
 {-| convert a string to Maybe size
