@@ -47,7 +47,7 @@ itemSummaryData =
   , discount        = { discount_code = "UXDS9y3"
                       , name          = "seafood giveaway"
                       , value         = "15"
-                      , iems          = ["CHKCCS1233"]
+                      , items         = ["CHKCCS1233"]
                       }
   }
 
@@ -90,6 +90,23 @@ newItemSummary =
                      <| ItemSummary.InvalidItemData
                           itemSummaryData.id
                           "availability" )
+
+    , it ( "produces InvalidItemData on \"discount\" field on " ++
+           "invalid discount data")
+         <| \_ ->
+              let discount = itemSummaryData.discount
+              in
+                Expect.equal
+                  ( ItemSummary.newItemSummary
+                      { itemSummaryData
+                      | discount = { discount
+                                   | value = "invalid"
+                                   }
+                      } )
+                  ( Err
+                       <| ItemSummary.InvalidItemData
+                            itemSummaryData.id
+                            "discount.value" )
     ]
 
 
@@ -228,4 +245,54 @@ strToMaybeGrad =
                , Expect.equal (ItemSummary.strToMaybeGrad "15.2 mG")
                ]
                (Just <| ItemSummary.Grad 15.2 ItemSummary.MG)
+    ]
+
+
+strToMaybeAvailability =
+  describe "strToMaybeAvailability"
+    [ it ("produces nothing when given a string that cannot be " ++
+          "converted.")
+        <| \_ ->
+             Expect.equal
+               (ItemSummary.strToMaybeAvailability "random string")
+               Nothing
+
+    , it ("produces IN_STOCK when given string \"in_stock\" " ++
+          "case-insensitive.")
+        <| \_ ->
+             Expect.all
+               [ Expect.equal
+                   (ItemSummary.strToMaybeAvailability "in_stock")
+               , Expect.equal
+                   (ItemSummary.strToMaybeAvailability "iN_sTOck")
+               , Expect.equal
+                   (ItemSummary.strToMaybeAvailability "IN_STOCK")
+               ]
+               (Just ItemSummary.IN_STOCK)
+
+    , it ("produces OUT_STOCK when given string \"out_stock\" " ++
+          "case-insensitive.")
+        <| \_ ->
+             Expect.all
+               [ Expect.equal
+                   (ItemSummary.strToMaybeAvailability "out_stock")
+               , Expect.equal
+                   (ItemSummary.strToMaybeAvailability "oUt_sTOck")
+               , Expect.equal
+                   (ItemSummary.strToMaybeAvailability "OUT_STOCK")
+               ]
+               (Just ItemSummary.OUT_STOCK)
+
+    , it ("produces ORDER_ONLY when given string \"order_only\" " ++
+          "case-insensitive.")
+        <| \_ ->
+             Expect.all
+               [ Expect.equal
+                   (ItemSummary.strToMaybeAvailability "order_only")
+               , Expect.equal
+                   (ItemSummary.strToMaybeAvailability "oRdeR_oNLy")
+               , Expect.equal
+                   (ItemSummary.strToMaybeAvailability "ORDER_ONLY")
+               ]
+               (Just ItemSummary.ORDER_ONLY)
     ]

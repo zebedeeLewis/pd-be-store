@@ -3,11 +3,13 @@ module ItemSummary exposing
   , InvalidItemData(..)
   , ItemSummaryDataRecord
   , Size(..)
+  , Availability(..)
   , Measure(..)
 
   , newItemSummary
   , strToMaybeSize
   , strToMaybeGrad
+  , strToMaybeAvailability
   )
 
 
@@ -155,7 +157,7 @@ example:
     , discount        = { discount_code = "UXDS9y3"
                         , name          = "seafood giveaway"
                         , value         = "15"
-                        , iems          = ["CHKCCS1233"]
+                        , items         = ["CHKCCS1233"]
                         }
     }
 
@@ -173,11 +175,7 @@ type alias ItemSummaryDataRecord =
   , subCategoryTags : List { id : String, name : String }
   , searchTags      : List { id : String, name : String }
   , availability    : String
-  , discount        : { discount_code : String
-                      , name          : String
-                      , value         : String
-                      , iems          : List String
-                      }
+  , discount        : ItemDiscountDataRecord
   }
 
 
@@ -226,6 +224,19 @@ type alias ItemDiscountRecord =
   { discount_code    : String
   , name             : String
   , value            : Float
+  , items            : List String
+  }
+
+
+{-| Represents the information necessary to build a new
+ItemDiscountRecord. All fields hold simple string data or "subrecords".
+
+All fields match one to one with the fields in ItemDiscountRecord.
+-}
+type alias ItemDiscountDataRecord =
+  { discount_code    : String
+  , name             : String
+  , value            : String
   , items            : List String
   }
 
@@ -657,7 +668,7 @@ example:
                             { discount_code = "UXDS9y3"
                             , name          = "seafood giveaway"
                             , value         = "15"
-                            , iems          = ["CHKCCS1233"]
+                            , items         = ["CHKCCS1233"]
                             }
       }
 
@@ -673,6 +684,8 @@ newItemSummary itemData =
              (validateSize itemData.id itemData.size)
         |> Result.andThen
              (validateAvailability itemData.id itemData.availability)
+        |> Result.andThen
+             (validateDiscount itemData.id itemData.discount)
   in
     case result of
       Err err -> Err err
@@ -726,7 +739,38 @@ validateAvailability
   -> ItemSummaryRecord
   -> Result InvalidItemData ItemSummaryRecord
 validateAvailability itemId strAvailability initialItem = 
-  Err <| InvalidItemData itemId "availability"
+  case strToMaybeAvailability strAvailability of
+    Nothing -> Err <| InvalidItemData itemId "availability"
+    Just availability ->
+      Ok { initialItem | availability = availability }
+
+
+{-| Take a simple representation of an ItemDiscount (i.e. all fields
+are string values), and try to convert it to an actual ItemData value.
+On success, produce the given ItemSummaryRecord with the "discount"
+field set to the results of the convertion. On failure produce an
+InvalidItemData on the "discount.<subfield>" field (e.g.
+InvalidItemData "UID123" "discount.value").
+TODO!!!
+-}
+validateDiscount
+  : String
+  -> ItemDiscountDataRecord
+  -> ItemSummaryRecord
+  -> Result InvalidItemData ItemSummaryRecord
+validateDiscount itemId discountData initialItem = 
+  Err <| InvalidItemData itemId "discount.value"
+
+
+{-| convert a string to Maybe Availability
+-}
+strToMaybeAvailability : String -> Maybe Availability
+strToMaybeAvailability strAvailability =
+  case String.toLower (String.trim strAvailability) of
+    "in_stock"    -> Just IN_STOCK
+    "out_stock"   -> Just OUT_STOCK
+    "order_only"  -> Just ORDER_ONLY
+    _             -> Nothing
 
 
 {-| convert a string to Maybe size
