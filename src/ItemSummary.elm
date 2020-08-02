@@ -1,7 +1,10 @@
 module ItemSummary exposing
-  ( ItemSummary
+  ( ItemSummary(..)
+  , ItemSummaryRecord
   , InvalidItemData(..)
+  , Tag(..)
   , ItemSummaryDataRecord
+  , ItemDiscount(..)
   , Size(..)
   , Availability(..)
   , Measure(..)
@@ -119,7 +122,7 @@ type alias ItemSummaryRecord =
   , subCategoryTags : List Tag
   , searchTags      : List Tag
   , availability    : Availability
-  , discount        : Maybe ItemDiscountRecord
+  , discount        : Maybe ItemDiscount
   }
 
 
@@ -678,6 +681,46 @@ newItemSummary
   -> Result InvalidItemData ItemSummary
 newItemSummary itemData =
   let
+    setCatTags = (\(v, d)->
+                   let categories = List.map CategoryTag d.categoryTags
+                   in ({ v | categoryTags = categories }, d))
+
+    setDeptTags = (\(v, d) ->
+                    let depts = List.map DepartmentTag d.departmentTags
+                    in ({ v | departmentTags = depts }, d))
+
+    setSubCatTags = (\(v, d) ->
+                      let subCats = List.map SubCategoryTag
+                                             d.subCategoryTags
+                      in ({ v | subCategoryTags = subCats }, d))
+
+    setSearchTags = (\(v, d) ->
+                      let search = List.map SearchTag d.searchTags
+                      in ({ v | searchTags = search }, d))
+
+    setName = (\(v, d) ->
+                let name = d.name
+                in ({ v | name = name }, d))
+
+    setId = (\(v, d) ->
+              let id = d.id
+              in ({ v | id = id }, d))
+
+    setBrand = (\(v, d) ->
+                 let brand = d.brand
+                 in ({ v | brand = brand }, d))
+
+    setVariant = (\(v, d) ->
+                   let variant = d.variant
+                   in ({ v | variant = variant }, d))
+
+    setImageThumbnail = (\(v, d) ->
+                          let imageThumbnail = d.imageThumbnail
+                          in
+                            ( { v | imageThumbnail = imageThumbnail }
+                            , d
+                            ))
+
     result =
       validatePrice itemData.id itemData.price blankItemSummaryRecord
         |> Result.andThen
@@ -689,7 +732,20 @@ newItemSummary itemData =
   in
     case result of
       Err err -> Err err
-      Ok val ->  Ok <| ItemSummary val
+      Ok val -> 
+        let
+          (val_, _) =
+            setCatTags
+            << setDeptTags
+            << setSubCatTags
+            << setSearchTags
+            << setName
+            << setId
+            << setImageThumbnail
+            << setBrand
+            << setVariant
+                 <| (val, itemData)
+        in Ok <| ItemSummary val_
 
 
 {-| Take a string representation of a float and try to convert it
@@ -713,7 +769,6 @@ validatePrice itemId strPrice initialItem =
 Size. On success, produce the given ItemSummaryRecord with the "size"
 field set to the results of the convertion. On failure, produce an
 InvalidItemData on the "size" field.
-TODO!!!
 -}
 validateSize
   : String
@@ -731,7 +786,6 @@ it to an actual Availability value. On success, produce the given
 ItemSummaryRecord with the "availability" field set to the results of
 the convertion. On failure produce an InvalidItemData on the
 "availability" field.
-TODO!!!
 -}
 validateAvailability
   : String
@@ -759,7 +813,18 @@ validateDiscount
   -> ItemSummaryRecord
   -> Result InvalidItemData ItemSummaryRecord
 validateDiscount itemId discountData initialItem = 
-  Err <| InvalidItemData itemId "discount.value"
+  let maybeValue = String.toFloat discountData.value
+  in
+    case maybeValue of
+      Nothing    -> Err <| InvalidItemData itemId "discount.value"
+      Just value ->
+        Ok { initialItem
+           | discount =
+               Just <| newItemDiscount discountData.discount_code
+                                       discountData.name
+                                       value
+                                       discountData.items
+           }
 
 
 {-| convert a string to Maybe Availability

@@ -46,10 +46,48 @@ itemSummaryData =
   , availability    = "in_stock"
   , discount        = { discount_code = "UXDS9y3"
                       , name          = "seafood giveaway"
-                      , value         = "15"
+                      , value         = "15.0"
                       , items         = ["CHKCCS1233"]
                       }
   }
+
+itemSummaryRecord : ItemSummary.ItemSummaryRecord
+itemSummaryRecord =
+      { name            = "chicken legs"
+      , id              = "CHKCCS1233"
+      , imageThumbnail  = "https://www.example.com/chicken.jpg"
+      , brand           = "caribbean chicken"
+      , variant         = "bag"
+      , price           = 15.93
+      , size            = ItemSummary.Grad 1000.5 ItemSummary.MG
+      , departmentTags  = [ ItemSummary.DepartmentTag
+                              { id = "UID789"
+                              , name = "deptTag"
+                              }
+                          ]
+      , categoryTags    = [ ItemSummary.CategoryTag
+                              { id = "UID456"
+                              , name = "catTag"
+                              }
+                          ]
+      , subCategoryTags = [ ItemSummary.SubCategoryTag
+                              { id   = "UID4123"
+                              , name = "subCatTag"
+                              }
+                          ]
+      , searchTags      = [ ItemSummary.SearchTag
+                              { id   = "UID333"
+                              , name = "searchTag"
+                              }
+                          ]
+      , availability    = ItemSummary.IN_STOCK
+      , discount        = Just <| ItemSummary.ItemDiscount
+                            { discount_code = "UXDS9y3"
+                            , name          = "seafood giveaway"
+                            , value         = 15.0
+                            , items         = ["CHKCCS1233"]
+                            }
+      }
 
 
 -----------------------------------------------------------------------
@@ -107,6 +145,13 @@ newItemSummary =
                        <| ItemSummary.InvalidItemData
                             itemSummaryData.id
                             "discount.value" )
+
+    , it ( "produces a new ItemSummary when given a valid " ++
+           "ItemSummaryDataRecord")
+         <| \_ ->
+              Expect.equal
+                ( ItemSummary.newItemSummary itemSummaryData )
+                ( Ok <| ItemSummary.ItemSummary itemSummaryRecord )
     ]
 
 
