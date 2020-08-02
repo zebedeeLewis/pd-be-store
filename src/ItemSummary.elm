@@ -1,5 +1,6 @@
 module ItemSummary exposing
   ( ItemSummary
+  , InvalidItemData(..)
   , ItemSummaryDataRecord
   , newItemSummary
   , filterByDepartment
@@ -181,7 +182,19 @@ type alias ItemSummaryDataRecord =
   }
 
 
-type ItemSummary  = ItemSummary ItemSummaryRecord
+{-| Represents a short description of an item (i.e. an inventory item)
+used to display a short summary of the item to the user.
+-}
+type ItemSummary 
+  = ItemSummary ItemSummaryRecord
+
+
+{-| If a user of this module attempts to create a new item with
+invalid data, that will result in an InvalidItemData. The first
+field of InvalidItemData is the id of the data item used in the
+attempt, the second is the name of the errant field.
+-}
+type InvalidItemData = InvalidItemData String String
 
 
 type ResultSet = ResultSet (List ItemSummary)
@@ -399,7 +412,6 @@ type alias ShoppingCartEntryM =
 type alias ShoppingCart = List ShoppingCartEntryM
 
 
-
 -----------------------------------------------------------------------
 -- FUNCTION DEFINITIONS
 -----------------------------------------------------------------------
@@ -424,6 +436,7 @@ filterByDepartment department items =
 itemSizeToString : ItemSummaryRecord -> String
 itemSizeToString item =
   sizeToString item.size
+
 
 sizeToString : Size -> String
 sizeToString size =
@@ -577,7 +590,9 @@ newItemDiscount  code name value items =
                }
 
 
-{-| produce a new ItemSummary from the given record.
+{-| Validate the given input data and produce a new ItemSummary
+from the given data record or InvalidItemData if any of the data
+is invalid.
 
 example:
 
@@ -614,40 +629,45 @@ example:
     }
 
   newItemSummary itemData ==
-    { name            = "chicken legs"
-    , id              = "CHKCCS1233"
-    , imageThumbnail  = "https://www.example.com/chicken.jpg"
-    , brand           = "caribbean chicken"
-    , variant         = "bag"
-    , price           = 15.93
-    , size            = Grad 1000.5 MG
-    , departmentTags  = [ DepartmentTag { id = "UID789"
-                                        , name = "deptTag"
+    ItemSummary
+      { name            = "chicken legs"
+      , id              = "CHKCCS1233"
+      , imageThumbnail  = "https://www.example.com/chicken.jpg"
+      , brand           = "caribbean chicken"
+      , variant         = "bag"
+      , price           = 15.93
+      , size            = Grad 1000.5 MG
+      , departmentTags  = [ DepartmentTag { id = "UID789"
+                                          , name = "deptTag"
+                                          }
+                          ]
+      , categoryTags    = [ CategoryTag { id = "UID456"
+                                        , name = "catTag"
                                         }
-                        ]
-    , categoryTags    = [ CategoryTag { id = "UID456"
-                                      , name = "catTag"
+                          ]
+      , subCategoryTags = [ SubCategoryTag { id   = "UID4123"
+                                           , name = "subCatTag"
+                                           }
+                          ]
+      , searchTags      = [ SearchTag { id   = "UID333"
+                                      , name = "searchTag"
                                       }
-                        ]
-    , subCategoryTags = [ SubCategoryTag { id   = "UID4123"
-                                         , name = "subCatTag"
-                                         }
-                        ]
-    , searchTags      = [ SearchTag { id   = "UID333"
-                                    , name = "searchTag"
-                                    }
-                        ]
-    , availability    = IN_STOCK
-    , discount        = ItemDiscount
-                          { discount_code = "UXDS9y3"
-                          , name          = "seafood giveaway"
-                          , value         = "15"
-                          , iems          = ["CHKCCS1233"]
-                          }
-    }
+                          ]
+      , availability    = IN_STOCK
+      , discount        = ItemDiscount
+                            { discount_code = "UXDS9y3"
+                            , name          = "seafood giveaway"
+                            , value         = "15"
+                            , iems          = ["CHKCCS1233"]
+                            }
+      }
 
 -}
-newItemSummary record = Nothing
+newItemSummary
+  : ItemSummaryDataRecord
+  -> Result InvalidItemData ItemSummary
+newItemSummary itemData =
+  Err <| InvalidItemData itemData.id "price"
   -- let
   --   validatePrice record.price blankItemSummaryRecord
   --     |> andThen validateSize record.size
