@@ -2,13 +2,12 @@ module ItemSummary exposing
   ( ItemSummary
   , InvalidItemData(..)
   , ItemSummaryDataRecord
+  , Size(..)
+  , Measure(..)
+
   , newItemSummary
-  , filterByDepartment
-  , newDeptTag
-  , newCatTag
-  , newSubCatTag
-  , newSearchTag
-  , newItemDiscount
+  , strToMaybeSize
+  , strToMaybeGrad
   )
 
 
@@ -334,7 +333,7 @@ type Availability
 type Measure
   = ML
   | MM
-  | CM3
+  | CC
   | MG
 
 
@@ -466,7 +465,7 @@ sizeToString size =
           in
             (String.fromFloat val) ++ rdMeasure 
 
-        CM3 ->
+        CC ->
           let
             val =
               if value > cubicMetre
@@ -672,6 +671,8 @@ newItemSummary itemData =
       validatePrice itemData.id itemData.price blankItemSummaryRecord
         |> Result.andThen
              (validateSize itemData.id itemData.size)
+        |> Result.andThen
+             (validateAvailability itemData.id itemData.availability)
   in
     case result of
       Err err -> Err err
@@ -707,26 +708,72 @@ validateSize
   -> ItemSummaryRecord
   -> Result InvalidItemData ItemSummaryRecord
 validateSize itemId strSize initialItem =
-  Err <| InvalidItemData itemId "size" 
+  case strToMaybeSize strSize of
+    Nothing -> Err <| InvalidItemData itemId "size"
+    Just size -> Ok { initialItem | size = size }
 
 
-{-| take a string representation of an Availability and try to convert
-it to an actual Availability value.
+{-| Take a string representation of an Availability and try to convert
+it to an actual Availability value. On success, produce the given
+ItemSummaryRecord with the "availability" field set to the results of
+the convertion. On failure produce an InvalidItemData on the
+"availability" field.
 TODO!!!
 -}
 validateAvailability
   : String
+  -> String
   -> ItemSummaryRecord
   -> Result InvalidItemData ItemSummaryRecord
-validateAvailability strAvailability initialItem = 
-  Err <| InvalidItemData "test" "availability"
+validateAvailability itemId strAvailability initialItem = 
+  Err <| InvalidItemData itemId "availability"
 
 
 {-| convert a string to Maybe size
-TODO!!!
 -}
-stringToMaybeSize : String -> Maybe Size
-stringToMaybeSize strSize = Nothing
+strToMaybeSize : String -> Maybe Size
+strToMaybeSize strSize =
+  case String.trim <| String.toLower strSize of 
+    "large"         -> Just LG
+    "lg"            -> Just LG
+    "xl"            -> Just XL
+    "extra large"   -> Just XL
+    "extra-large"   -> Just XL
+    "xs"            -> Just XS
+    "extra small"   -> Just XS
+    "extra-small"   -> Just XS
+    "small"         -> Just SM
+    "sm"            -> Just SM
+    "medium"        -> Just M
+    "m"             -> Just M
+    strGrad         -> strToMaybeGrad strGrad
+
+
+{-| convert a string to a Grad x Measure or Nothing.
+-}
+strToMaybeGrad : String -> Maybe Size
+strToMaybeGrad strGrad =
+  let
+    gradFields = String.words strGrad
+    maybeMeasure = List.head <| List.drop 1 gradFields
+    maybeVal =
+      case  List.head gradFields of
+        Nothing -> Nothing
+        Just strVal -> String.toFloat strVal
+
+  in
+    case maybeVal of
+      Nothing -> Nothing
+      Just val ->
+        case maybeMeasure of
+          Nothing -> Nothing
+          Just measure ->
+            case String.toLower measure of
+              "ml" -> Just <| Grad val ML
+              "mm" -> Just <| Grad val MM
+              "cc" -> Just <| Grad val CC
+              "mg" -> Just <| Grad val MG
+              _    -> Nothing
 
 
 {-| convert a string to Maybe Availability
