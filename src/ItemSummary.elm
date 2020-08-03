@@ -1,7 +1,7 @@
 module ItemSummary exposing
   ( ItemSummary(..)
   , ItemSummaryRecord
-  , InvalidItemData(..)
+  , ValidationErr(..)
   , Tag(..)
   , ItemSummaryDataRecord
   , ItemDiscount(..)
@@ -60,46 +60,46 @@ used to display a short summary of the item to the user.
 
 examples:
 
-record : ItemSummary.ItemSummaryRecord
-record =
-      { name            = "chicken legs"
-      , id              = "CHKCCS1233"
-      , imageThumbnail  = "https://www.example.com/chicken.jpg"
-      , brand           = "caribbean chicken"
-      , variant         = "bag"
-      , price           = 15.93
-      , size            = Grad 1000.5 MG
-      , departmentTags  = [ DepartmentTag
-                              { id = "UID789"
-                              , name = "deptTag"
-                              }
-                          ]
-      , categoryTags    = [ CategoryTag
-                              { id = "UID456"
-                              , name = "catTag"
-                              }
-                          ]
-      , subCategoryTags = [ SubCategoryTag
-                              { id   = "UID4123"
-                              , name = "subCatTag"
-                              }
-                          ]
-      , searchTags      = [ SearchTag
-                              { id   = "UID333"
-                              , name = "searchTag"
-                              }
-                          ]
-      , availability    = IN_STOCK
-      , discount        = Just <| ItemDiscount
-                            { discount_code = "UXDS9y3"
-                            , name          = "seafood giveaway"
-                            , value         = 15.0
-                            , items         = ["CHKCCS1233"]
+  record : ItemSummary.ItemSummaryRecord
+  record =
+    { name            = "chicken legs"
+    , id              = "CHKCCS1233"
+    , imageThumbnail  = "https://www.example.com/chicken.jpg"
+    , brand           = "caribbean chicken"
+    , variant         = "bag"
+    , price           = 15.93
+    , size            = Grad 1000.5 MG
+    , departmentTags  = [ DepartmentTag
+                            { id = "UID789"
+                            , name = "deptTag"
                             }
-      }
+                        ]
+    , categoryTags    = [ CategoryTag
+                            { id = "UID456"
+                            , name = "catTag"
+                            }
+                        ]
+    , subCategoryTags = [ SubCategoryTag
+                            { id   = "UID4123"
+                            , name = "subCatTag"
+                            }
+                        ]
+    , searchTags      = [ SearchTag
+                            { id   = "UID333"
+                            , name = "searchTag"
+                            }
+                        ]
+    , availability    = IN_STOCK
+    , discount        = Just <| ItemDiscount
+                          { discount_code = "UXDS9y3"
+                          , name          = "seafood giveaway"
+                          , value         = 15.0
+                          , items         = ["CHKCCS1233"]
+                          }
+    }
 
-itemSummary : ItemSummaryRecord
-itemSummary = ItemSummary
+  itemSummary : ItemSummaryRecord
+  itemSummary = ItemSummary record
 -}
 type ItemSummary 
   = ItemSummary ItemSummaryRecord
@@ -115,12 +115,52 @@ the item should be in.
 category the item should be in. This serves to sub-devides individual
 departments.
 
-**kubCategoryTags:** A collection of tags, each representing a
+**subCategoryTags:** A collection of tags, each representing a
 department sub-category the item should be in. This serves to further
 sub-devide individual departments.
 
 **searchTags:** A collection of tags, these are tags used to aid in
 searching for this item.
+
+example:
+
+  record : ItemSummary.ItemSummaryRecord
+  record =
+    { name            = "chicken legs"
+    , id              = "CHKCCS1233"
+    , imageThumbnail  = "https://www.example.com/chicken.jpg"
+    , brand           = "caribbean chicken"
+    , variant         = "bag"
+    , price           = 15.93
+    , size            = Grad 1000.5 MG
+    , departmentTags  = [ DepartmentTag
+                            { id = "UID789"
+                            , name = "deptTag"
+                            }
+                        ]
+    , categoryTags    = [ CategoryTag
+                            { id = "UID456"
+                            , name = "catTag"
+                            }
+                        ]
+    , subCategoryTags = [ SubCategoryTag
+                            { id   = "UID4123"
+                            , name = "subCatTag"
+                            }
+                        ]
+    , searchTags      = [ SearchTag
+                            { id   = "UID333"
+                            , name = "searchTag"
+                            }
+                        ]
+    , availability    = IN_STOCK
+    , discount        = Just <| ItemDiscount
+                          { discount_code = "UXDS9y3"
+                          , name          = "seafood giveaway"
+                          , value         = 15.0
+                          , items         = ["CHKCCS1233"]
+                          }
+    }
 -}
 type alias ItemSummaryRecord =
   { name            : String
@@ -176,7 +216,6 @@ example:
                         , items         = ["CHKCCS1233"]
                         }
     }
-
 -}
 type alias ItemSummaryDataRecord =
   { name            : String
@@ -196,18 +235,44 @@ type alias ItemSummaryDataRecord =
 
 
 {-| If a user of this module attempts to create a new item with
-invalid data, that will result in an InvalidItemData. The first
-field of InvalidItemData is the id of the data item used in the
-attempt, the second is the name of the errant field.
+invalid data, that will result in an ValidationErr. The first
+field of ValidationErr is the id of the data item used in the
+attempt, the second is the errant value used in the attempt.
+Whenever a third field is present it represents the field name
+holding the errant data.
+
+example:
+  priceErr = NaNPrice "ID123" "$124"
+
+  sizeErr = InvalidSize "ID123" "invalid size"
+
+  avErr = InvalidAvailability "ID123" "out of stock"
+
+  --                            item id  value  field
+  discountErr = InvalidDiscount String   "so"   "value"
+  
 -}
-type ValidationErr = InvalidItemData String String
+type ValidationErr
+  = NaNPrice             String String
+  | InvalidSize          String String
+  | InvalidAvailability  String String
+  | InvalidDiscount      String String String
 
 
-type ResultSet = ResultSet (List ItemSummary)
+type ItemDiscount = ItemDiscount ItemDiscountRecord
 
 
-type CategorizedResultSet =
-  CategorizedResultSet Tag (List ItemSummary)
+{-| Represents the information necessary to build a new
+ItemDiscountRecord. All fields hold simple string data or "subrecords".
+
+All fields match one to one with the fields in ItemDiscountRecord.
+-}
+type alias ItemDiscountDataRecord =
+  { discount_code    : String
+  , name             : String
+  , value            : String
+  , items            : List String
+  }
 
 
 {-| Represents a discount that is automatically applied to a select
@@ -227,7 +292,6 @@ itemDiscount =
   , value         = 15
   , iems          = ["CHKCCS1233"]
   }
-
 -}
 type alias ItemDiscountRecord =
   { discount_code    : String
@@ -237,86 +301,25 @@ type alias ItemDiscountRecord =
   }
 
 
-{-| Represents the information necessary to build a new
-ItemDiscountRecord. All fields hold simple string data or "subrecords".
+{-| Represents a collection of ItemSummary -}
+type ResultSet = ResultSet (List ItemSummary)
 
-All fields match one to one with the fields in ItemDiscountRecord.
+
+{-| Represents a collection of ItemSummary that share the given
+tag.
 -}
-type alias ItemDiscountDataRecord =
-  { discount_code    : String
-  , name             : String
-  , value            : String
-  , items            : List String
-  }
+type CategorizedResultSet =
+  CategorizedResultSet Tag (List ItemSummary)
 
 
-type ItemDiscount = ItemDiscount ItemDiscountRecord
+{-| represents the availability of inventory items of a given type.
 
+**IN_STOCK**   - represents a type of item that is currently in stock.
 
-{-| Represents a discount that the user has the option to apply. Once
-applied the discount will take effect on a select set of items.
-
-Has the exact set of fields as ItemDiscount along with the following
-additional field:
-
-**expirationTime:** the current time passes this expiration time, then
-the discount is no longer valid.
-
-**startingBalance:** user discounts cannot be applied beyond a certain
-dollar amount. This represents the balance to that dollar cap before
-the discount is applied.
-
-**finalBalance:** represents the balance to the dollar cap after the
-discount is applied.
-
--- the startingBalance and finalBalance values are the same for
--- unapplied discounts.
-userDiscount =
-  { discount_code    = "DSC123"
-  , name             = "marketing discount"
-  , value            = 10
-  , iems             = ["CHKCCS1233"]
-  , expirationTime   = Time.millisToPosix 1596261755
-  , startingBalance  = 58.6
-  , finalBalance     = 58.6
-  }
-
--- the startingBalance is more than the finalBalance for applied
--- discounts.
-appliedUserDiscount =
-  { discount_code    = "DSC123"
-  , name             = "marketing discount"
-  , value            = 10
-  , iems             = ["CHKCCS1233"]
-  , expirationTime   = Time.millisToPosix 1596261755
-  , startingBalance  = 58.6
-  , finalBalance     = 23.6
-  }
-
--}
-type alias UserDiscountRecord =
-  { discount_code    : String
-  , name             : String
-  , value            : Float
-  , items            : List String
-  , expirationTime   : Time.Posix
-  , startingBalance  : Float
-  , finalBalance     : Float
-  }
-
-
-type UserDiscount = UserDiscount UserDiscountRecord
-
-
-{-|
-  represents the availability of inventory items of a given type.
-
-    IN_STOCK   - represents a type of item that is currently in stock.
-
-    OUT_STOCK  - represents a type of item that is currently out of
-                 stock.
-    ORDER_ONLY - represents a type of item that is available on a
-                 per order basis.
+**OUT_STOCK**  - represents a type of item that is currently out of
+stock.
+**ORDER_ONLY** - represents a type of item that is available on a
+per order basis.
 
   examples:
 
@@ -335,11 +338,10 @@ type Availability
   | OUT_STOCK
 
 
-{-|
-  represents the basic unit of measurement for length, volume and
-  weight.
+{-| represents the basic unit of measurement for length, volume and
+weight.
 
-  example:
+example:
 
   measure1 : Measure
   measure1 = ML
@@ -357,15 +359,14 @@ type Measure
   | MG
 
 
-{-|
-  represents the size of an item, this can be an exact measurement
-  or an generic estimate such as large, extra-large etc.
+{-| represents the size of an item, this can be an exact measurement
+or an generic estimate such as large, extra-large etc.
 
-    Grad value measure
-      value   - measurement value
-      measure - the unit of measurement
+Grad value measure
+  value   - measurement value
+  measure - the unit of measurement
 
-  examples:
+examples:
 
   size1 : Size
   size1 = LG
@@ -375,7 +376,6 @@ type Measure
   
   size3 : Size
   size3 = Grad 2.5 ML
-
 -}
 type Size
   = Grad Float Measure
@@ -384,6 +384,13 @@ type Size
   | SM
   | XS
   | M
+
+
+type Tag
+  = DepartmentTag TagRecord
+  | CategoryTag TagRecord
+  | SubCategoryTag TagRecord
+  | SearchTag TagRecord
 
 
 {-|
@@ -396,7 +403,6 @@ type Size
     { id   = "UID4123"
     , name = "foods"
     }
-
 -}
 type alias TagRecord =
   { id    : String
@@ -404,31 +410,64 @@ type alias TagRecord =
   }
 
 
-type Tag
-  = DepartmentTag TagRecord
-  | CategoryTag TagRecord
-  | SubCategoryTag TagRecord
-  | SearchTag TagRecord
+{- TODO: This should be moved to a module dedicated to Users.  -}
+type UserDiscount = UserDiscount UserDiscountRecord
 
 
-{-|
-  represents an item added to a shopping cart as well as how many
-  individual items of that type is added.
+{-| Represents a discount that the user has the option to apply. Once
+applied the discount will take effect on a select set of items.
 
-  examples:
+Has the exact set of fields as ItemDiscount along with the following
+additional field:
 
-  shoppingCartEntry1 =
-    { item      = itemSummary1
-    , quantity  = 2
+**expirationTime:** the current time passes this expiration time, then
+the discount is no longer valid.
+
+**startingBalance:** user discounts cannot be applied beyond a certain
+dollar amount. This represents the balance to that dollar cap before
+the discount is applied.
+
+**finalBalance:** represents the balance to the dollar cap after the
+discount is applied.
+
+examples:
+
+  -- the startingBalance and finalBalance values are the same for
+  -- unapplied discounts.
+  userDiscount =
+    { discount_code    = "DSC123"
+    , name             = "marketing discount"
+    , value            = 10
+    , iems             = ["CHKCCS1233"]
+    , expirationTime   = Time.millisToPosix 1596261755
+    , startingBalance  = 58.6
+    , finalBalance     = 58.6
     }
+
+  -- the startingBalance is more than the finalBalance for applied
+  -- discounts.
+  appliedUserDiscount =
+    { discount_code    = "DSC123"
+    , name             = "marketing discount"
+    , value            = 10
+    , iems             = ["CHKCCS1233"]
+    , expirationTime   = Time.millisToPosix 1596261755
+    , startingBalance  = 58.6
+    , finalBalance     = 23.6
+    }
+
+TODO: This should be moved to a module dedicated to Users.
 -}
-type alias ShoppingCartEntryM =
-  { item      : ItemSummaryRecord
-  , quantity  : Int
+type alias UserDiscountRecord =
+  { discount_code    : String
+  , name             : String
+  , value            : Float
+  , items            : List String
+  , expirationTime   : Time.Posix
+  , startingBalance  : Float
+  , finalBalance     : Float
   }
 
-
-type alias ShoppingCart = List ShoppingCartEntryM
 
 
 -----------------------------------------------------------------------
@@ -566,7 +605,7 @@ newItemDiscount  code name value items =
 
 
 {-| Validate the given input data and produce a new ItemSummary
-from the given data record or InvalidItemData if any of the data
+from the given data record or ValidationErr if any of the data
 is invalid.
 
 example:
@@ -639,7 +678,7 @@ example:
 -}
 newItemSummary
   : ItemSummaryDataRecord
-  -> Result InvalidItemData ItemSummary
+  -> Result ValidationErr ItemSummary
 newItemSummary itemData =
   let
     setCatTags = (\(v, d)->
@@ -712,49 +751,48 @@ newItemSummary itemData =
 {-| Take a string representation of a float and try to convert it
 to an actual float value. On success, produce the given
 ItemSummaryRecord with the "price" field set to the results of the
-convertion. On Failure produce an InvalidItemData on the "price" field.
+convertion. On Failure produce an ValidationErr.
 -}
 validatePrice
   : String
   -> String
   -> ItemSummaryRecord
-  -> Result InvalidItemData ItemSummaryRecord
+  -> Result ValidationErr ItemSummaryRecord
 validatePrice itemId strPrice initialItem = 
   case String.toFloat strPrice of
-    Nothing -> Err <| InvalidItemData itemId "price" 
+    Nothing -> Err <| NaNPrice itemId strPrice
     Just price -> Ok { initialItem | price = price }
 
 
 {-| Take a string representation of a size and convert it to an actual
 Size. On success, produce the given ItemSummaryRecord with the "size"
 field set to the results of the convertion. On failure, produce an
-InvalidItemData on the "size" field.
+ValidatinErr.
 -}
 validateSize
   : String
   -> String
   -> ItemSummaryRecord
-  -> Result InvalidItemData ItemSummaryRecord
+  -> Result ValidationErr ItemSummaryRecord
 validateSize itemId strSize initialItem =
   case strToMaybeSize strSize of
-    Nothing -> Err <| InvalidItemData itemId "size"
+    Nothing -> Err <| InvalidSize itemId strSize
     Just size -> Ok { initialItem | size = size }
 
 
 {-| Take a string representation of an Availability and try to convert
 it to an actual Availability value. On success, produce the given
 ItemSummaryRecord with the "availability" field set to the results of
-the convertion. On failure produce an InvalidItemData on the
-"availability" field.
+the convertion. On failure produce an ValidationErr.
 -}
 validateAvailability
   : String
   -> String
   -> ItemSummaryRecord
-  -> Result InvalidItemData ItemSummaryRecord
+  -> Result ValidationErr ItemSummaryRecord
 validateAvailability itemId strAvailability initialItem = 
   case strToMaybeAvailability strAvailability of
-    Nothing -> Err <| InvalidItemData itemId "availability"
+    Nothing -> Err <| InvalidAvailability itemId strAvailability
     Just availability ->
       Ok { initialItem | availability = availability }
 
@@ -763,19 +801,19 @@ validateAvailability itemId strAvailability initialItem =
 are string values), and try to convert it to an actual ItemData value.
 On success, produce the given ItemSummaryRecord with the "discount"
 field set to the results of the convertion. On failure produce an
-InvalidItemData on the "discount.<subfield>" field (e.g.
-InvalidItemData "UID123" "discount.value").
+ValidationErr.
 -}
 validateDiscount
   : String
   -> ItemDiscountDataRecord
   -> ItemSummaryRecord
-  -> Result InvalidItemData ItemSummaryRecord
+  -> Result ValidationErr ItemSummaryRecord
 validateDiscount itemId discountData initialItem = 
   let maybeValue = String.toFloat discountData.value
   in
     case maybeValue of
-      Nothing    -> Err <| InvalidItemData itemId "discount.value"
+      Nothing    ->
+        Err <| InvalidDiscount itemId discountData.value "value"
       Just value ->
         Ok { initialItem
            | discount =

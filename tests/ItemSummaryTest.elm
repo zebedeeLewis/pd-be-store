@@ -96,55 +96,57 @@ itemSummaryRecord =
 
 newItemSummary =
   describe "newItemSummary"
-    [ it ( "produces InvalidItemData on \"price\" field on NaN " ++
-           "price data")
+    [ it ( "produces NaNPrice when given price data that is not a " ++
+           "number.")
          <| \_ ->
-              Expect.equal
-                ( ItemSummary.newItemSummary
-                    { itemSummaryData | price = "$123.30" } )
-                ( Err
-                     <| ItemSummary.InvalidItemData
-                          itemSummaryData.id
-                          "price" )
+              let newPriceData = "$123.30"
+              in
+                Expect.equal
+                  ( ItemSummary.newItemSummary
+                      { itemSummaryData | price = newPriceData } )
+                  ( Err
+                       <| ItemSummary.NaNPrice
+                            itemSummaryData.id newPriceData )
 
-    , it ( "produces InvalidItemData on \"size\" field on invalid " ++
-           "size data")
+    , it ( "produces InvalidSize when given invalid size data")
          <| \_ ->
-              Expect.equal
-                ( ItemSummary.newItemSummary
-                    { itemSummaryData | size = "invalid size" } )
-                ( Err
-                     <| ItemSummary.InvalidItemData
-                          itemSummaryData.id
-                          "size" )
+              let newSizeData = "invalid size"
+              in
+                Expect.equal
+                  ( ItemSummary.newItemSummary
+                      { itemSummaryData | size = newSizeData } )
+                  ( Err
+                       <| ItemSummary.InvalidSize
+                            itemSummaryData.id newSizeData )
 
-    , it ( "produces InvalidItemData on \"availability\" field on " ++
-           "invalid availability data")
+    , it ( "produces InvalidAvailability when given invalid " ++
+           "availability data")
          <| \_ ->
-              Expect.equal
-                ( ItemSummary.newItemSummary
-                    { itemSummaryData | availability = "invalid" } )
-                ( Err
-                     <| ItemSummary.InvalidItemData
-                          itemSummaryData.id
-                          "availability" )
+              let newData = "invalid"
+              in
+                Expect.equal
+                  ( ItemSummary.newItemSummary
+                      { itemSummaryData | availability = newData } )
+                  ( Err
+                       <| ItemSummary.InvalidAvailability
+                            itemSummaryData.id newData )
 
-    , it ( "produces InvalidItemData on \"discount\" field on " ++
-           "invalid discount data")
+    , it ( "produces InvalidDiscount on \"value\" sub-field when " ++
+           "given an invalid discount value data")
          <| \_ ->
               let discount = itemSummaryData.discount
+                  newData = "invalid"
               in
                 Expect.equal
                   ( ItemSummary.newItemSummary
                       { itemSummaryData
                       | discount = { discount
-                                   | value = "invalid"
+                                   | value = newData
                                    }
                       } )
                   ( Err
-                       <| ItemSummary.InvalidItemData
-                            itemSummaryData.id
-                            "discount.value" )
+                       <| ItemSummary.InvalidDiscount
+                            itemSummaryData.id newData "value" )
 
     , it ( "produces a new ItemSummary when given a valid " ++
            "ItemSummaryDataRecord")
