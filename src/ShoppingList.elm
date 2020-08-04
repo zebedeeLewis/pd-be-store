@@ -46,8 +46,31 @@ empty = ShoppingList []
 id removed.
 TODO!!!
 -}
-remove : String -> ShoppingList -> ShoppingList
-remove itemId list = list
+remove : String -> Float -> ShoppingList -> ShoppingList
+remove itemId itemPrice list =
+  let
+    remove_ itemId_ (ShoppingList entries) =
+      ShoppingList
+        <| List.filter
+             (\(Entry qty price id) -> not (id == itemId_))
+             entries
+
+    dec itemId_ itemPrice_ (ShoppingList entries) =
+      ShoppingList
+        <| List.map
+          (\(Entry qty price entryId) ->
+            if entryId == itemId_ 
+              then Entry (qty - 1) itemPrice_ itemId_
+              else Entry qty price entryId)
+          entries
+  in
+    case getMaybeEntry itemId list of
+      Nothing -> list
+      Just (Entry qty _ id) ->
+        if qty > 1
+          then dec itemId itemPrice list
+          else remove_ itemId list
+
 
 
 {-| produce a new ShoppingList with a new entry for the given item
