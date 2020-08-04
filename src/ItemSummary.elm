@@ -9,7 +9,7 @@ module ItemSummary exposing
   , Availability(..)
   , Measure(..)
 
-  , newItemSummary
+  , new
   , strToMaybeSize
   , strToMaybeGrad
   , strToMaybeAvailability
@@ -250,13 +250,14 @@ example:
 
   --                            item id  value  field
   discountErr = InvalidDiscount String   "so"   "value"
-  
+
 -}
 type ValidationErr
   = NaNPrice             String String
   | InvalidSize          String String
   | InvalidAvailability  String String
   | InvalidDiscount      String String String
+  | NullId
 
 
 type ItemDiscount = ItemDiscount ItemDiscountRecord
@@ -642,7 +643,7 @@ example:
                         }
     }
 
-  newItemSummary itemData ==
+  new itemData ==
     ItemSummary
       { name            = "chicken legs"
       , id              = "CHKCCS1233"
@@ -676,10 +677,10 @@ example:
                             }
       }
 -}
-newItemSummary
+new
   : ItemSummaryDataRecord
   -> Result ValidationErr ItemSummary
-newItemSummary itemData =
+new itemData =
   let
     setCatTags = (\(v, d)->
                    let categories = List.map CategoryTag d.categoryTags
@@ -722,7 +723,9 @@ newItemSummary itemData =
                             ))
 
     result =
-      validatePrice itemData.id itemData.price blankItemSummaryRecord
+      validateId itemData.id blankItemSummaryRecord
+        |> Result.andThen
+             (validatePrice itemData.id itemData.price)
         |> Result.andThen
              (validateSize itemData.id itemData.size)
         |> Result.andThen
@@ -746,6 +749,20 @@ newItemSummary itemData =
             << setVariant
                  <| (val, itemData)
         in Ok <| ItemSummary val_
+
+
+{-| ensure the id given to an item is not null (empty string).
+On failure produce NullId.
+TODO!!!
+-}
+validateId
+  : String
+  -> ItemSummaryRecord
+  -> Result ValidationErr ItemSummaryRecord
+validateId itemId initialItem =
+  if String.length itemId  <= 0
+    then Err <| NullId
+    else Ok { initialItem | id = itemId }
 
 
 {-| Take a string representation of a float and try to convert it

@@ -94,15 +94,15 @@ itemSummaryRecord =
 -- TESTS
 -----------------------------------------------------------------------
 
-newItemSummary =
-  describe "newItemSummary"
+new =
+  describe "new"
     [ it ( "produces NaNPrice when given price data that is not a " ++
            "number.")
          <| \_ ->
               let newPriceData = "$123.30"
               in
                 Expect.equal
-                  ( ItemSummary.newItemSummary
+                  ( ItemSummary.new
                       { itemSummaryData | price = newPriceData } )
                   ( Err
                        <| ItemSummary.NaNPrice
@@ -113,7 +113,7 @@ newItemSummary =
               let newSizeData = "invalid size"
               in
                 Expect.equal
-                  ( ItemSummary.newItemSummary
+                  ( ItemSummary.new
                       { itemSummaryData | size = newSizeData } )
                   ( Err
                        <| ItemSummary.InvalidSize
@@ -125,7 +125,7 @@ newItemSummary =
               let newData = "invalid"
               in
                 Expect.equal
-                  ( ItemSummary.newItemSummary
+                  ( ItemSummary.new
                       { itemSummaryData | availability = newData } )
                   ( Err
                        <| ItemSummary.InvalidAvailability
@@ -138,7 +138,7 @@ newItemSummary =
                   newData = "invalid"
               in
                 Expect.equal
-                  ( ItemSummary.newItemSummary
+                  ( ItemSummary.new
                       { itemSummaryData
                       | discount = { discount
                                    | value = newData
@@ -152,8 +152,18 @@ newItemSummary =
            "ItemSummaryDataRecord")
          <| \_ ->
               Expect.equal
-                ( ItemSummary.newItemSummary itemSummaryData )
+                ( ItemSummary.new itemSummaryData )
                 ( Ok <| ItemSummary.ItemSummary itemSummaryRecord )
+
+    , it ( "produces NullId when given id data that is and empty " ++
+           "string.")
+         <| \_ ->
+              let newData = "invalid"
+              in
+                Expect.equal
+                  ( ItemSummary.new
+                      { itemSummaryData | id = "" } )
+                  ( Err ItemSummary.NullId  )
     ]
 
 
