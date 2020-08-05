@@ -5,7 +5,7 @@ module Item exposing
 -- Production Exports: uncomment these out for production.
 -- ( Item
 -- , BriefR
--- , ItemDiscountDataRecord
+-- , DiscountDataR
 -- , ItemSet
 -- , CategorizedItemSet
 -- , ValidationErr
@@ -88,7 +88,7 @@ examples:
                             }
                         ]
     , availability    = IN_STOCK
-    , discount        = Just <| ItemDiscount
+    , discount        = Just <| Discount
                           { discount_code = "UXDS9y3"
                           , name          = "seafood giveaway"
                           , value         = 15.0
@@ -152,7 +152,7 @@ example:
                             }
                         ]
     , availability    = IN_STOCK
-    , discount        = Just <| ItemDiscount
+    , discount        = Just <| Discount
                           { discount_code = "UXDS9y3"
                           , name          = "seafood giveaway"
                           , value         = 15.0
@@ -173,7 +173,7 @@ type alias BriefR =
   , subCategoryTags : List Tag
   , searchTags      : List Tag
   , availability    : Availability
-  , discount        : Maybe ItemDiscount
+  , discount        : Maybe Discount
   }
 
 
@@ -228,7 +228,7 @@ type alias BriefDataR =
   , subCategoryTags : List { id : String, name : String }
   , searchTags      : List { id : String, name : String }
   , availability    : String
-  , discount        : ItemDiscountDataRecord
+  , discount        : DiscountDataR
   }
 
 
@@ -259,15 +259,15 @@ type ValidationErr
   | NullId
 
 
-type ItemDiscount = ItemDiscount ItemDiscountRecord
+type Discount = Discount DiscountR
 
 
 {-| Represents the information necessary to build a new
-ItemDiscountRecord. All fields hold simple string data or "subrecords".
+Discount. All fields hold simple string data or "subrecords".
 
-All fields match one to one with the fields in ItemDiscountRecord.
+All fields match one to one with the fields in DiscountR.
 -}
-type alias ItemDiscountDataRecord =
+type alias DiscountDataR =
   { discount_code    : String
   , name             : String
   , value            : String
@@ -285,7 +285,7 @@ item.
 
 example:
 
-itemDiscount : ItemDiscount
+itemDiscount : Discount
 itemDiscount =
   { discount_code = "UXDS9y3"
   , name          = "seafood giveaway"
@@ -293,7 +293,7 @@ itemDiscount =
   , iems          = ["CHKCCS1233"]
   }
 -}
-type alias ItemDiscountRecord =
+type alias DiscountR =
   { discount_code    : String
   , name             : String
   , value            : Float
@@ -426,7 +426,7 @@ type UserDiscount = UserDiscount UserDiscountRecord
 {-| Represents a discount that the user has the option to apply. Once
 applied the discount will take effect on a select set of items.
 
-Has the exact set of fields as ItemDiscount along with the following
+Has the exact set of fields as Discount along with the following
 additional field:
 
 **expirationTime:** the current time passes this expiration time, then
@@ -592,21 +592,21 @@ getTagRecord tag =
     SearchTag tag_ -> tag_
 
 
-{-| produce a new ItemDiscount from the given tuple
+{-| produce a new Discount from the given tuple
 
 example:
 
   discount = 
-    ewItemDiscount "UXDS9y3" "seafood giveaway" 15.0 ["CHKCCS1233"]
+    ewDiscount "UXDS9y3" "seafood giveaway" 15.0 ["CHKCCS1233"]
 -}
-newItemDiscount
+newDiscount
   : String
   -> String
   -> Float
   -> List String
-  -> ItemDiscount
-newItemDiscount  code name value items =
-  ItemDiscount { discount_code = code
+  -> Discount
+newDiscount  code name value items =
+  Discount { discount_code = code
                , name          = name
                , value         = value
                , items         = items
@@ -677,7 +677,7 @@ example:
                                       }
                           ]
       , availability    = IN_STOCK
-      , discount        = ItemDiscount
+      , discount        = Discount
                             { discount_code = "UXDS9y3"
                             , name          = "seafood giveaway"
                             , value         = "15"
@@ -841,7 +841,7 @@ validateAvailability itemId strAvailability initialItem =
       Ok { initialItem | availability = availability }
 
 
-{-| Take a simple representation of an ItemDiscount (i.e. all fields
+{-| Take a simple representation of an Discount (i.e. all fields
 are string values), and try to convert it to an actual ItemData value.
 On success, produce the given BriefR with the "discount"
 field set to the results of the convertion. On failure produce an
@@ -849,7 +849,7 @@ ValidationErr.
 -}
 validateDiscount
   : String
-  -> ItemDiscountDataRecord
+  -> DiscountDataR
   -> BriefR
   -> Result ValidationErr BriefR
 validateDiscount itemId discountData initialItem = 
@@ -861,7 +861,7 @@ validateDiscount itemId discountData initialItem =
       Just value ->
         Ok { initialItem
            | discount =
-               Just <| newItemDiscount discountData.discount_code
+               Just <| newDiscount discountData.discount_code
                                        discountData.name
                                        value
                                        discountData.items

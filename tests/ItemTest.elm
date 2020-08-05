@@ -90,7 +90,7 @@ itemSummaryRecord =
                               }
                           ]
       , availability    = Item.IN_STOCK
-      , discount        = Just <| Item.ItemDiscount
+      , discount        = Just <| Item.Discount
                             { discount_code = "UXDS9y3"
                             , name          = "seafood giveaway"
                             , value         = 15.0
