@@ -3,8 +3,8 @@ module ItemTest exposing (..)
 {-| To enable tests:
 
 1. uncomment all the commented out lines below
-2. comment out all the "Production Exports" in the ItemSummary module
-3. uncomment the "Test Exports" in the ItemSummary module
+2. comment out all the "Production Exports" in the Item module
+3. uncomment the "Test Exports" in the Item module
 -}
 
 import Expect exposing (Expectation)
@@ -169,7 +169,7 @@ new =
                        <| Item.InvalidDiscount
                             itemSummaryData.id newData "value" )
 
-    , it ( "produces a new ItemSummary when given a valid " ++
+    , it ( "produces a new Item when given a valid " ++
            "ItemSummaryDataRecord")
          <| \_ ->
               Expect.equal

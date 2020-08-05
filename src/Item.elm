@@ -3,7 +3,7 @@ module Item exposing
   (..)
 
 -- Production Exports: uncomment these out for production.
--- ( ItemSummary
+-- ( Item
 -- , ItemSummaryDataRecord
 -- , ItemDiscountDataRecord
 -- , ItemSet
@@ -58,7 +58,7 @@ used to display a short summary of the item to the user.
 
 examples:
 
-  record : ItemSummary.ItemSummaryRecord
+  record : Item.ItemSummaryRecord
   record =
     { name            = "chicken legs"
     , id              = "CHKCCS1233"
@@ -99,7 +99,7 @@ examples:
   itemSummary : ItemSummaryRecord
   itemSummary = ItemSummary record
 -}
-type ItemSummary 
+type Item
   = ItemSummary ItemSummaryRecord
 
 
@@ -122,7 +122,7 @@ searching for this item.
 
 example:
 
-  record : ItemSummary.ItemSummaryRecord
+  record : Item.ItemSummaryRecord
   record =
     { name            = "chicken legs"
     , id              = "CHKCCS1233"
@@ -301,15 +301,15 @@ type alias ItemDiscountRecord =
   }
 
 
-{-| Represents a collection of ItemSummary -}
-type ItemSet = ItemSet (List ItemSummary)
+{-| Represents a collection of Item -}
+type ItemSet = ItemSet (List Item)
 
 
-{-| Represents a collection of ItemSummary that share the given
+{-| Represents a collection of Item that share the given
 tag.
 -}
 type CategorizedItemSet =
-  CategorizedItemSet Tag (List ItemSummary)
+  CategorizedItemSet Tag (List Item)
 
 
 {-| represents the availability of inventory items of a given type.
@@ -613,7 +613,7 @@ newItemDiscount  code name value items =
                }
 
 
-{-| Validate the given input data and produce a new ItemSummary
+{-| Validate the given input data and produce a new Item
 from the given data record or ValidationErr if any of the data
 is invalid.
 
@@ -687,7 +687,7 @@ example:
 -}
 new
   : ItemSummaryDataRecord
-  -> Result ValidationErr ItemSummary
+  -> Result ValidationErr Item
 new itemData =
   let
     setCatTags = (\(v, d)->
