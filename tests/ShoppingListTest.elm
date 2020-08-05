@@ -78,14 +78,14 @@ removeItem =
     ]
 
 
-subTotal =
-  describe "subTotal"
-    [ it ("produces the sub-total of the price of all items in the " ++
+total =
+  describe "total"
+    [ it ("produces the total or sub-total of all items in the " ++
           "list.")
       ( \_->
          (8, 25) |>
          Expect.equal
-           ( ShoppingList.subTotal 
+           ( ShoppingList.total 
                (\id ->
                  case id of
                    "CHKCCS1233" -> (2, 50)

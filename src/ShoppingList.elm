@@ -30,10 +30,11 @@ examples:
 type Entry = Entry Int String
 
 
-{-| represents the interface to a function used to produce the subtotal
-of the item identified by the given id
+{-| represents the interface to a function used to produce the total
+or subtotal of the item identified by the given id. This function is
+used in the calculation of the total/sub-total price of a shopping cart.
 -}
-type alias ItemSubtotalFn = String -> (Int, Int)
+type alias ItemTotalFn = String -> (Int, Int)
 
 
 
@@ -47,10 +48,10 @@ empty : ShoppingList
 empty = ShoppingList []
 
 
-{-| poduce the subtotal on the given shopping list.
+{-| poduce the total on the given shopping list.
 -}
-subTotal : ItemSubtotalFn -> ShoppingList-> (Int, Int)
-subTotal fn (ShoppingList entries) =
+total : ItemTotalFn -> ShoppingList-> (Int, Int)
+total fn (ShoppingList entries) =
   List.foldl
     (\entry acc ->
       let (Entry qty id) = entry
