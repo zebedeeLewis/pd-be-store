@@ -174,7 +174,7 @@ new =
          <| \_ ->
               Expect.equal
                 ( Item.new itemSummaryData )
-                ( Ok <| Item.ItemSummary itemSummaryRecord )
+                ( Ok <| Item.Brief itemSummaryRecord )
 
     , it ( "produces NullId when given id data that is and empty " ++
            "string.")

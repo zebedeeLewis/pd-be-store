@@ -97,10 +97,10 @@ examples:
     }
 
   itemSummary : ItemSummaryRecord
-  itemSummary = ItemSummary record
+  itemSummary = Brief record
 -}
 type Item
-  = ItemSummary ItemSummaryRecord
+  = Brief ItemSummaryRecord
 
 
 {-| represents a summary descriptions of a single type of inventory
@@ -652,7 +652,7 @@ example:
     }
 
   new itemData ==
-    ItemSummary
+    Brief
       { name            = "chicken legs"
       , id              = "CHKCCS1233"
       , imageThumbnail  = "https://www.example.com/chicken.jpg"
@@ -751,7 +751,7 @@ new itemData =
             << setBrand
             << setVariant
                  <| (val, itemData)
-        in Ok <| ItemSummary val_
+        in Ok <| Brief val_
 
 
 {-| ensure the id given to an item is not null (empty string).
