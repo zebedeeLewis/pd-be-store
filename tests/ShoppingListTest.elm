@@ -26,7 +26,6 @@ emptyList = ShoppingList.empty
 itemId = "CHKCCS1233"
 item2Id = "CHKCCS4563"
 
-itemPrice = 55.99
 
 
 -----------------------------------------------------------------------
@@ -38,31 +37,19 @@ addItem =
     [ it "creates new entry if item is not found in the shopping list."
       <| \_->
            Expect.equal
-             (ShoppingList.add itemId itemPrice emptyList)
+             (ShoppingList.add itemId emptyList)
              (ShoppingList.ShoppingList 
-               [ShoppingList.Entry 1 itemPrice itemId])
+               [ShoppingList.Entry 1 itemId])
 
     , it ("increments the quantity of the entry for each " ++
           "subsequent entry of the same item.")
       <| \_->
            Expect.equal
-             (ShoppingList.add itemId itemPrice
-             << ShoppingList.add itemId itemPrice
-             << ShoppingList.add itemId itemPrice <| emptyList)
+             (ShoppingList.add itemId
+             << ShoppingList.add itemId
+             << ShoppingList.add itemId <| emptyList)
              (ShoppingList.ShoppingList 
-               [ShoppingList.Entry 3 itemPrice itemId])
-
-    , it "updates the price of the entry to that of the new item."
-      <| \_->
-           let finalPrice = 2.50
-           in
-             Expect.equal
-               (ShoppingList.add itemId finalPrice <|
-                 ShoppingList.ShoppingList 
-                   [ShoppingList.Entry 1 itemPrice itemId])
-
-               (ShoppingList.ShoppingList 
-                 [ShoppingList.Entry 2 finalPrice itemId])
+               [ShoppingList.Entry 3 itemId])
     ]
 
 
@@ -74,9 +61,8 @@ removeItem =
         Expect.equal
           (ShoppingList.remove
              itemId 
-             itemPrice
              <| ShoppingList.ShoppingList 
-                  [ShoppingList.Entry 1 itemPrice itemId])
+                  [ShoppingList.Entry 1 itemId])
           (ShoppingList.ShoppingList [])
       )
 
@@ -86,11 +72,8 @@ removeItem =
         Expect.equal
           (ShoppingList.remove
              itemId 
-             itemPrice
-             <| ShoppingList.ShoppingList 
-                  [ShoppingList.Entry 5 itemPrice itemId])
-          (ShoppingList.ShoppingList 
-            [ShoppingList.Entry 4 itemPrice itemId])
+             <| ShoppingList.ShoppingList [ShoppingList.Entry 5 itemId])
+          (ShoppingList.ShoppingList [ShoppingList.Entry 4 itemId])
       )
     ]
 
@@ -109,8 +92,8 @@ subTotal =
                    _            -> (3, 25)
                )
                ( ShoppingList.ShoppingList
-                   [ ShoppingList.Entry 1 3.25 "CHKCCS4563"
-                   , ShoppingList.Entry 2 2.50 "CHKCCS1233"
+                   [ ShoppingList.Entry 1 "CHKCCS4563"
+                   , ShoppingList.Entry 2 "CHKCCS1233"
                    ]
                )
            )

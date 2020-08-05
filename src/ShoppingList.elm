@@ -18,17 +18,16 @@ type ShoppingList = ShoppingList (List Entry)
 
 {-| Represents a single entry in a user shopping list. contains a
 reference to an ItemSummary as well as the quantity of that item in
-the list and the final unit price. The final unit price is the price
-of the item minus itemdiscount if any exists.
+the list.
 
 examples:
   
   Import ItemSummary
 
-  --            QTY   final price  Item Id
-  entry = Entry 5     5.50         "IDI73M"
+  --            QTY  Item Id
+  entry = Entry 5    "IDI73M"
 -}
-type Entry = Entry Int Float String
+type Entry = Entry Int String
 
 
 {-| represents the interface to a function used to produce the subtotal
@@ -54,7 +53,7 @@ subTotal : ItemSubtotalFn -> ShoppingList-> (Int, Int)
 subTotal fn (ShoppingList entries) =
   List.foldl
     (\entry acc ->
-      let (Entry qty _ id) = entry
+      let (Entry qty id) = entry
           itemSubtotal = fn id
           addFn (d1, c1) (d2, c2) = 
             let cents = (c1 + c2) |> modBy 100
@@ -74,54 +73,54 @@ subTotal fn (ShoppingList entries) =
 if the quantity is 1. If the quantity is greater than 1, then decrement
 the quantity by 1.
 -}
-remove : String -> Float -> ShoppingList -> ShoppingList
-remove itemId itemPrice list =
+remove : String -> ShoppingList -> ShoppingList
+remove itemId list =
   let
     remove_ itemId_ (ShoppingList entries) =
       ShoppingList
         <| List.filter
-             (\(Entry qty price id) -> not (id == itemId_))
+             (\(Entry qty id) -> not (id == itemId_))
              entries
 
-    dec itemId_ itemPrice_ (ShoppingList entries) =
+    dec itemId_ (ShoppingList entries) =
       ShoppingList
         <| List.map
-          (\(Entry qty price entryId) ->
+          (\(Entry qty entryId) ->
             if entryId == itemId_ 
-              then Entry (qty - 1) itemPrice_ itemId_
-              else Entry qty price entryId)
+              then Entry (qty - 1) itemId_
+              else Entry qty entryId)
           entries
   in
     case getMaybeEntry itemId list of
       Nothing -> list
-      Just (Entry qty _ id) ->
+      Just (Entry qty id) ->
         if qty > 1
-          then dec itemId itemPrice list
+          then dec itemId list
           else remove_ itemId list
 
 
 {-| produce a new ShoppingList with a new entry for the given item
 -}
-add : String -> Float -> ShoppingList -> ShoppingList
-add itemId itemPrice list =
+add : String -> ShoppingList -> ShoppingList
+add itemId list =
   let
-    add_ itemId_ itemPrice_ (ShoppingList entries) =
-      ShoppingList <| (singletonEntry itemId_ itemPrice_)::entries
+    add_ itemId_ (ShoppingList entries) =
+      ShoppingList <| (singletonEntry itemId_)::entries
 
-    inc itemId_ itemPrice_ (ShoppingList entries) =
+    inc itemId_ (ShoppingList entries) =
       ShoppingList
         <| List.map
-          (\(Entry qty price entryId) ->
+          (\(Entry qty entryId) ->
             if entryId == itemId_ 
-              then Entry (qty + 1) itemPrice_ itemId_
-              else Entry qty price entryId)
+              then Entry (qty + 1) itemId_
+              else Entry qty entryId)
           entries
   in
     case getMaybeEntry itemId list of
       Nothing ->
-        add_ itemId itemPrice list
-      Just (Entry _ _ id) ->
-        inc itemId itemPrice list
+        add_ itemId list
+      Just _ ->
+        inc itemId list
 
 
 {-| produce the entry in the list with the given id or
@@ -134,7 +133,7 @@ getMaybeEntry itemId (ShoppingList entries) =
       case List.head entries_ of
         Nothing -> Nothing
         Just entry -> 
-          let (Entry _ _ entryId) = entry
+          let (Entry _ entryId) = entry
           in
             if entryId == itemId
               then Just entry
@@ -144,7 +143,7 @@ getMaybeEntry itemId (ShoppingList entries) =
 
 {-| produce a new shopping list entry representing one item.
 -}
-singletonEntry : String -> Float -> Entry
-singletonEntry itemId price = Entry 1 price itemId
+singletonEntry : String -> Entry
+singletonEntry itemId = Entry 1 itemId
 
 
