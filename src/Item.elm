@@ -492,95 +492,91 @@ filterBy
   -> List BriefR
   -> List BriefR
 filterBy department items =
-  -- List.filter (\item -> 
-  --   List.member department item.departmentTags
-  -- )
   items
 
 
 {-|
   produce the string representation of an Size
 -}
-itemSizeToString : BriefR -> String
-itemSizeToString item =
-  sizeToString item.size
+sizeToString : BriefR -> String
+sizeToString item =
+  let
+    sizeToString_ : Size -> String
+    sizeToString_ size =
+      case size of
+        LG -> "LG"
+        XL -> "XL"
+        SM -> "SM"
+        XS -> "XS"
+        M  -> "M"
+        Grad value measure ->
+          case measure of
+            ML  ->
+              let
+                val =
+                  if value > gallon
+                    then value/gallon
+                  else if value > litre
+                    then value/litre
+                  else value
 
+                rdMeasure =
+                  if value > gallon
+                    then "gal"
+                  else if value > litre
+                    then "L"
+                  else "mL"
+              in
+                (String.fromFloat val) ++ rdMeasure 
 
-sizeToString : Size -> String
-sizeToString size =
-  case size of
-    LG -> "LG"
-    XL -> "XL"
-    SM -> "SM"
-    XS -> "XS"
-    M  -> "M"
-    Grad value measure ->
-      case measure of
-        ML  ->
-          let
-            val =
-              if value > gallon
-                then value/gallon
-              else if value > litre
-                then value/litre
-              else value
+            CC ->
+              let
+                val =
+                  if value > cubicMetre
+                    then value/cubicMetre
+                    else value
 
-            rdMeasure =
-              if value > gallon
-                then "gal"
-              else if value > litre
-                then "L"
-              else "mL"
-          in
-            (String.fromFloat val) ++ rdMeasure 
+                rdMeasure =
+                  if val > cubicMetre
+                    then "cc"
+                    else "m cube"
+              in
+                (String.fromFloat val) ++ rdMeasure
 
-        CC ->
-          let
-            val =
-              if value > cubicMetre
-                then value/cubicMetre
-                else value
+            MG ->
+              let
+                val =
+                  if value > kilogram
+                    then value/kilogram
+                  else if value > gram
+                    then value/gram
+                  else value
 
-            rdMeasure =
-              if val > cubicMetre
-                then "cc"
-                else "m cube"
-          in
-            (String.fromFloat val) ++ rdMeasure
-
-        MG ->
-          let
-            val =
-              if value > kilogram
-                then value/kilogram
-              else if value > gram
-                then value/gram
-              else value
-
-            rdMeasure =
-              if value > kilogram
-                then "kg"
-              else if value > gram
-                then "g"
-              else "mg"
-          in
-            (String.fromFloat val) ++ rdMeasure
-        MM ->
-          let
-            val =
-              if value > metre
-                then value/metre
-              else if value > centimetre
-                then value/centimetre
-              else value
-            rdMeasure =
-              if value > metre
-                then "m"
-              else if value > centimetre
-                then "cm"
-              else "mm"
-          in
-            (String.fromFloat val) ++ rdMeasure
+                rdMeasure =
+                  if value > kilogram
+                    then "kg"
+                  else if value > gram
+                    then "g"
+                  else "mg"
+              in
+                (String.fromFloat val) ++ rdMeasure
+            MM ->
+              let
+                val =
+                  if value > metre
+                    then value/metre
+                  else if value > centimetre
+                    then value/centimetre
+                  else value
+                rdMeasure =
+                  if value > metre
+                    then "m"
+                  else if value > centimetre
+                    then "cm"
+                  else "mm"
+              in
+                (String.fromFloat val) ++ rdMeasure
+  in sizeToString_ item.size
 
 
 getTagR : Tag -> TagR
