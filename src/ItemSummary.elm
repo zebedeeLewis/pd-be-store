@@ -1,19 +1,5 @@
 module ItemSummary exposing
-  ( ItemSummary(..)
-  , ItemSummaryRecord
-  , ValidationErr(..)
-  , Tag(..)
-  , ItemSummaryDataRecord
-  , ItemDiscount(..)
-  , Size(..)
-  , Availability(..)
-  , Measure(..)
-
-  , new
-  , strToMaybeSize
-  , strToMaybeGrad
-  , strToMaybeAvailability
-  )
+  (..)
 
 
 import Time
@@ -39,7 +25,7 @@ blankItemSummaryRecord =
   , imageThumbnail  = ""
   , brand           = ""
   , variant         = ""
-  , price           = 0.0
+  , price           = Price 0 0
   , size            = LG
   , departmentTags  = []
   , categoryTags    = []
@@ -67,7 +53,7 @@ examples:
     , imageThumbnail  = "https://www.example.com/chicken.jpg"
     , brand           = "caribbean chicken"
     , variant         = "bag"
-    , price           = 15.93
+    , price           = Price 15 93
     , size            = Grad 1000.5 MG
     , departmentTags  = [ DepartmentTag
                             { id = "UID789"
@@ -168,7 +154,7 @@ type alias ItemSummaryRecord =
   , imageThumbnail  : String
   , brand           : String
   , variant         : String
-  , price           : Float
+  , price           : Price
   , size            : Size
   , departmentTags  : List Tag
   , categoryTags    : List Tag
@@ -254,6 +240,7 @@ example:
 -}
 type ValidationErr
   = NaNPrice             String String
+  | NegativePrice        String String
   | InvalidSize          String String
   | InvalidAvailability  String String
   | InvalidDiscount      String String String
@@ -394,10 +381,9 @@ type Tag
   | SearchTag TagRecord
 
 
-{-|
-  represents a single tag used to categorize a group of items.
+{-| represents a single tag used to categorize a group of items.
 
-  examples: 
+examples: 
 
   tag1 : Entity.TagRecord
   tag1 =
@@ -409,6 +395,16 @@ type alias TagRecord =
   { id    : String
   , name  : String
   }
+
+
+{-| represents a price.
+
+example
+
+  --    dollars  cents
+  Price 35       99
+-}
+type Price = Price Int Int
 
 
 {- TODO: This should be moved to a module dedicated to Users.  -}
@@ -703,10 +699,6 @@ new itemData =
                 let name = d.name
                 in ({ v | name = name }, d))
 
-    setId = (\(v, d) ->
-              let id = d.id
-              in ({ v | id = id }, d))
-
     setBrand = (\(v, d) ->
                  let brand = d.brand
                  in ({ v | brand = brand }, d))
@@ -743,7 +735,6 @@ new itemData =
             << setSubCatTags
             << setSearchTags
             << setName
-            << setId
             << setImageThumbnail
             << setBrand
             << setVariant
@@ -778,7 +769,21 @@ validatePrice
 validatePrice itemId strPrice initialItem = 
   case String.toFloat strPrice of
     Nothing -> Err <| NaNPrice itemId strPrice
-    Just price -> Ok { initialItem | price = price }
+    Just fPrice ->
+      if fPrice < 0
+        then Err <| NegativePrice itemId strPrice
+      else
+        let price = floatToPrice fPrice
+        in Ok { initialItem | price = price }
+
+
+{-| produce a new price from the given float.
+-}
+floatToPrice : Float -> Price
+floatToPrice fPrice =
+  let dollars = floor fPrice
+      cents = round (100*(fPrice - (toFloat dollars)))
+  in Price dollars cents 
 
 
 {-| Take a string representation of a size and convert it to an actual

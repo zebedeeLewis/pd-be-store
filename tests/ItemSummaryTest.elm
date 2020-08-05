@@ -58,7 +58,7 @@ itemSummaryRecord =
       , imageThumbnail  = "https://www.example.com/chicken.jpg"
       , brand           = "caribbean chicken"
       , variant         = "bag"
-      , price           = 15.93
+      , price           = ItemSummary.Price 15 93
       , size            = ItemSummary.Grad 1000.5 ItemSummary.MG
       , departmentTags  = [ ItemSummary.DepartmentTag
                               { id = "UID789"
@@ -106,6 +106,18 @@ new =
                       { itemSummaryData | price = newPriceData } )
                   ( Err
                        <| ItemSummary.NaNPrice
+                            itemSummaryData.id newPriceData )
+
+    , it ( "produces NegativePrice when given price data that is " ++
+           "less thant 0.")
+         <| \_ ->
+              let newPriceData = "-123.30"
+              in
+                Expect.equal
+                  ( ItemSummary.new
+                      { itemSummaryData | price = newPriceData } )
+                  ( Err
+                       <| ItemSummary.NegativePrice
                             itemSummaryData.id newPriceData )
 
     , it ( "produces InvalidSize when given invalid size data")
@@ -353,3 +365,5 @@ strToMaybeAvailability =
                ]
                (Just ItemSummary.ORDER_ONLY)
     ]
+
+
