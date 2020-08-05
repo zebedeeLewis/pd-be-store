@@ -1,4 +1,21 @@
-module ShoppingList exposing (..)
+module ShoppingList exposing
+ -- Test Exports, uncomment the exposing block below for
+ -- testing.
+ -- 
+ -- (..)
+
+ -- Production Exports, uncomment the exposing block below for
+ -- production and comment out the "Test Exports" above.
+ ( ShoppingList
+ , ItemTotalFn
+ , Entry
+ , total
+ , remove
+ , add
+ , empty
+ , getMaybeEntry
+ )
+
 
 
 -----------------------------------------------------------------------
