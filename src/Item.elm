@@ -1,18 +1,18 @@
-module ItemSummary exposing
+module Item exposing
 -- Test Exports: uncomment the export block below when testing.
---   (..)
+  (..)
 
 -- Production Exports: uncomment these out for production.
-  ( ItemSummary
-  , ItemSummaryDataRecord
-  , ItemDiscountDataRecord
-  , ItemSet
-  , CategorizedItemSet
-  , ValidationErr
-  , new
-  , priceToPair
-  , floatToPrice
-  )
+-- ( ItemSummary
+-- , ItemSummaryDataRecord
+-- , ItemDiscountDataRecord
+-- , ItemSet
+-- , CategorizedItemSet
+-- , ValidationErr
+-- , new
+-- , priceToPair
+-- , floatToPrice
+-- )
 
 
 import Time
