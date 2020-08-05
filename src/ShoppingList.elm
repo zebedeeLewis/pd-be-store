@@ -31,6 +31,12 @@ examples:
 type Entry = Entry Int Float String
 
 
+{-| represents the interface to a function used to produce the subtotal
+of the item identified by the given id
+-}
+type alias ItemSubtotalFn = String -> (Int, Int)
+
+
 
 -----------------------------------------------------------------------
 -- FUNCTION DEFINITIONS
@@ -42,9 +48,31 @@ empty : ShoppingList
 empty = ShoppingList []
 
 
-{-| produce a new ShoppingList with the entry identified by the given
-id removed.
-TODO!!!
+{-| poduce the subtotal on the given shopping list.
+-}
+subTotal : ItemSubtotalFn -> ShoppingList-> (Int, Int)
+subTotal fn (ShoppingList entries) =
+  List.foldl
+    (\entry acc ->
+      let (Entry qty _ id) = entry
+          itemSubtotal = fn id
+          addFn (d1, c1) (d2, c2) = 
+            let cents = (c1 + c2) |> modBy 100
+                dollars = (d1 + d2) + ((c1 + c2)//100)
+            in (dollars, cents)
+
+          multFn multiplier (d, c) =
+            let cents = (multiplier * c) |> modBy 100
+                dollars = (multiplier * d) + ((multiplier * c)//100)
+            in (dollars, cents)
+
+      in addFn acc (multFn qty itemSubtotal)
+    ) (0, 0) entries
+
+
+{-| remove the entry identified by the given id from the ShoppingList
+if the quantity is 1. If the quantity is greater than 1, then decrement
+the quantity by 1.
 -}
 remove : String -> Float -> ShoppingList -> ShoppingList
 remove itemId itemPrice list =
@@ -72,10 +100,7 @@ remove itemId itemPrice list =
           else remove_ itemId list
 
 
-
 {-| produce a new ShoppingList with a new entry for the given item
-
-Assumptions: we assume that an item with the given id exists somewhere
 -}
 add : String -> Float -> ShoppingList -> ShoppingList
 add itemId itemPrice list =

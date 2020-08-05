@@ -24,6 +24,7 @@ it = test
 emptyList = ShoppingList.empty
 
 itemId = "CHKCCS1233"
+item2Id = "CHKCCS4563"
 
 itemPrice = 55.99
 
@@ -92,3 +93,27 @@ removeItem =
             [ShoppingList.Entry 4 itemPrice itemId])
       )
     ]
+
+
+subTotal =
+  describe "subTotal"
+    [ it ("produces the sub-total of the price of all items in the " ++
+          "list.")
+      ( \_->
+         (8, 25) |>
+         Expect.equal
+           ( ShoppingList.subTotal 
+               (\id ->
+                 case id of
+                   "CHKCCS1233" -> (2, 50)
+                   _            -> (3, 25)
+               )
+               ( ShoppingList.ShoppingList
+                   [ ShoppingList.Entry 1 3.25 "CHKCCS4563"
+                   , ShoppingList.Entry 2 2.50 "CHKCCS1233"
+                   ]
+               )
+           )
+      )
+    ]
+
