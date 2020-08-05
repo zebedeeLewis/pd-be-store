@@ -60,7 +60,7 @@ itemSummaryData =
                       }
   }
 
-itemSummaryRecord : Item.ItemSummaryRecord
+itemSummaryRecord : Item.BriefR
 itemSummaryRecord =
       { name            = "chicken legs"
       , id              = "CHKCCS1233"

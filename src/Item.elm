@@ -30,8 +30,8 @@ centimetre = 10        -- mm
 metre = 1000           -- mm
 
 
-blankItemSummaryRecord : ItemSummaryRecord
-blankItemSummaryRecord =
+blankBriefR : BriefR
+blankBriefR =
   { name            = ""
   , id              = ""
   , imageThumbnail  = ""
@@ -58,7 +58,7 @@ used to display a short summary of the item to the user.
 
 examples:
 
-  record : Item.ItemSummaryRecord
+  record : Item.BriefR
   record =
     { name            = "chicken legs"
     , id              = "CHKCCS1233"
@@ -96,11 +96,11 @@ examples:
                           }
     }
 
-  itemSummary : ItemSummaryRecord
+  itemSummary : BriefR
   itemSummary = Brief record
 -}
 type Item
-  = Brief ItemSummaryRecord
+  = Brief BriefR
 
 
 {-| represents a summary descriptions of a single type of inventory
@@ -122,7 +122,7 @@ searching for this item.
 
 example:
 
-  record : Item.ItemSummaryRecord
+  record : Item.BriefR
   record =
     { name            = "chicken legs"
     , id              = "CHKCCS1233"
@@ -160,7 +160,7 @@ example:
                           }
     }
 -}
-type alias ItemSummaryRecord =
+type alias BriefR =
   { name            : String
   , id              : String
   , imageThumbnail  : String
@@ -177,10 +177,10 @@ type alias ItemSummaryRecord =
   }
 
 
-{-| Represents the information necessary to build a new
-ItemSummaryRecord. All fields hold simple string data or "subrecords".
+{-| Represents the information necessary to build a new BriefR. All
+fields hold simple string data or "subrecords".
 
-All fields match one to one with the fields in ItemSummaryRecord.
+All fields match one to one with the fields in BriefR.
 
 example:
   data =
@@ -489,8 +489,8 @@ type alias UserDiscountRecord =
 -}
 filterByDepartment
   : TagRecord
-  -> List ItemSummaryRecord
-  -> List ItemSummaryRecord
+  -> List BriefR
+  -> List BriefR
 filterByDepartment department items =
   -- List.filter (\item -> 
   --   List.member department item.departmentTags
@@ -501,7 +501,7 @@ filterByDepartment department items =
 {-|
   produce the string representation of an Size
 -}
-itemSizeToString : ItemSummaryRecord -> String
+itemSizeToString : BriefR -> String
 itemSizeToString item =
   sizeToString item.size
 
@@ -727,7 +727,7 @@ new itemData =
                             ))
 
     result =
-      validateId itemData.id blankItemSummaryRecord
+      validateId itemData.id blankBriefR
         |> Result.andThen
              (validatePrice itemData.id itemData.price)
         |> Result.andThen
@@ -759,8 +759,8 @@ On failure produce NullId.
 -}
 validateId
   : String
-  -> ItemSummaryRecord
-  -> Result ValidationErr ItemSummaryRecord
+  -> BriefR
+  -> Result ValidationErr BriefR
 validateId itemId initialItem =
   if String.length itemId  <= 0
     then Err <| NullId
@@ -769,14 +769,14 @@ validateId itemId initialItem =
 
 {-| Take a string representation of a float and try to convert it
 to an actual float value. On success, produce the given
-ItemSummaryRecord with the "price" field set to the results of the
+BriefR with the "price" field set to the results of the
 convertion. On Failure produce an ValidationErr.
 -}
 validatePrice
   : String
   -> String
-  -> ItemSummaryRecord
-  -> Result ValidationErr ItemSummaryRecord
+  -> BriefR
+  -> Result ValidationErr BriefR
 validatePrice itemId strPrice initialItem = 
   case String.toFloat strPrice of
     Nothing -> Err <| NaNPrice itemId strPrice
@@ -809,15 +809,15 @@ priceToPair (Price dollars cents) = (dollars, cents)
 
 
 {-| Take a string representation of a size and convert it to an actual
-Size. On success, produce the given ItemSummaryRecord with the "size"
+Size. On success, produce the given BriefR with the "size"
 field set to the results of the convertion. On failure, produce an
 ValidatinErr.
 -}
 validateSize
   : String
   -> String
-  -> ItemSummaryRecord
-  -> Result ValidationErr ItemSummaryRecord
+  -> BriefR
+  -> Result ValidationErr BriefR
 validateSize itemId strSize initialItem =
   case strToMaybeSize strSize of
     Nothing -> Err <| InvalidSize itemId strSize
@@ -826,14 +826,14 @@ validateSize itemId strSize initialItem =
 
 {-| Take a string representation of an Availability and try to convert
 it to an actual Availability value. On success, produce the given
-ItemSummaryRecord with the "availability" field set to the results of
+BriefR with the "availability" field set to the results of
 the convertion. On failure produce an ValidationErr.
 -}
 validateAvailability
   : String
   -> String
-  -> ItemSummaryRecord
-  -> Result ValidationErr ItemSummaryRecord
+  -> BriefR
+  -> Result ValidationErr BriefR
 validateAvailability itemId strAvailability initialItem = 
   case strToMaybeAvailability strAvailability of
     Nothing -> Err <| InvalidAvailability itemId strAvailability
@@ -843,15 +843,15 @@ validateAvailability itemId strAvailability initialItem =
 
 {-| Take a simple representation of an ItemDiscount (i.e. all fields
 are string values), and try to convert it to an actual ItemData value.
-On success, produce the given ItemSummaryRecord with the "discount"
+On success, produce the given BriefR with the "discount"
 field set to the results of the convertion. On failure produce an
 ValidationErr.
 -}
 validateDiscount
   : String
   -> ItemDiscountDataRecord
-  -> ItemSummaryRecord
-  -> Result ValidationErr ItemSummaryRecord
+  -> BriefR
+  -> Result ValidationErr BriefR
 validateDiscount itemId discountData initialItem = 
   let maybeValue = String.toFloat discountData.value
   in
