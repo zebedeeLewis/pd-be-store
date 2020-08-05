@@ -60,8 +60,8 @@ itemSummaryData =
                       }
   }
 
-itemSummaryRecord : Item.BriefR
-itemSummaryRecord =
+itemSummaryR : Item.BriefR
+itemSummaryR =
       { name            = "chicken legs"
       , id              = "CHKCCS1233"
       , imageThumbnail  = "https://www.example.com/chicken.jpg"
@@ -174,7 +174,7 @@ new =
          <| \_ ->
               Expect.equal
                 ( Item.new itemSummaryData )
-                ( Ok <| Item.Brief itemSummaryRecord )
+                ( Ok <| Item.Brief itemSummaryR )
 
     , it ( "produces NullId when given id data that is and empty " ++
            "string.")

@@ -387,23 +387,23 @@ type Size
 
 
 type Tag
-  = DepartmentTag TagRecord
-  | CategoryTag TagRecord
-  | SubCategoryTag TagRecord
-  | SearchTag TagRecord
+  = DepartmentTag TagR
+  | CategoryTag TagR
+  | SubCategoryTag TagR
+  | SearchTag TagR
 
 
 {-| represents a single tag used to categorize a group of items.
 
 examples: 
 
-  tag1 : Entity.TagRecord
+  tag1 : Entity.TagR
   tag1 =
     { id   = "UID4123"
     , name = "foods"
     }
 -}
-type alias TagRecord =
+type alias TagR =
   { id    : String
   , name  : String
   }
@@ -420,7 +420,7 @@ type Price = Price Int Int
 
 
 {- TODO: This should be moved to a module dedicated to Users.  -}
-type UserDiscount = UserDiscount UserDiscountRecord
+type UserDiscount = UserDiscount UserDiscountR
 
 
 {-| Represents a discount that the user has the option to apply. Once
@@ -467,7 +467,7 @@ examples:
 
 TODO: This should be moved to a module dedicated to Users.
 -}
-type alias UserDiscountRecord =
+type alias UserDiscountR =
   { discount_code    : String
   , name             : String
   , value            : Float
@@ -487,11 +487,11 @@ type alias UserDiscountRecord =
   produce a list of all Entity with the given tagName.
   TODO!!!
 -}
-filterByDepartment
-  : TagRecord
+filterBy
+  : TagR
   -> List BriefR
   -> List BriefR
-filterByDepartment department items =
+filterBy department items =
   -- List.filter (\item -> 
   --   List.member department item.departmentTags
   -- )
@@ -583,8 +583,8 @@ sizeToString size =
             (String.fromFloat val) ++ rdMeasure
 
 
-getTagRecord : Tag -> TagRecord
-getTagRecord tag =
+getTagR : Tag -> TagR
+getTagR tag =
   case tag of
     DepartmentTag tag_ -> tag_
     CategoryTag tag_ -> tag_
