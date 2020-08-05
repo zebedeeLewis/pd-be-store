@@ -27,7 +27,7 @@ it = test
 
 -- enable = todo "Enable Item Tests"
 
-itemSummaryData : Item.ItemSummaryDataRecord
+itemSummaryData : Item.BriefDataR
 itemSummaryData =
   { name            = "chicken legs"
   , id              = "CHKCCS1233"
@@ -170,7 +170,7 @@ new =
                             itemSummaryData.id newData "value" )
 
     , it ( "produces a new Item when given a valid " ++
-           "ItemSummaryDataRecord")
+           "BriefDataR")
          <| \_ ->
               Expect.equal
                 ( Item.new itemSummaryData )

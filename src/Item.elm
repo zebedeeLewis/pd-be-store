@@ -4,7 +4,7 @@ module Item exposing
 
 -- Production Exports: uncomment these out for production.
 -- ( Item
--- , ItemSummaryDataRecord
+-- , BriefR
 -- , ItemDiscountDataRecord
 -- , ItemSet
 -- , CategorizedItemSet
@@ -215,7 +215,7 @@ example:
                         }
     }
 -}
-type alias ItemSummaryDataRecord =
+type alias BriefDataR =
   { name            : String
   , id              : String
   , imageThumbnail  : String
@@ -686,7 +686,7 @@ example:
       }
 -}
 new
-  : ItemSummaryDataRecord
+  : BriefDataR
   -> Result ValidationErr Item
 new itemData =
   let
