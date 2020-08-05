@@ -6,6 +6,8 @@ module ItemSummary exposing
   ( ItemSummary
   , ItemSummaryDataRecord
   , ItemDiscountDataRecord
+  , ItemSet
+  , CategorizedItemSet
   , ValidationErr
   , new
   , priceToPair
@@ -19,7 +21,6 @@ import Time
 -----------------------------------------------------------------------
 -- CONSTANT DEFINITIONS
 -----------------------------------------------------------------------
-
 litre = 1000           -- ml
 gallon = 4547          -- ml
 cubicMetre = 1000000   -- cubic cm
@@ -301,14 +302,14 @@ type alias ItemDiscountRecord =
 
 
 {-| Represents a collection of ItemSummary -}
-type ResultSet = ResultSet (List ItemSummary)
+type ItemSet = ItemSet (List ItemSummary)
 
 
 {-| Represents a collection of ItemSummary that share the given
 tag.
 -}
-type CategorizedResultSet =
-  CategorizedResultSet Tag (List ItemSummary)
+type CategorizedItemSet =
+  CategorizedItemSet Tag (List ItemSummary)
 
 
 {-| represents the availability of inventory items of a given type.
