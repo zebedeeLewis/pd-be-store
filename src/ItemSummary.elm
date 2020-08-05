@@ -744,7 +744,6 @@ new itemData =
 
 {-| ensure the id given to an item is not null (empty string).
 On failure produce NullId.
-TODO!!!
 -}
 validateId
   : String
@@ -784,6 +783,17 @@ floatToPrice fPrice =
   let dollars = floor fPrice
       cents = round (100*(fPrice - (toFloat dollars)))
   in Price dollars cents 
+
+
+{-| produce a new pair from the given price where the first element is the
+dollar component and the second element is the price.
+
+example:
+
+ priceToPair <| Price 8 99 == (8, 99)
+-}
+priceToPair : Price -> (Int, Int)
+priceToPair (Price dollars cents) = (dollars, cents)
 
 
 {-| Take a string representation of a size and convert it to an actual
