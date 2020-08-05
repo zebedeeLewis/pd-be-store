@@ -6,8 +6,8 @@ module Item exposing
 -- ( Item
 -- , BriefR
 -- , DiscountDataR
--- , ItemSet
--- , CategorizedItemSet
+-- , Set
+-- , CategorizedSet
 -- , ValidationErr
 -- , new
 -- , priceToPair
@@ -302,14 +302,14 @@ type alias DiscountR =
 
 
 {-| Represents a collection of Item -}
-type ItemSet = ItemSet (List Item)
+type Set = Set (List Item)
 
 
 {-| Represents a collection of Item that share the given
 tag.
 -}
-type CategorizedItemSet =
-  CategorizedItemSet Tag (List Item)
+type CategorizedSet =
+  CategorizedSet Tag (List Item)
 
 
 {-| represents the availability of inventory items of a given type.
