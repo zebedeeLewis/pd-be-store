@@ -12,6 +12,7 @@ module Item exposing
 -- , new
 -- , priceToPair
 -- , floatToPrice
+-- , toData
 -- )
 
 
@@ -46,6 +47,10 @@ blankBriefR =
   , availability    = OUT_STOCK
   , discount        = Nothing
   }
+
+
+blankBrief : Item
+blankBrief = Brief blankBriefR
 
 
 
@@ -498,85 +503,81 @@ filterBy department items =
 {-|
   produce the string representation of an Size
 -}
-sizeToString : BriefR -> String
-sizeToString item =
-  let
-    sizeToString_ : Size -> String
-    sizeToString_ size =
-      case size of
-        LG -> "LG"
-        XL -> "XL"
-        SM -> "SM"
-        XS -> "XS"
-        M  -> "M"
-        Grad value measure ->
-          case measure of
-            ML  ->
-              let
-                val =
-                  if value > gallon
-                    then value/gallon
-                  else if value > litre
-                    then value/litre
-                  else value
+sizeToString : Size -> String
+sizeToString size =
+  case size of
+    LG -> "LG"
+    XL -> "XL"
+    SM -> "SM"
+    XS -> "XS"
+    M  -> "M"
+    Grad value measure ->
+      case measure of
+        ML  ->
+          let
+            val =
+              if value > gallon
+                then value/gallon
+              else if value > litre
+                then value/litre
+              else value
 
-                rdMeasure =
-                  if value > gallon
-                    then "gal"
-                  else if value > litre
-                    then "L"
-                  else "mL"
-              in
-                (String.fromFloat val) ++ rdMeasure 
+            rdMeasure =
+              if value > gallon
+                then "gal"
+              else if value > litre
+                then "L"
+              else "mL"
+          in
+            (String.fromFloat val) ++ rdMeasure 
 
-            CC ->
-              let
-                val =
-                  if value > cubicMetre
-                    then value/cubicMetre
-                    else value
+        CC ->
+          let
+            val =
+              if value > cubicMetre
+                then value/cubicMetre
+                else value
 
-                rdMeasure =
-                  if val > cubicMetre
-                    then "cc"
-                    else "m cube"
-              in
-                (String.fromFloat val) ++ rdMeasure
+            rdMeasure =
+              if val > cubicMetre
+                then "cc"
+                else "m cube"
+          in
+            (String.fromFloat val) ++ rdMeasure
 
-            MG ->
-              let
-                val =
-                  if value > kilogram
-                    then value/kilogram
-                  else if value > gram
-                    then value/gram
-                  else value
+        MG ->
+          let
+            val =
+              if value > kilogram
+                then value/kilogram
+              else if value > gram
+                then value/gram
+              else value
 
-                rdMeasure =
-                  if value > kilogram
-                    then "kg"
-                  else if value > gram
-                    then "g"
-                  else "mg"
-              in
-                (String.fromFloat val) ++ rdMeasure
-            MM ->
-              let
-                val =
-                  if value > metre
-                    then value/metre
-                  else if value > centimetre
-                    then value/centimetre
-                  else value
-                rdMeasure =
-                  if value > metre
-                    then "m"
-                  else if value > centimetre
-                    then "cm"
-                  else "mm"
-              in
-                (String.fromFloat val) ++ rdMeasure
-  in sizeToString_ item.size
+            rdMeasure =
+              if value > kilogram
+                then "kg"
+              else if value > gram
+                then "g"
+              else "mg"
+          in
+            (String.fromFloat val) ++ rdMeasure
+        MM ->
+          let
+            val =
+              if value > metre
+                then value/metre
+              else if value > centimetre
+                then value/centimetre
+              else value
+            rdMeasure =
+              if value > metre
+                then "m"
+              else if value > centimetre
+                then "cm"
+              else "mm"
+          in
+            (String.fromFloat val) ++ rdMeasure
 
 
 getTagR : Tag -> TagR
@@ -748,6 +749,52 @@ new itemData =
             << setVariant
                  <| (val, itemData)
         in Ok <| Brief val_
+
+
+{-| produce a new BriefDataR from the given Item
+TODO!!!
+-}
+toData : Item -> BriefDataR
+toData item =
+  let (Brief record) = item
+  in
+    { name            = record.name
+    , id              = record.id
+    , imageThumbnail  = record.imageThumbnail
+    , brand           = record.brand
+    , variant         = record.variant
+    , price           = priceToString record.price
+    , size            = "1000.5 mg"
+    , departmentTags  = [ { id = "UID789"
+                          , name = "deptTag"
+                          }
+                        ]
+    , categoryTags    = [ { id = "UID456"
+                          , name = "catTag"
+                          }
+                        ]
+    , subCategoryTags = [ { id   = "UID4123"
+                          , name = "subCatTag"
+                          }
+                        ]
+    , searchTags      = [ { id   = "UID333"
+                          , name = "searchTag"
+                          }
+                        ]
+    , availability    = "in_stock"
+    , discount        = { discount_code = "UXDS9y3"
+                        , name          = "seafood giveaway"
+                        , value         = "15"
+                        , items          = ["CHKCCS1233"]
+                        }
+    }
+
+
+{-| produce the string representation of the given price
+TODO!!!
+-}
+priceToString : Price -> String
+priceToString price = "5.50"
 
 
 {-| ensure the id given to an item is not null (empty string).
