@@ -39,8 +39,6 @@ the list.
 
 examples:
   
-  Import ItemSummary
-
   --            QTY  Item Id
   entry = Entry 5    "IDI73M"
 -}

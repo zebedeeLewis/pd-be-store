@@ -27,8 +27,8 @@ it = test
 
 -- enable = todo "Enable Item Tests"
 
-itemSummaryData : Item.BriefDataR
-itemSummaryData =
+itemBriefData : Item.BriefDataR
+itemBriefData =
   { name            = "chicken legs"
   , id              = "CHKCCS1233"
   , imageThumbnail  = "https://www.example.com/chicken.jpg"
@@ -53,15 +53,15 @@ itemSummaryData =
                         }
                       ]
   , availability    = "in_stock"
-  , discount        = { discount_code = "UXDS9y3"
-                      , name          = "seafood giveaway"
-                      , value         = "15.0"
-                      , items         = ["CHKCCS1233"]
-                      }
+  , discount        = Just { discount_code = "UXDS9y3"
+                           , name          = "seafood giveaway"
+                           , value         = "15.0"
+                           , items         = ["CHKCCS1233"]
+                           }
   }
 
-itemSummaryR : Item.BriefR
-itemSummaryR =
+itemBriefR : Item.BriefR
+itemBriefR =
       { name            = "chicken legs"
       , id              = "CHKCCS1233"
       , imageThumbnail  = "https://www.example.com/chicken.jpg"
@@ -103,6 +103,17 @@ itemSummaryR =
 -- TESTS
 -------------------------------------------------------------------------
 
+toData =
+  describe "toData"
+    [ it "produces the DataR representation of the given item."
+      (\_->
+        let expected = itemBriefData
+            item = Item.Brief itemBriefR
+            actual = Item.toData item
+        in Expect.equal expected actual
+      )
+    ]
+
 new =
   describe "new"
     [ it ( "produces NaNPrice when given price data that is not a " ++
@@ -112,10 +123,10 @@ new =
               in
                 Expect.equal
                   ( Item.new
-                      { itemSummaryData | price = newPriceData } )
+                      { itemBriefData | price = newPriceData } )
                   ( Err
                        <| Item.NaNPrice
-                            itemSummaryData.id newPriceData )
+                            itemBriefData.id newPriceData )
 
     , it ( "produces NegativePrice when given price data that is " ++
            "less thant 0.")
@@ -124,10 +135,10 @@ new =
               in
                 Expect.equal
                   ( Item.new
-                      { itemSummaryData | price = newPriceData } )
+                      { itemBriefData | price = newPriceData } )
                   ( Err
                        <| Item.NegativePrice
-                            itemSummaryData.id newPriceData )
+                            itemBriefData.id newPriceData )
 
     , it ( "produces InvalidSize when given invalid size data")
          <| \_ ->
@@ -135,10 +146,10 @@ new =
               in
                 Expect.equal
                   ( Item.new
-                      { itemSummaryData | size = newSizeData } )
+                      { itemBriefData | size = newSizeData } )
                   ( Err
                        <| Item.InvalidSize
-                            itemSummaryData.id newSizeData )
+                            itemBriefData.id newSizeData )
 
     , it ( "produces InvalidAvailability when given invalid " ++
            "availability data")
@@ -147,34 +158,34 @@ new =
               in
                 Expect.equal
                   ( Item.new
-                      { itemSummaryData | availability = newData } )
+                      { itemBriefData | availability = newData } )
                   ( Err
                        <| Item.InvalidAvailability
-                            itemSummaryData.id newData )
+                            itemBriefData.id newData )
 
     , it ( "produces InvalidDiscount on \"value\" sub-field when " ++
            "given an invalid discount value data")
          <| \_ ->
-              let discount = itemSummaryData.discount
-                  newData = "invalid"
+                 
+              let newData = "invalid"
+                  discount =
+                    case itemBriefData.discount of
+                      Nothing -> Nothing
+                      Just discountData ->
+                        Just { discountData | value = newData }
               in
                 Expect.equal
-                  ( Item.new
-                      { itemSummaryData
-                      | discount = { discount
-                                   | value = newData
-                                   }
-                      } )
+                  ( Item.new { itemBriefData | discount = discount } )
                   ( Err
                        <| Item.InvalidDiscount
-                            itemSummaryData.id newData "value" )
+                            itemBriefData.id newData "value" )
 
     , it ( "produces a new Item when given a valid " ++
            "BriefDataR")
          <| \_ ->
               Expect.equal
-                ( Item.new itemSummaryData )
-                ( Ok <| Item.Brief itemSummaryR )
+                ( Item.new itemBriefData )
+                ( Ok <| Item.Brief itemBriefR )
 
     , it ( "produces NullId when given id data that is and empty " ++
            "string.")
@@ -183,7 +194,7 @@ new =
               in
                 Expect.equal
                   ( Item.new
-                      { itemSummaryData | id = "" } )
+                      { itemBriefData | id = "" } )
                   ( Err Item.NullId  )
     ]
 

@@ -233,7 +233,7 @@ type alias BriefDataR =
   , subCategoryTags : List { id : String, name : String }
   , searchTags      : List { id : String, name : String }
   , availability    : String
-  , discount        : DiscountDataR
+  , discount        : Maybe DiscountDataR
   }
 
 
@@ -764,30 +764,51 @@ toData item =
     , brand           = record.brand
     , variant         = record.variant
     , price           = priceToString record.price
-    , size            = "1000.5 mg"
-    , departmentTags  = [ { id = "UID789"
-                          , name = "deptTag"
-                          }
-                        ]
-    , categoryTags    = [ { id = "UID456"
-                          , name = "catTag"
-                          }
-                        ]
-    , subCategoryTags = [ { id   = "UID4123"
-                          , name = "subCatTag"
-                          }
-                        ]
-    , searchTags      = [ { id   = "UID333"
-                          , name = "searchTag"
-                          }
-                        ]
-    , availability    = "in_stock"
-    , discount        = { discount_code = "UXDS9y3"
-                        , name          = "seafood giveaway"
-                        , value         = "15"
-                        , items          = ["CHKCCS1233"]
-                        }
+    , size            = sizeToString record.size
+    , departmentTags  = List.map tagToData record.departmentTags
+    , categoryTags    = List.map tagToData record.departmentTags
+    , subCategoryTags = List.map tagToData record.departmentTags
+    , searchTags      = List.map tagToData record.departmentTags
+    , availability    = availabilityToStr record.availability
+    , discount        = discountToData record.discount
     }
+
+
+{-| convert an Availability to a string
+TODO!!!
+-}
+availabilityToStr : Availability -> String
+availabilityToStr availability = "out_stock"
+-- case String.toLower (String.trim strAvailability) of
+--   "in_stock"    -> Just IN_STOCK
+--   "out_stock"   -> Just OUT_STOCK
+--   "order_only"  -> Just ORDER_ONLY
+--   _             -> Nothing
+
+
+
+
+{-| produce the data record from the given tag.
+-}
+tagToData : Tag -> TagR
+tagToData tag =
+  case tag of
+    (DepartmentTag data)   -> data
+    (CategoryTag data)     -> data
+    (SubCategoryTag data)  -> data
+    (SearchTag data)       -> data
+
+
+{-| produce the data record from the given discount
+TODO!!!
+-}
+discountToData : Maybe Discount -> Maybe DiscountDataR
+discountToData discount = Nothing
+  -- { discount_code = "UXDS9y3"
+  -- , name          = "seafood giveaway"
+  -- , value         = "15"
+  -- , items          = ["CHKCCS1233"]
+  -- }
 
 
 {-| produce the string representation of the given price
@@ -892,23 +913,27 @@ ValidationErr.
 -}
 validateDiscount
   : String
-  -> DiscountDataR
+  -> Maybe DiscountDataR
   -> BriefR
   -> Result ValidationErr BriefR
-validateDiscount itemId discountData initialItem = 
-  let maybeValue = String.toFloat discountData.value
-  in
-    case maybeValue of
-      Nothing    ->
-        Err <| InvalidDiscount itemId discountData.value "value"
-      Just value ->
-        Ok { initialItem
-           | discount =
-               Just <| newDiscount discountData.discount_code
+validateDiscount itemId maybeDiscountData initialItem = 
+  case maybeDiscountData of
+    Nothing -> Ok { initialItem | discount = Nothing }
+
+    Just discountData ->
+      let maybeValue = String.toFloat discountData.value
+      in
+        case maybeValue of
+          Nothing    ->
+            Err <| InvalidDiscount itemId discountData.value "value"
+          Just value ->
+            Ok { initialItem
+               | discount =
+                   Just <| newDiscount discountData.discount_code
                                        discountData.name
                                        value
                                        discountData.items
-           }
+               }
 
 
 {-| convert a string to Maybe Availability

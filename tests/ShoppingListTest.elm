@@ -5,7 +5,6 @@ import Set
 import Expect exposing (Expectation)
 import Test exposing (..)
 
-import ItemSummary
 import ShoppingList
 
 
