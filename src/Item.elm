@@ -306,15 +306,15 @@ type alias DiscountR =
   }
 
 
-{-| Represents a collection of Item -}
-type Set = Set (List Item)
-
-
-{-| Represents a collection of Item that share the given
-tag.
+{-| Represents a collection of Item. A set can have one or more filters
+applied to it.
 -}
-type CategorizedSet =
-  CategorizedSet Tag (List Item)
+type Set = Set (List Filter) (List Item)
+
+
+{-| represents a filter to be applied to an item set
+-}
+type Filter = BrandFilter String
 
 
 {-| represents the availability of inventory items of a given type.
