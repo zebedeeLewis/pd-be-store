@@ -55,7 +55,7 @@ itemBriefData =
   , availability    = "in_stock"
   , discount        = Just { discount_code = "UXDS9y3"
                            , name          = "seafood giveaway"
-                           , value         = "15.0"
+                           , value         = "15"
                            , items         = ["CHKCCS1233"]
                            }
   }
@@ -93,7 +93,7 @@ itemBriefR =
       , discount        = Just <| Item.Discount
                             { discount_code = "UXDS9y3"
                             , name          = "seafood giveaway"
-                            , value         = 15.0
+                            , value         = 15
                             , items         = ["CHKCCS1233"]
                             }
       }
@@ -113,6 +113,43 @@ toData =
         in Expect.equal expected actual
       )
     ]
+
+
+availabilityToStr =
+  describe "availabilityToStr"
+    [ it "produces \"in_stock\" when given IN_STOCK."
+      (\_->
+        let expected = "in_stock"
+            actual = Item.availabilityToStr Item.IN_STOCK
+        in Expect.equal expected actual
+      )
+
+    , it "produces \"out_stock\" when given OUT_STOCK."
+      (\_->
+        let expected = "out_stock"
+            actual = Item.availabilityToStr Item.OUT_STOCK
+        in Expect.equal expected actual
+      )
+
+    , it "produces \"order_only\" when given ORDER_ONLY."
+      (\_->
+        let expected = "order_only"
+            actual = Item.availabilityToStr Item.ORDER_ONLY
+        in Expect.equal expected actual
+      )
+    ]
+
+
+priceToString =
+  describe "priceToString"
+    [ it "produces string representation of price, with trailing zero"
+        (\_->
+          let expect = "2.50"
+              actual = Item.priceToString <| Item.Price 2 50
+          in Expect.equal expect actual
+        )
+    ]
+
 
 new =
   describe "new"

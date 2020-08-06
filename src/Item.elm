@@ -513,71 +513,10 @@ sizeToString size =
     M  -> "M"
     Grad value measure ->
       case measure of
-        ML  ->
-          let
-            val =
-              if value > gallon
-                then value/gallon
-              else if value > litre
-                then value/litre
-              else value
-
-            rdMeasure =
-              if value > gallon
-                then "gal"
-              else if value > litre
-                then "L"
-              else "mL"
-          in
-            (String.fromFloat val) ++ rdMeasure 
-
-        CC ->
-          let
-            val =
-              if value > cubicMetre
-                then value/cubicMetre
-                else value
-
-            rdMeasure =
-              if val > cubicMetre
-                then "cc"
-                else "m cube"
-          in
-            (String.fromFloat val) ++ rdMeasure
-
-        MG ->
-          let
-            val =
-              if value > kilogram
-                then value/kilogram
-              else if value > gram
-                then value/gram
-              else value
-
-            rdMeasure =
-              if value > kilogram
-                then "kg"
-              else if value > gram
-                then "g"
-              else "mg"
-          in
-            (String.fromFloat val) ++ rdMeasure
-        MM ->
-          let
-            val =
-              if value > metre
-                then value/metre
-              else if value > centimetre
-                then value/centimetre
-              else value
-            rdMeasure =
-              if value > metre
-                then "m"
-              else if value > centimetre
-                then "cm"
-              else "mm"
-          in
-            (String.fromFloat val) ++ rdMeasure
+        ML  -> (String.fromFloat value) ++ " ml" 
+        CC -> (String.fromFloat value) ++ " cc"
+        MG -> (String.fromFloat value) ++ " mg"
+        MM -> (String.fromFloat value) ++ " mm"
 
 
 getTagR : Tag -> TagR
@@ -752,7 +691,6 @@ new itemData =
 
 
 {-| produce a new BriefDataR from the given Item
-TODO!!!
 -}
 toData : Item -> BriefDataR
 toData item =
@@ -766,26 +704,22 @@ toData item =
     , price           = priceToString record.price
     , size            = sizeToString record.size
     , departmentTags  = List.map tagToData record.departmentTags
-    , categoryTags    = List.map tagToData record.departmentTags
-    , subCategoryTags = List.map tagToData record.departmentTags
-    , searchTags      = List.map tagToData record.departmentTags
+    , categoryTags    = List.map tagToData record.categoryTags
+    , subCategoryTags = List.map tagToData record.subCategoryTags
+    , searchTags      = List.map tagToData record.searchTags
     , availability    = availabilityToStr record.availability
     , discount        = discountToData record.discount
     }
 
 
 {-| convert an Availability to a string
-TODO!!!
 -}
 availabilityToStr : Availability -> String
-availabilityToStr availability = "out_stock"
--- case String.toLower (String.trim strAvailability) of
---   "in_stock"    -> Just IN_STOCK
---   "out_stock"   -> Just OUT_STOCK
---   "order_only"  -> Just ORDER_ONLY
---   _             -> Nothing
-
-
+availabilityToStr availability =
+  case availability of
+    IN_STOCK    ->  "in_stock"    
+    OUT_STOCK   ->  "out_stock"   
+    ORDER_ONLY  ->  "order_only"  
 
 
 {-| produce the data record from the given tag.
@@ -800,22 +734,27 @@ tagToData tag =
 
 
 {-| produce the data record from the given discount
-TODO!!!
 -}
 discountToData : Maybe Discount -> Maybe DiscountDataR
-discountToData discount = Nothing
-  -- { discount_code = "UXDS9y3"
-  -- , name          = "seafood giveaway"
-  -- , value         = "15"
-  -- , items          = ["CHKCCS1233"]
-  -- }
+discountToData maybeDiscount =
+  case maybeDiscount of
+    Nothing -> Nothing
+    Just (Discount discountR) -> 
+      Just { discount_code = discountR.discount_code
+           , name = discountR.name
+           , value = String.fromFloat discountR.value
+           , items = discountR.items
+           }
 
 
 {-| produce the string representation of the given price
-TODO!!!
 -}
 priceToString : Price -> String
-priceToString price = "5.50"
+priceToString price =
+  let (dollars, cents) = priceToPair price
+      strDollars = String.fromInt dollars
+      strCents = String.fromInt cents
+  in strDollars ++ "." ++ strCents
 
 
 {-| ensure the id given to an item is not null (empty string).
