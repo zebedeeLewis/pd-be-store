@@ -53,6 +53,10 @@ blankBrief : Item
 blankBrief = Brief blankBriefR
 
 
+emptySet : Set
+emptySet = Set [] []
+
+
 
 -----------------------------------------------------------------------
 -- DATA DEFINITIONS
@@ -314,6 +318,7 @@ type Set = Set (List Filter) (List Item)
 
 {-| represents a filter to be applied to an item set
 -}
+--                        value
 type Filter = BrandFilter String
 
 
