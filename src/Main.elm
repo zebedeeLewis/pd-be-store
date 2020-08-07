@@ -52,11 +52,13 @@ main =
 
 init : () -> Url.Url -> Nav.Key -> (Model, Cmd Msg)
 init  _ url key =
-  ( { app  = ItemBrowser ShoppingList.empty Item.emptySet
-    , view = View.ItemBrowser []
-    }
-  , Cmd.none
-  )
+  let app = ItemBrowser ShoppingList.empty Item.emptySet
+  in
+    ( { app  = app
+      , view = appView app
+      }
+    , Cmd.none
+    )
 
 
 view : Model -> Browser.Document Msg
@@ -87,7 +89,30 @@ update msg model =
 
 
 liftHtml : Html View.Msg -> Html Msg
-liftHtml =
-  Html.map (\viewMsg -> ViewMsg viewMsg)
+liftHtml = Html.map (\viewMsg -> ViewMsg viewMsg)
 
 
+{-| produce a view for the given app
+-}
+appView : App -> View.Model
+appView app = 
+  let header =
+        { navdrawer =
+            View.NavdrawerC
+              True
+              [ { label = "test1"
+                , value = "test"
+                , active = True
+                }
+              ]
+        , navbar = View.NavbarC
+        , cartdrawer = View.CartdrawerC True
+        }
+  in
+    case app of
+      Loading ->
+        View.Loading { header = header }
+
+      ItemBrowser cart items ->
+        View.ItemBrowser 
+          { header = header }

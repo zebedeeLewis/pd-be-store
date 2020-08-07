@@ -17,8 +17,8 @@ navbarHeight = 48 -- px
 
 
 navbarZIndex = 10
-navDrawerZIndex = 12
-cartDrawerZIndex = 8
+navdrawerZIndex = 12
+cartdrawerZIndex = 8
 
 
 type alias Space =
@@ -96,12 +96,12 @@ searchResultsContainer =
   css []
 
 
-navDrawerHidden : Attribute msg
-navDrawerHidden =
+navdrawerHidden : Attribute msg
+navdrawerHidden =
   let delay = drawerContentAnimationDuration
   in
     css
-      [ navDrawerStyle
+      [ navdrawerStyle
       , transform (translateX (pct -100))
       , Transitions.transition
           [ Transitions.transform2
@@ -110,35 +110,35 @@ navDrawerHidden =
       ]
 
 
-navDrawerShown : Attribute msg
-navDrawerShown =
+navdrawerShown : Attribute msg
+navdrawerShown =
   css
-    [ navDrawerStyle
+    [ navdrawerStyle
     , transform (translateX (pct 0))
     , Transitions.transition
         [Transitions.transform drawerAnimationDuration]
     ]
 
 
-navDrawerStyle : Style
-navDrawerStyle =
+navdrawerStyle : Style
+navdrawerStyle =
   batch
     [ width (pct 100)
     , height (vh 100)
     , position fixed
     , top (px 0)
     , left (px 0)
-    , zIndex (int navDrawerZIndex)
+    , zIndex (int navdrawerZIndex)
     , color theme.primary
     ]
 
 
-navDrawerHiddenScrim : Attribute msg
-navDrawerHiddenScrim =
+navdrawerHiddenScrim : Attribute msg
+navdrawerHiddenScrim =
   let delay = drawerAnimationDuration
   in
     css
-      [ navDrawerScrimStyle
+      [ navdrawerScrimStyle
       , opacity (num 0)
       , Transitions.transition
           [ Transitions.opacity2
@@ -148,12 +148,12 @@ navDrawerHiddenScrim =
       ]
 
 
-navDrawerShownScrim : Attribute msg
-navDrawerShownScrim =
+navdrawerShownScrim : Attribute msg
+navdrawerShownScrim =
   let delay = drawerAnimationDuration
   in
     css
-      [ navDrawerScrimStyle
+      [ navdrawerScrimStyle
       , opacity (num 0.4)
         , Transitions.transition
             [ Transitions.opacity2
@@ -163,8 +163,8 @@ navDrawerShownScrim =
       ]
 
 
-navDrawerScrimStyle : Style
-navDrawerScrimStyle =
+navdrawerScrimStyle : Style
+navdrawerScrimStyle =
   batch
     [ width (pct 100)
     , height (pct 100)
@@ -173,12 +173,12 @@ navDrawerScrimStyle =
     ]
 
 
-navDrawerHiddenContent : Attribute msg
-navDrawerHiddenContent =
+navdrawerHiddenContent : Attribute msg
+navdrawerHiddenContent =
   let delay = drawerAnimationDuration
   in
     css
-      [ navDrawerContentStyle
+      [ navdrawerContentStyle
       , transform (translateX <| px (negate drawerContentWidth))
         , Transitions.transition
             [ Transitions.transform2
@@ -188,12 +188,12 @@ navDrawerHiddenContent =
       ]
 
 
-navDrawerShownContent : Attribute msg
-navDrawerShownContent =
+navdrawerShownContent : Attribute msg
+navdrawerShownContent =
   let delay = drawerAnimationDuration
   in
     css
-      [ navDrawerContentStyle
+      [ navdrawerContentStyle
       , transform (translateX (px 0))
         , Transitions.transition
             [ Transitions.transform2
@@ -203,8 +203,8 @@ navDrawerShownContent =
       ]
 
 
-navDrawerContentStyle : Style
-navDrawerContentStyle =
+navdrawerContentStyle : Style
+navdrawerContentStyle =
   batch
     [ width (pct 80)
     , maxWidth (px drawerContentWidth)
@@ -221,8 +221,8 @@ navDrawerContentStyle =
     ]
 
 
-navDrawerNav : Attribute msg
-navDrawerNav =
+navdrawerNav : Attribute msg
+navdrawerNav =
   css
     [ fontSize (px defaultFontSize)
     , borderBottomStyle solid
@@ -232,9 +232,22 @@ navDrawerNav =
     ]
 
 
-navDrawerNavItem : Attribute msg
-navDrawerNavItem =
+navItem : Attribute msg
+navItem =
+  css [ navItemStyle ]
+
+
+navItemActive : Attribute msg
+navItemActive =
   css
+    [ navItemStyle
+    , backgroundColor theme.lighter_grey
+    ]
+
+
+navItemStyle : Style
+navItemStyle =
+  batch
     [ width (pct 100)
     , paddingBottom (px 12)
     , textTransform uppercase
@@ -311,28 +324,28 @@ drawerTopBarTitle =
     ]
 
 
-cartDrawerShown : Attribute msg
-cartDrawerShown =
+cartdrawerShown : Attribute msg
+cartdrawerShown =
   css
-    [ cartDrawerStyle
+    [ cartdrawerStyle
     , transform (translateX (pct 0))
     , Transitions.transition
         [Transitions.transform drawerContentAnimationDuration]
     ]
 
 
-cartDrawerHidden : Attribute msg
-cartDrawerHidden =
+cartdrawerHidden : Attribute msg
+cartdrawerHidden =
   css
-    [ cartDrawerStyle
+    [ cartdrawerStyle
     , transform (translateX (px drawerMaxWidth))
     , Transitions.transition
         [Transitions.transform drawerContentAnimationDuration]
     ]
 
 
-cartDrawerStyle : Style
-cartDrawerStyle =
+cartdrawerStyle : Style
+cartdrawerStyle =
   batch
     [ width (pct 100)
     , paddingTop (px 60)
@@ -341,7 +354,7 @@ cartDrawerStyle =
     , position absolute
     , top (px 0)
     , right (px 0)
-    , zIndex (int cartDrawerZIndex)
+    , zIndex (int cartdrawerZIndex)
     , boxSizing borderBox
     , borderLeftStyle solid
     , borderColor theme.lighter_grey
@@ -350,15 +363,15 @@ cartDrawerStyle =
     ]
 
 
-cartDrawerContent : Attribute msg
-cartDrawerContent =
+cartdrawerContent : Attribute msg
+cartdrawerContent =
   css
-    [ cartDrawerContentStyle
+    [ cartdrawerContentStyle
     ]
 
 
-cartDrawerContentStyle : Style
-cartDrawerContentStyle =
+cartdrawerContentStyle : Style
+cartdrawerContentStyle =
   batch
     [ width (pct 100)
     , height (pct 90)
@@ -370,8 +383,8 @@ cartDrawerContentStyle =
     ]
 
 
-cartDrawerContentLabel : Attribute msg
-cartDrawerContentLabel =
+cartdrawerContentLabel : Attribute msg
+cartdrawerContentLabel =
   css
     [ textAlign left
     , color theme.primary
@@ -379,30 +392,30 @@ cartDrawerContentLabel =
     ]
 
 
-cartDrawerContentLine : Style
-cartDrawerContentLine =
+cartdrawerContentLine : Style
+cartdrawerContentLine =
   batch
     [ displayFlex
     , justifyContent spaceBetween
     , pb1Style
     ]
 
-cartDrawerSummary : Attribute msg
-cartDrawerSummary =
+cartdrawerSummary : Attribute msg
+cartdrawerSummary =
   css []
 
 
-cartDrawerSubTotal : Attribute msg
-cartDrawerSubTotal =
+cartdrawerSubTotal : Attribute msg
+cartdrawerSubTotal =
   css
-    [ cartDrawerContentLine
+    [ cartdrawerContentLine
     ]
 
 
-cartDrawerDiscounts : Attribute msg
-cartDrawerDiscounts =
+cartdrawerDiscounts : Attribute msg
+cartdrawerDiscounts =
   css
-    [ cartDrawerContentLine ]
+    [ cartdrawerContentLine ]
 
 
 btnSimple : Attribute msg
@@ -412,34 +425,34 @@ btnSimple =
     ]
 
 
-cartDrawerApplyDiscountBtn : Attribute msg
-cartDrawerApplyDiscountBtn =
+cartdrawerApplyDiscountBtn : Attribute msg
+cartdrawerApplyDiscountBtn =
   css
     [ btnSimpleStyle
-    ,cartDrawerDiscountBtnStyle
+    ,cartdrawerDiscountBtnStyle
     , backgroundColor theme.light_green
     ]
 
 
-cartDrawerRemoveDiscountBtn : Attribute msg
-cartDrawerRemoveDiscountBtn =
+cartdrawerRemoveDiscountBtn : Attribute msg
+cartdrawerRemoveDiscountBtn =
   css
     [ btnSimpleStyle
-    ,cartDrawerDiscountBtnStyle
+    ,cartdrawerDiscountBtnStyle
     , backgroundColor theme.lighter_grey
     ]
 
 
-cartDrawerDiscountLabelLink : Attribute msg
-cartDrawerDiscountLabelLink =
+cartdrawerDiscountLabelLink : Attribute msg
+cartdrawerDiscountLabelLink =
   css
     [ btnSimpleStyle
     , color theme.light_grey
     ]
 
 
-cartDrawerDiscountBtnStyle : Style
-cartDrawerDiscountBtnStyle =
+cartdrawerDiscountBtnStyle : Style
+cartdrawerDiscountBtnStyle =
   batch
     [ borderRadius (px 4)
     , paddingLeft (px 4)
@@ -492,8 +505,8 @@ btnDanger =
   css [ btnDangerStyle ]
 
 
-btnDangerCartDrawer : Attribute msg
-btnDangerCartDrawer =
+btnDangerCartdrawer : Attribute msg
+btnDangerCartdrawer =
   css
     [ btnDangerStyle
     , ml2Style
@@ -613,8 +626,8 @@ btnStyle =
     ]
 
 
-cartDrawerDiscountPanel : Attribute msg
-cartDrawerDiscountPanel =
+cartdrawerDiscountPanel : Attribute msg
+cartdrawerDiscountPanel =
   css
     [ paddingLeft (px 12)
     , paddingTop (px 12)
@@ -628,14 +641,14 @@ cartDrawerDiscountPanel =
     ]
 
 
-cartDrawerDiscountItem : Attribute msg
-cartDrawerDiscountItem =
+cartdrawerDiscountItem : Attribute msg
+cartdrawerDiscountItem =
   css
-    [ cartDrawerContentLine ]
+    [ cartdrawerContentLine ]
 
 
-cartDrawerDiscountItemLabel : Attribute msg
-cartDrawerDiscountItemLabel =
+cartdrawerDiscountItemLabel : Attribute msg
+cartdrawerDiscountItemLabel =
   css
     [ textTransform capitalize
     , color theme.light_grey
@@ -643,22 +656,22 @@ cartDrawerDiscountItemLabel =
     ]
 
 
-cartDrawerDiscountItemVal : Attribute msg
-cartDrawerDiscountItemVal =
+cartdrawerDiscountItemVal : Attribute msg
+cartdrawerDiscountItemVal =
   css
-    [ cartDrawerDiscountItemValStyle ]
+    [ cartdrawerDiscountItemValStyle ]
 
 
-cartDrawerAppliedDiscountItemVal : Attribute msg
-cartDrawerAppliedDiscountItemVal =
+cartdrawerAppliedDiscountItemVal : Attribute msg
+cartdrawerAppliedDiscountItemVal =
   css
-    [ cartDrawerDiscountItemValStyle
+    [ cartdrawerDiscountItemValStyle
     , color theme.primary
     ]
 
 
-cartDrawerDiscountItemValStyle : Style
-cartDrawerDiscountItemValStyle =
+cartdrawerDiscountItemValStyle : Style
+cartdrawerDiscountItemValStyle =
   batch
     [ width (pct 20)
     , color theme.light_grey
@@ -666,30 +679,30 @@ cartDrawerDiscountItemValStyle =
     ]
 
 
-cartDrawerDiscountPct : Attribute msg
-cartDrawerDiscountPct =
+cartdrawerDiscountPct : Attribute msg
+cartdrawerDiscountPct =
   css
     [ color theme.light_grey
     , width (pct 15)
     ]
 
 
-cartDrawerDiscountAction : Attribute msg
-cartDrawerDiscountAction =
+cartdrawerDiscountAction : Attribute msg
+cartdrawerDiscountAction =
   css
     [ width (pct 15)
     ]
 
 
-cartDrawerTax : Attribute msg
-cartDrawerTax =
-  css [ cartDrawerContentLine ]
+cartdrawerTax : Attribute msg
+cartdrawerTax =
+  css [ cartdrawerContentLine ]
 
 
-cartDrawerTotal : Attribute msg
-cartDrawerTotal =
+cartdrawerTotal : Attribute msg
+cartdrawerTotal =
   css
-    [ cartDrawerContentLine
+    [ cartdrawerContentLine
     , borderTopStyle solid
     , borderColor theme.lighter_grey
     , borderWidth (px 1)
@@ -697,8 +710,8 @@ cartDrawerTotal =
     ]
 
 
-cartDrawerActionLine : Attribute msg
-cartDrawerActionLine =
+cartdrawerActionLine : Attribute msg
+cartdrawerActionLine =
   css
     [ displayFlex
     , mt1Style
@@ -706,16 +719,16 @@ cartDrawerActionLine =
     ]
 
 
-cartDrawerContentValue : Attribute msg
-cartDrawerContentValue =
+cartdrawerContentValue : Attribute msg
+cartdrawerContentValue =
   css
     [ textAlign right
     , color theme.primary
     ]
 
 
-cartDrawerItems : Attribute msg
-cartDrawerItems =
+cartdrawerItems : Attribute msg
+cartdrawerItems =
   css []
 
 
