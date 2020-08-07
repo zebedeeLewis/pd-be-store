@@ -25,6 +25,7 @@ import Material.TopAppBar as TopAppBar
 import Material.Icon as Icon
 
 import Item
+import ShoppingList
 import ViewStyle
 
 
@@ -75,7 +76,7 @@ type NavbarC = NavbarC
 type NavdrawerC = NavdrawerC Bool (List NavItem)
 
 
-type CartdrawerC = CartdrawerC Bool
+type CartdrawerC = CartdrawerC Bool (ShoppingList.ShoppingList)
 
 
 type alias NavItem =
@@ -135,8 +136,8 @@ toggleNavdrawer header =
 
 toggleCartdrawer : HeaderC -> HeaderC
 toggleCartdrawer header =
-  let (CartdrawerC toggled) = header.cartdrawer
-      cartdrawer = CartdrawerC <| not toggled
+  let (CartdrawerC toggled cart) = header.cartdrawer
+      cartdrawer = CartdrawerC (not toggled) cart
 
   in { header | cartdrawer = cartdrawer }
 
@@ -164,7 +165,7 @@ renderItemBrowser model items =
 
 renderCartdrawer : CartdrawerC -> Html Msg
 renderCartdrawer cartdrawer =
-  let (CartdrawerC toggled) = cartdrawer
+  let (CartdrawerC toggled cart) = cartdrawer
   in
     div
       [ if toggled 
