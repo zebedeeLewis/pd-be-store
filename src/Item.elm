@@ -7,7 +7,6 @@ module Item exposing
 -- , BriefR
 -- , DiscountDataR
 -- , Set
--- , CategorizedSet
 -- , ValidationErr
 -- , new
 -- , priceToPair
@@ -936,4 +935,11 @@ strToMaybeGrad strGrad =
               "cc" -> Just <| Grad val CC
               "mg" -> Just <| Grad val MG
               _    -> Nothing
+
+
+{-| produce a List of BriefDataR
+-}
+setToData : Set -> List BriefDataR
+setToData (Set _ items) =
+  List.map (\item -> toData item) items
 

@@ -37,3 +37,9 @@ viewItemBrief viewFn item =
   viewFn <| Item.toData item
 
 
+{-| produce a view of the given set of items
+-}
+viewItemSet : (List Item.BriefDataR -> view) -> Item.Set -> view
+viewItemSet renderer itemSet =
+  renderer <| Item.setToData itemSet
+

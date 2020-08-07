@@ -2,10 +2,13 @@ module Main exposing (..)
 
 import Url
 import Html exposing (Html)
+import Html.Styled exposing (toUnstyled)
 import Browser
 import Browser.Navigation as Nav
 
-import App
+import Item
+import ShoppingList
+import UseCase
 import View
 
 
@@ -14,15 +17,19 @@ import View
 -----------------------------------------------------------------------
 
 type alias Model =
-  { app  : App.Model
+  { app  : App
   , view : View.Model
   }
+
+
+type App
+  = Loading
+  | ItemBrowser ShoppingList.ShoppingList Item.Set
 
 
 type Msg
   = UrlChanged Url.Url
   | LinkClicked Browser.UrlRequest
-  | AppMsg App.Msg
   | ViewMsg View.Msg
 
 
@@ -45,8 +52,8 @@ main =
 
 init : () -> Url.Url -> Nav.Key -> (Model, Cmd Msg)
 init  _ url key =
-  ( { app  = App.Loading
-    , view = View.Loading
+  ( { app  = ItemBrowser ShoppingList.empty Item.emptySet
+    , view = View.ItemBrowser []
     }
   , Cmd.none
   )
@@ -54,11 +61,16 @@ init  _ url key =
 
 view : Model -> Browser.Document Msg
 view model =
-  { title = App.getTitle model.app
-  , body =
-      [ liftHtml <| View.renderApp model.view model.app
-      ]
-  }
+  let
+    content =
+      case model.app of
+        Loading -> Html.div [] []
+
+        ItemBrowser cart items ->
+          UseCase.viewItemSet
+            (toUnstyled << View.renderItemBrowser model.view) items
+  in
+    { title = "test" , body = [ liftHtml content ] }
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -67,11 +79,6 @@ update msg model =
     UrlChanged url -> (model, Cmd.none)
 
     LinkClicked urlRequest -> (model, Cmd.none)
-
-    AppMsg appMsg ->
-      ( { model | app =  App.update appMsg model.app }
-      , Cmd.none
-      )
 
     ViewMsg viewMsg ->
       ( { model | view = View.update viewMsg model.view }
