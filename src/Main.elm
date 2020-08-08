@@ -24,7 +24,7 @@ type alias Model =
 
 type App
   = Loading
-  | ItemBrowser ShoppingList.ShoppingList Item.Set
+  | ItemBrowser ShoppingList.Model Item.Set
 
 
 type Msg

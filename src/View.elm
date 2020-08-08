@@ -76,7 +76,7 @@ type NavbarC = NavbarC
 type NavdrawerC = NavdrawerC Bool (List NavItem)
 
 
-type CartdrawerC = CartdrawerC Bool (ShoppingList.ShoppingList)
+type CartdrawerC = CartdrawerC Bool (ShoppingList.Model)
 
 
 type alias NavItem =

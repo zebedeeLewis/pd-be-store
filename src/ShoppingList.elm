@@ -30,7 +30,7 @@ module ShoppingList exposing
 
 {-| Represents a users shopping list.
 -}
-type ShoppingList = ShoppingList (List Entry)
+type Model = ShoppingList (List Entry)
 
 
 {-| Represents a single entry in a user shopping list. contains a
@@ -59,13 +59,13 @@ type alias ItemTotalFn = String -> (Int, Int)
 
 {-| produce a new empty shopping list.
 -}
-empty : ShoppingList
+empty : Model
 empty = ShoppingList []
 
 
 {-| poduce the total on the given shopping list.
 -}
-total : ItemTotalFn -> ShoppingList-> (Int, Int)
+total : ItemTotalFn -> Model -> (Int, Int)
 total fn (ShoppingList entries) =
   List.foldl
     (\entry acc ->
@@ -89,7 +89,7 @@ total fn (ShoppingList entries) =
 if the quantity is 1. If the quantity is greater than 1, then decrement
 the quantity by 1.
 -}
-remove : String -> ShoppingList -> ShoppingList
+remove : String -> Model -> Model
 remove itemId list =
   let
     remove_ itemId_ (ShoppingList entries) =
@@ -117,7 +117,7 @@ remove itemId list =
 
 {-| produce a new ShoppingList with a new entry for the given item
 -}
-add : String -> ShoppingList -> ShoppingList
+add : String -> Model -> Model
 add itemId list =
   let
     add_ itemId_ (ShoppingList entries) =
@@ -142,7 +142,7 @@ add itemId list =
 {-| produce the entry in the list with the given id or
 Nothing
 -}
-getMaybeEntry : String -> ShoppingList -> Maybe Entry
+getMaybeEntry : String -> Model -> Maybe Entry
 getMaybeEntry itemId (ShoppingList entries) =
   let
     getMaybeEntry_ entries_ = 

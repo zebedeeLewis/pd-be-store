@@ -12,6 +12,7 @@ module Item exposing
   , priceToPair
   , priceToString
   , blankBrief
+  , emptySet
   , setToData
   , equal
   , id
