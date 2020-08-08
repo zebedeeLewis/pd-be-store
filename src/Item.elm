@@ -16,6 +16,7 @@ module Item exposing
   , setToData
   , equal
   , id
+  , listPrice
   , toData
   )
 
@@ -945,4 +946,12 @@ id : Model -> String
 id item =
   case item of
     Brief record -> record.id
+
+
+{-| produce the list price of the given item
+-}
+listPrice : Model -> Float
+listPrice item =
+  case item of
+    Brief record -> record.listPrice
 

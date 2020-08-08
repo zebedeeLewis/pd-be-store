@@ -16,6 +16,8 @@ module ShoppingList exposing
 -- , getMaybeEntry
 -- )
 
+import Item
+
 
 
 -----------------------------------------------------------------------
@@ -39,17 +41,19 @@ the list.
 
 examples:
   
-  --            QTY  Item Id
-  entry = Entry 5    "IDI73M"
--}
-type Entry = Entry Int String
+  briefData = 
+    { name : "Chicken wings"
+    , id : "CHID123"
+    , brand : "Quality Fowls
+    ...
+    }
 
+  item = Item.newBrief briefData
 
-{-| represents the interface to a function used to produce the total
-or subtotal of the item identified by the given id. This function is
-used in the calculation of the total/sub-total price of a shopping cart.
+  --            QTY  Item
+  entry = Entry 5    item
 -}
-type alias ItemTotalFn = String -> (Int, Int)
+type Entry = Entry Int Item.Model
 
 
 
@@ -63,26 +67,16 @@ empty : Model
 empty = ShoppingList []
 
 
-{-| poduce the total on the given shopping list.
+{-| poduce the subtotal on the given shopping list.
 -}
-total : ItemTotalFn -> Model -> (Int, Int)
-total fn (ShoppingList entries) =
+subTotal : Model -> Float
+subTotal (ShoppingList entries) =
   List.foldl
     (\entry acc ->
-      let (Entry qty id) = entry
-          itemSubtotal = fn id
-          addFn (d1, c1) (d2, c2) = 
-            let cents = (c1 + c2) |> modBy 100
-                dollars = (d1 + d2) + ((c1 + c2)//100)
-            in (dollars, cents)
-
-          multFn multiplier (d, c) =
-            let cents = (multiplier * c) |> modBy 100
-                dollars = (multiplier * d) + ((multiplier * c)//100)
-            in (dollars, cents)
-
-      in addFn acc (multFn qty itemSubtotal)
-    ) (0, 0) entries
+      let (Entry qty item) = entry
+          itemSubtotal = Item.listPrice item
+      in acc + ((toFloat qty) * itemSubtotal)
+    ) 0 entries
 
 
 {-| remove the entry identified by the given id from the ShoppingList
@@ -95,48 +89,49 @@ remove itemId list =
     remove_ itemId_ (ShoppingList entries) =
       ShoppingList
         <| List.filter
-             (\(Entry qty id) -> not (id == itemId_))
+             (\(Entry qty item) -> not (Item.id item == itemId_))
              entries
 
     dec itemId_ (ShoppingList entries) =
       ShoppingList
         <| List.map
-          (\(Entry qty entryId) ->
-            if entryId == itemId_ 
-              then Entry (qty - 1) itemId_
-              else Entry qty entryId)
-          entries
+          (\(Entry qty item) ->
+            if Item.id item == itemId_ 
+              then Entry (qty - 1) item
+              else Entry qty item
+          ) entries
   in
     case getMaybeEntry itemId list of
       Nothing -> list
-      Just (Entry qty id) ->
+      Just (Entry qty item) ->
         if qty > 1
-          then dec itemId list
-          else remove_ itemId list
+          then dec (Item.id item) list
+          else remove_ (Item.id item) list
 
 
 {-| produce a new ShoppingList with a new entry for the given item
 -}
-add : String -> Model -> Model
-add itemId list =
+add : Item.Model -> Model -> Model
+add item list =
   let
-    add_ itemId_ (ShoppingList entries) =
-      ShoppingList <| (singletonEntry itemId_)::entries
+    itemId = Item.id item
+    addTo (ShoppingList entries) =
+      ShoppingList <| (singletonEntry item)::entries
 
-    inc itemId_ (ShoppingList entries) =
+    inc (ShoppingList entries) =
       ShoppingList
         <| List.map
-          (\(Entry qty entryId) ->
-            if entryId == itemId_ 
-              then Entry (qty + 1) itemId_
-              else Entry qty entryId)
+          (\(Entry qty entryItem) ->
+            if Item.id entryItem == itemId
+              then Entry (qty + 1) entryItem
+              else Entry qty entryItem)
           entries
   in
     case getMaybeEntry itemId list of
       Nothing ->
-        add_ itemId list
+        addTo list
       Just _ ->
-        inc itemId list
+        inc list
 
 
 {-| produce the entry in the list with the given id or
@@ -149,9 +144,9 @@ getMaybeEntry itemId (ShoppingList entries) =
       case List.head entries_ of
         Nothing -> Nothing
         Just entry -> 
-          let (Entry _ entryId) = entry
+          let (Entry _ item) = entry
           in
-            if entryId == itemId
+            if Item.id item == itemId
               then Just entry
               else getMaybeEntry_ <| List.drop 1 entries
   in getMaybeEntry_ entries
@@ -159,7 +154,7 @@ getMaybeEntry itemId (ShoppingList entries) =
 
 {-| produce a new shopping list entry representing one item.
 -}
-singletonEntry : String -> Entry
-singletonEntry itemId = Entry 1 itemId
+singletonEntry : Item.Model -> Entry
+singletonEntry item = Entry 1 item
 
 
