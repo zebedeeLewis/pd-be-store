@@ -1,18 +1,22 @@
 module Item exposing
 -- Test Exports: uncomment the export block below when testing.
-  (..)
+--  (..)
 
 -- Production Exports: uncomment these out for production.
--- ( Item
--- , BriefR
--- , DiscountDataR
--- , Set
--- , ValidationErr
--- , new
--- , priceToPair
--- , floatToPrice
--- , toData
--- )
+  ( Model
+  , BriefDataR
+  , DiscountDataR
+  , Set
+  , ValidationErr(..)
+  , newBrief
+  , priceToPair
+  , priceToString
+  , blankBrief
+  , setToData
+  , equal
+  , id
+  , toData
+  )
 
 
 import Time
@@ -49,7 +53,7 @@ blankBriefR =
   }
 
 
-blankBrief : Item
+blankBrief : Model
 blankBrief = Brief blankBriefR
 
 
@@ -108,7 +112,7 @@ examples:
   itemSummary : BriefR
   itemSummary = Brief record
 -}
-type Item
+type Model
   = Brief BriefR
 
 
@@ -313,7 +317,7 @@ type alias DiscountR =
 {-| Represents a collection of Item. A set can have one or more filters
 applied to it.
 -}
-type Set = Set (List Filter) (List Item)
+type Set = Set (List Filter) (List Model)
 
 
 {-| represents a filter to be applied to an item set
@@ -417,16 +421,6 @@ type alias TagR =
   { id    : String
   , name  : String
   }
-
-
-{-| represents a price.
-
-example
-
-  --    dollars  cents
-  Price 35       99
--}
-type Price = Price Int Int
 
 
 {- TODO: This should be moved to a module dedicated to Users.  -}
@@ -626,10 +620,10 @@ example:
                             }
       }
 -}
-new
+newBrief
   : BriefDataR
-  -> Result ValidationErr Item
-new itemData =
+  -> Result ValidationErr Model
+newBrief itemData =
   let
     setCatTags = (\(v, d)->
                    let categories = List.map CategoryTag d.categoryTags
@@ -697,7 +691,7 @@ new itemData =
 
 {-| produce a new BriefDataR from the given Item
 -}
-toData : Item -> BriefDataR
+toData : Model -> BriefDataR
 toData item =
   let (Brief record) = item
   in
@@ -754,7 +748,7 @@ discountToData maybeDiscount =
 
 {-| produce the string representation of the given price
 -}
-priceToString : Price -> String
+priceToString : Float -> String
 priceToString price =
   let (dollars, cents) = priceToPair price
       strDollars = String.fromInt dollars
@@ -795,24 +789,18 @@ validatePrice itemId strPrice initialItem =
         Ok { initialItem | listPrice = fPrice }
 
 
-{-| produce a new price from the given float.
--}
-floatToPrice : Float -> Price
-floatToPrice fPrice =
-  let dollars = floor fPrice
-      cents = round (100*(fPrice - (toFloat dollars)))
-  in Price dollars cents 
-
-
-{-| produce a new pair from the given price where the first element is the
-dollar component and the second element is the price.
+{-| produce a new pair from the given price where the first element is
+the dollar component and the second element is the cent.
 
 example:
 
- priceToPair <| Price 8 99 == (8, 99)
+ priceToPair <| 8.99 == (8, 99)
 -}
-priceToPair : Price -> (Int, Int)
-priceToPair (Price dollars cents) = (dollars, cents)
+priceToPair : Float -> (Int, Int)
+priceToPair fPrice =
+  let dollars = floor fPrice
+      cents = floor <| (fPrice - (toFloat dollars)) * 100.0
+  in (dollars, cents)
 
 
 {-| Take a string representation of a size and convert it to an actual
@@ -942,4 +930,18 @@ strToMaybeGrad strGrad =
 setToData : Set -> List BriefDataR
 setToData (Set _ items) =
   List.map (\item -> toData item) items
+
+
+{-| produce True if the id of both Items are the same
+-}
+equal : Model -> Model -> Bool
+equal item1 item2 = (id item1) == (id item2)
+
+
+{-| produce the id of the given item
+-}
+id : Model -> String
+id item =
+  case item of
+    Brief record -> record.id
 

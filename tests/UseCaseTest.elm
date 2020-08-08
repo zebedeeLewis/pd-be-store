@@ -53,9 +53,9 @@ itemBriefData =
   }
 
 
-itemBrief : Item.Item
+itemBrief : Item.Model
 itemBrief =
-  case Item.new itemBriefData of
+  case Item.newBrief itemBriefData of
     Err _ -> Item.blankBrief
     Ok brief -> brief
 

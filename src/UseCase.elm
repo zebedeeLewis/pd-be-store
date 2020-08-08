@@ -31,7 +31,7 @@ on the return type of the ItemBriefView function.
 -}
 viewItemBrief
   : ( Item.BriefDataR -> view )
-  -> Item.Item
+  -> Item.Model
   -> view
 viewItemBrief viewFn item =
   viewFn <| Item.toData item
