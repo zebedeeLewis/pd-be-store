@@ -20,6 +20,21 @@ import Item
 -- DATA DEFINITIONS
 -----------------------------------------------------------------------
 
+{-| Interface defines a function used to display a view of the contents
+of a shopping list.
+-}
+ShoppingListView view =
+  (List 
+     { name       : String
+     , brand      : String
+     , variant    : String
+     , size       : String
+     , listTotal  : String
+     , saleTotal  : String
+     , qty        : String
+     }
+  ) -> view
+
 
 
 -----------------------------------------------------------------------
@@ -37,9 +52,10 @@ viewItemBrief viewFn item =
   viewFn <| Item.toData item
 
 
-{-| produce a view of the given set of items
+{-| produce a view of the contents of the given shopping list.
 -}
-viewItemSet : (List Item.BriefDataR -> view) -> Item.Set -> view
-viewItemSet renderer itemSet =
+viewListContent : ShoppingListView view -> ShoppingList.Model -> view
+viewListContent renderer itemSet =
   renderer <| Item.setToData itemSet
+
 
