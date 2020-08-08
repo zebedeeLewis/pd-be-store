@@ -34,7 +34,7 @@ itemBriefData =
   , imageThumbnail  = "https://www.example.com/chicken.jpg"
   , brand           = "caribbean chicken"
   , variant         = "bag"
-  , price           = "15.93"
+  , listPrice       = "15.93"
   , size            = "1000.5 mg"
   , departmentTags  = [ { id = "UID789"
                         , name = "deptTag"
@@ -67,7 +67,7 @@ itemBriefR =
       , imageThumbnail  = "https://www.example.com/chicken.jpg"
       , brand           = "caribbean chicken"
       , variant         = "bag"
-      , price           = Item.Price 15 93
+      , listPrice       = 15.93
       , size            = Item.Grad 1000.5 Item.MG
       , departmentTags  = [ Item.DepartmentTag
                               { id = "UID789"
@@ -160,7 +160,7 @@ new =
               in
                 Expect.equal
                   ( Item.new
-                      { itemBriefData | price = newPriceData } )
+                      { itemBriefData | listPrice = newPriceData } )
                   ( Err
                        <| Item.NaNPrice
                             itemBriefData.id newPriceData )
@@ -172,7 +172,7 @@ new =
               in
                 Expect.equal
                   ( Item.new
-                      { itemBriefData | price = newPriceData } )
+                      { itemBriefData | listPrice = newPriceData } )
                   ( Err
                        <| Item.NegativePrice
                             itemBriefData.id newPriceData )

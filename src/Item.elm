@@ -21,6 +21,7 @@ import Time
 -----------------------------------------------------------------------
 -- CONSTANT DEFINITIONS
 -----------------------------------------------------------------------
+
 litre = 1000           -- ml
 gallon = 4547          -- ml
 cubicMetre = 1000000   -- cubic cm
@@ -37,7 +38,7 @@ blankBriefR =
   , imageThumbnail  = ""
   , brand           = ""
   , variant         = ""
-  , price           = Price 0 0
+  , listPrice       = 0.0
   , size            = LG
   , departmentTags  = []
   , categoryTags    = []
@@ -73,7 +74,7 @@ examples:
     , imageThumbnail  = "https://www.example.com/chicken.jpg"
     , brand           = "caribbean chicken"
     , variant         = "bag"
-    , price           = Price 15 93
+    , listPrice       = 15.93
     , size            = Grad 1000.5 MG
     , departmentTags  = [ DepartmentTag
                             { id = "UID789"
@@ -137,7 +138,7 @@ example:
     , imageThumbnail  = "https://www.example.com/chicken.jpg"
     , brand           = "caribbean chicken"
     , variant         = "bag"
-    , price           = 15.93
+    , listPrice       = 15.93
     , size            = Grad 1000.5 MG
     , departmentTags  = [ DepartmentTag
                             { id = "UID789"
@@ -174,7 +175,7 @@ type alias BriefR =
   , imageThumbnail  : String
   , brand           : String
   , variant         : String
-  , price           : Price
+  , listPrice       : Float
   , size            : Size
   , departmentTags  : List Tag
   , categoryTags    : List Tag
@@ -197,7 +198,7 @@ example:
     , imageThumbnail  = "https://www.example.com/chicken.jpg"
     , brand           = "caribbean chicken"
     , variant         = "bag"
-    , price           = "15.93"
+    , listPrice       = "15.93"
     , size            = "1000.5 mg"
     , departmentTags  = [ { id = "UID789"
                           , name = "deptTag"
@@ -229,7 +230,7 @@ type alias BriefDataR =
   , imageThumbnail  : String
   , brand           : String
   , variant         : String
-  , price           : String
+  , listPrice       : String
   , size            : String
   , departmentTags  : List { id : String, name : String }
   , categoryTags    : List { id : String, name : String }
@@ -669,7 +670,7 @@ new itemData =
     result =
       validateId itemData.id blankBriefR
         |> Result.andThen
-             (validatePrice itemData.id itemData.price)
+             (validatePrice itemData.id itemData.listPrice)
         |> Result.andThen
              (validateSize itemData.id itemData.size)
         |> Result.andThen
@@ -705,7 +706,7 @@ toData item =
     , imageThumbnail  = record.imageThumbnail
     , brand           = record.brand
     , variant         = record.variant
-    , price           = priceToString record.price
+    , listPrice       = String.fromFloat record.listPrice
     , size            = sizeToString record.size
     , departmentTags  = List.map tagToData record.departmentTags
     , categoryTags    = List.map tagToData record.categoryTags
@@ -791,8 +792,7 @@ validatePrice itemId strPrice initialItem =
       if fPrice < 0
         then Err <| NegativePrice itemId strPrice
       else
-        let price = floatToPrice fPrice
-        in Ok { initialItem | price = price }
+        Ok { initialItem | listPrice = fPrice }
 
 
 {-| produce a new price from the given float.
