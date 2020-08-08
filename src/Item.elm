@@ -955,3 +955,31 @@ listPrice item =
   case item of
     Brief record -> record.listPrice
 
+
+{-| produce the discount sales price of the given item
+-}
+discountSalePrice : Model -> Float
+discountSalePrice item =
+  case item of
+    Brief record ->
+      let listPrice_ = record.listPrice 
+          maybeDiscount = record.discount
+      in
+        case maybeDiscount of
+          Nothing -> listPrice_
+          Just discount ->
+            applyDiscount listPrice_ discount
+
+
+{-| apply the discount to the price and produce the results.
+-}
+applyDiscount : Float -> Discount -> Float
+applyDiscount listPrice_ discount =
+  let discountVal = listPrice_ * ((discountPercentage discount)/100)
+  in listPrice_ - discountVal 
+
+
+{-| produce the percentage of the given discount
+-}
+discountPercentage : Discount -> Float
+discountPercentage (Discount record) = record.value
