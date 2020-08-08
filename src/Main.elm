@@ -11,6 +11,9 @@ import ShoppingList
 import UseCase
 import View
 
+-- TEST PURPOSES ONLY
+import DummyItem
+
 
 -----------------------------------------------------------------------
 -- DATA DEFINITIONS
@@ -23,7 +26,7 @@ type alias Model =
 
 
 type App
-  = Loading
+  = Loading ShoppingList.Model
   | ItemBrowser ShoppingList.Model Item.Set
 
 
@@ -31,6 +34,7 @@ type Msg
   = UrlChanged Url.Url
   | LinkClicked Browser.UrlRequest
   | ViewMsg View.Msg
+  | GotDummyDataSeed 
 
 
 
@@ -66,11 +70,10 @@ view model =
   let
     content =
       case model.app of
-        Loading -> Html.div [] []
+        Loading cart -> Html.div [] []
 
         ItemBrowser cart items ->
-          UseCase.viewItemSet
-            (toUnstyled << View.renderItemBrowser model.view) items
+          toUnstyled <| View.renderItemBrowser cart items model.view
   in
     { title = "test" , body = [ liftHtml content ] }
 
@@ -99,18 +102,18 @@ appView app =
   let header =
         { navdrawer =
             View.NavdrawerC
-              True
+              False
               [ { label = "test1"
                 , value = "test"
-                , active = True
+                , active = False
                 }
               ]
         , navbar = View.NavbarC
-        , cartdrawer = View.CartdrawerC True ShoppingList.empty
+        , cartdrawer = View.CartdrawerC False ShoppingList.empty
         }
   in
     case app of
-      Loading ->
+      Loading cart ->
         View.Loading { header = header }
 
       ItemBrowser cart items ->

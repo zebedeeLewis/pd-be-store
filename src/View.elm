@@ -144,8 +144,8 @@ toggleCartdrawer header =
 
 -- RENDERS
 
-renderItemBrowser : Model -> List Item.BriefDataR -> Html Msg
-renderItemBrowser model items =
+renderItemBrowser : ShoppingList.Model -> Item.Set -> Model -> Html Msg
+renderItemBrowser cart items model =
   case model of
     ItemBrowser browserView ->
       let header = browserView.header
@@ -154,7 +154,7 @@ renderItemBrowser model items =
           [ ViewStyle.appContainer ]
           [ renderHeader header.navbar header.navdrawer
           , renderCartdrawer header.cartdrawer
-          , renderItemBrowserContent model items
+          , renderItemBrowserContent items model
           ]
 
     _ ->
@@ -350,8 +350,8 @@ renderCartdrawer cartdrawer =
       ]
 
 
-renderItemBrowserContent : Model -> List Item.BriefDataR -> Html Msg
-renderItemBrowserContent model items =
+renderItemBrowserContent : Item.Set -> Model -> Html Msg
+renderItemBrowserContent items model =
   div
     []
     [

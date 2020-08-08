@@ -65,6 +65,9 @@ itemBrief =
 -- TESTS
 -------------------------------------------------------------------------
 
-useCase = todo "Create Use Case Tests"
+viewCart =
+  describe "User should be able to view contents of shopping list"
+    [ todo ""
+    ]
 
 

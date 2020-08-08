@@ -7,6 +7,8 @@ module Item exposing
   , BriefDataR
   , DiscountDataR
   , Set
+  , Size(..)
+  , Measure(..)
   , ValidationErr(..)
   , newBrief
   , priceToPair
@@ -16,7 +18,13 @@ module Item exposing
   , setToData
   , equal
   , id
+  , sizeToString
+  , name
+  , size
+  , variant
   , listPrice
+  , salePrice
+  , brand
   , toData
   )
 
@@ -505,19 +513,19 @@ filterBy department items =
   produce the string representation of an Size
 -}
 sizeToString : Size -> String
-sizeToString size =
-  case size of
-    LG -> "LG"
-    XL -> "XL"
-    SM -> "SM"
-    XS -> "XS"
-    M  -> "M"
+sizeToString size_ =
+  case size_ of
     Grad value measure ->
       case measure of
         ML  -> (String.fromFloat value) ++ " ml" 
         CC -> (String.fromFloat value) ++ " cc"
         MG -> (String.fromFloat value) ++ " mg"
         MM -> (String.fromFloat value) ++ " mm"
+    LG -> "LG"
+    XL -> "XL"
+    SM -> "SM"
+    XS -> "XS"
+    M  -> "M"
 
 
 getTagR : Tag -> TagR
@@ -542,9 +550,9 @@ newDiscount
   -> Float
   -> List String
   -> Discount
-newDiscount  code name value items =
+newDiscount  code name_ value items =
   Discount { discount_code = code
-               , name          = name
+               , name          = name_
                , value         = value
                , items         = items
                }
@@ -645,16 +653,16 @@ newBrief itemData =
                       in ({ v | searchTags = search }, d))
 
     setName = (\(v, d) ->
-                let name = d.name
-                in ({ v | name = name }, d))
+                let name_ = d.name
+                in ({ v | name = name_ }, d))
 
     setBrand = (\(v, d) ->
-                 let brand = d.brand
-                 in ({ v | brand = brand }, d))
+                 let brand_ = d.brand
+                 in ({ v | brand = brand_ }, d))
 
     setVariant = (\(v, d) ->
-                   let variant = d.variant
-                   in ({ v | variant = variant }, d))
+                   let variant_ = d.variant
+                   in ({ v | variant = variant_ }, d))
 
     setImageThumbnail = (\(v, d) ->
                           let imageThumbnail = d.imageThumbnail
@@ -751,8 +759,8 @@ discountToData maybeDiscount =
 {-| produce the string representation of the given price
 -}
 priceToString : Float -> String
-priceToString price =
-  let (dollars, cents) = priceToPair price
+priceToString price_ =
+  let (dollars, cents) = priceToPair price_
       strDollars = String.fromInt dollars
       strCents = String.fromInt cents
   in strDollars ++ "." ++ strCents
@@ -818,7 +826,7 @@ validateSize
 validateSize itemId strSize initialItem =
   case strToMaybeSize strSize of
     Nothing -> Err <| InvalidSize itemId strSize
-    Just size -> Ok { initialItem | size = size }
+    Just size_ -> Ok { initialItem | size = size_ }
 
 
 {-| Take a string representation of an Availability and try to convert
@@ -948,6 +956,32 @@ id item =
     Brief record -> record.id
 
 
+{-| produce the item name
+-}
+name : Model -> String
+name item =
+  case item of
+    Brief record -> record.name
+
+
+brand : Model -> String
+brand item =
+  case item of
+    Brief record -> record.brand
+
+
+variant : Model -> String
+variant item =
+  case item of
+    Brief record -> record.variant
+
+
+size : Model -> Size
+size item =
+  case item of
+    Brief record -> record.size
+
+
 {-| produce the list price of the given item
 -}
 listPrice : Model -> Float
@@ -958,8 +992,8 @@ listPrice item =
 
 {-| produce the discount sales price of the given item
 -}
-discountSalePrice : Model -> Float
-discountSalePrice item =
+salePrice : Model -> Float
+salePrice item =
   case item of
     Brief record ->
       let listPrice_ = record.listPrice 
