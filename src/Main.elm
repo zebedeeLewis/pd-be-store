@@ -1,6 +1,8 @@
 module Main exposing (..)
 
 import Url
+import Time
+import Task
 import Html exposing (Html)
 import Html.Styled exposing (toUnstyled)
 import Browser
@@ -34,7 +36,7 @@ type Msg
   = UrlChanged Url.Url
   | LinkClicked Browser.UrlRequest
   | ViewMsg View.Msg
-  | GotDummyDataSeed 
+  | GotDummyData Int
 
 
 
@@ -61,7 +63,7 @@ init  _ url key =
     ( { app  = app
       , view = appView app
       }
-    , Cmd.none
+    , loadDummyData
     )
 
 
@@ -89,6 +91,13 @@ update msg model =
       ( { model | view = View.update viewMsg model.view }
       , Cmd.none
       )
+
+    GotDummyData seed ->
+      ( { model | app = ItemBrowser ShoppingList.empty (DummyItem.randomSet seed)
+      }
+      , Cmd.none
+      )
+
 
 
 liftHtml : Html View.Msg -> Html Msg
@@ -119,3 +128,11 @@ appView app =
       ItemBrowser cart items ->
         View.ItemBrowser 
           { header = header }
+
+
+loadDummyData : Cmd Msg
+loadDummyData =
+  Task.perform
+    (\pTime ->
+      GotDummyData (Time.posixToMillis pTime)
+    ) Time.now

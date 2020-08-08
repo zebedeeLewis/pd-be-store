@@ -176,3 +176,21 @@ randomItemBriefData seed =
   , discount        = Nothing
   }
 
+
+randomItemBrief : Int -> Item.Model
+randomItemBrief seed =
+  case Item.newBrief (randomItemBriefData seed) of
+    Err _ -> Item.blankBrief
+    Ok brief -> brief
+
+randomSet : Int -> Item.Set
+randomSet seed =
+  let data = List.map
+               (\i ->
+                 let seed_ = seed+i
+                 in randomItemBriefData seed
+               ) <| List.range 1 30
+  in Item.dataListToSet data
+
+
+

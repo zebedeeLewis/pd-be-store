@@ -15,6 +15,7 @@ module Item exposing
   , priceToString
   , blankBrief
   , emptySet
+  , addToSet
   , setToData
   , equal
   , id
@@ -26,6 +27,7 @@ module Item exposing
   , salePrice
   , brand
   , toData
+  , dataListToSet
   )
 
 
@@ -1017,3 +1019,17 @@ applyDiscount listPrice_ discount =
 -}
 discountPercentage : Discount -> Float
 discountPercentage (Discount record) = record.value
+
+
+{-| add an item to the set
+-}
+addToSet : Model -> Set -> Set
+addToSet item (Set filters items) =
+  Set filters (item::items)
+
+{-| produce a new set from a list list of Item Data
+-}
+dataListToSet : List BriefDataR -> Set
+dataListToSet lod =
+  Set [] <| List.filterMap (\data-> Result.toMaybe (newBrief data)) lod
+
