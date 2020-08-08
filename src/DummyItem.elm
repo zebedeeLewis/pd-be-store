@@ -82,6 +82,17 @@ randomVariant seed =
   in Random.step generator (Random.initialSeed seed) |> Tuple.first
 
 
+randomAvailability : Int -> Item.Availability
+randomAvailability seed =
+  let mapper x =
+        case x of
+          1 -> Item.IN_STOCK
+          2 -> Item.OUT_STOCK
+          _ -> Item.ORDER_ONLY
+      generator = Random.map mapper (Random.int 1 3)
+  in Random.step generator (Random.initialSeed seed) |> Tuple.first
+
+
 randomSize : Int -> Item.Size
 randomSize seed =
   let
@@ -130,6 +141,14 @@ randomFloat seed =
   |> Tuple.first
 
 
+randomInt : Int -> Int -> Int -> Int
+randomInt min max seed =
+  Random.step
+  (Random.int min max)
+  (Random.initialSeed seed)
+  |> Tuple.first
+
+
 randomDiscount : Int -> Item.DiscountDataR
 randomDiscount seed =
   { discount_code    = randomId seed
@@ -147,7 +166,7 @@ randomItemBriefData : Int -> Item.BriefDataR
 randomItemBriefData seed =
   { name            = randomItemName seed
   , id              = randomId seed
-  , imageThumbnail  = "https://www.example.com/chicken.jpg"
+  , imageThumbnail  = randomImageUrl seed
   , brand           = randomBrand seed
   , variant         = randomVariant seed
   , listPrice       = String.fromFloat (randomFloat seed)
@@ -172,8 +191,8 @@ randomItemBriefData seed =
                           , name = "searchTag"
                           }
                       ]
-  , availability    = ""
-  , discount        = Nothing
+  , availability    = Item.availabilityToStr (randomAvailability seed)
+  , discount        = Just (randomDiscount seed)
   }
 
 

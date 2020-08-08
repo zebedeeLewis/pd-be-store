@@ -15,6 +15,7 @@ import View
 
 -- TEST PURPOSES ONLY
 import DummyItem
+import DummyShoppingList
 
 
 -----------------------------------------------------------------------
@@ -93,8 +94,10 @@ update msg model =
       )
 
     GotDummyData seed ->
-      ( { model | app = ItemBrowser ShoppingList.empty (DummyItem.randomSet seed)
-      }
+      ( { model
+        | app = ItemBrowser (DummyShoppingList.randomList seed)
+                            (DummyItem.randomSet seed)
+        }
       , Cmd.none
       )
 

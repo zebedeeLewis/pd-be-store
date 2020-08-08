@@ -9,6 +9,7 @@ module Item exposing
   , Set
   , Size(..)
   , Measure(..)
+  , Availability(..)
   , ValidationErr(..)
   , newBrief
   , priceToPair
@@ -28,6 +29,7 @@ module Item exposing
   , brand
   , toData
   , dataListToSet
+  , availabilityToStr
   )
 
 
