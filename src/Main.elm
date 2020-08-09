@@ -121,7 +121,7 @@ appView app =
                 }
               ]
         , navbar = View.NavbarC
-        , cartdrawer = View.CartdrawerC False ShoppingList.empty
+        , cartdrawer = View.CartdrawerC False
         }
   in
     case app of

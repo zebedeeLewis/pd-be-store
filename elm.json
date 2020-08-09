@@ -6,6 +6,7 @@
     "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
+            "Chadtech/elm-money": "4.0.1",
             "TSFoster/elm-uuid": "4.0.1",
             "aforemny/material-components-web-elm": "4.0.0",
             "elm/browser": "1.0.2",
@@ -14,6 +15,7 @@
             "elm/random": "1.0.0",
             "elm/time": "1.0.0",
             "elm/url": "1.0.0",
+            "myrho/elm-round": "1.0.4",
             "rtfeldman/elm-css": "16.0.1",
             "toastal/either": "3.5.1"
         },

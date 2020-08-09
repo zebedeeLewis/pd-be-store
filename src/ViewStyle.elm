@@ -12,7 +12,7 @@ drawerContentWidth = 280 -- px
 drawerAnimationDuration = 1 -- ms
 drawerContentAnimationDuration = 300 -- ms
 baseline = 16 -- px
-defaultFontSize = 14 -- px
+defaultFontSize = 13 -- px
 navbarHeight = 48 -- px
 
 
@@ -309,6 +309,7 @@ drawerTopBar =
     , textAlign right
     , color theme.light_grey
     , paddingLeft (px 12)
+    , paddingRight (px 12)
     , boxSizing borderBox
     ]
 
@@ -360,6 +361,9 @@ cartdrawerStyle =
     , borderColor theme.lighter_grey
     , borderWidth (px 1)
     , backgroundColor theme.background
+    , fontSize (px defaultFontSize)
+    , overflowY hidden
+    , overflowX hidden
     ]
 
 
@@ -389,6 +393,7 @@ cartdrawerContentLabel =
     [ textAlign left
     , color theme.primary
     , textTransform capitalize
+    , fontWeight bold
     ]
 
 
@@ -422,6 +427,15 @@ btnSimple : Attribute msg
 btnSimple =
   css
     [ btnSimpleStyle
+    ]
+
+
+btnDiscount : Attribute msg
+btnDiscount =
+  css
+    [ btnSimpleStyle
+    , fontSize (px 13)
+    , fontWeight bold
     ]
 
 
@@ -715,7 +729,7 @@ cartdrawerActionLine =
   css
     [ displayFlex
     , mt1Style
-    , pb2Style
+    , pb1Style
     ]
 
 
@@ -727,9 +741,69 @@ cartdrawerContentValue =
     ]
 
 
-cartdrawerItems : Attribute msg
-cartdrawerItems =
-  css []
+cartdrawerEntries : Attribute msg
+cartdrawerEntries =
+  css
+    [ width (pct 100)
+    , pt2Style
+    ]
+
+
+cartdrawerEntry : Attribute msg
+cartdrawerEntry =
+  css
+    [ width (pct 100)
+    , mb2Style
+    , pb1Style
+    , borderBottomStyle solid
+    , borderWidth (px 1)
+    , borderColor theme.lighter_grey
+    , displayFlex
+    , lineHeight (num 1.5)
+    , fontSize (px 12)
+    , color theme.primary
+    ]
+
+
+cartEntryImg : Attribute msg
+cartEntryImg =
+  css
+    [ width (px 80)
+    ]
+
+
+cartEntryDetails : Attribute msg
+cartEntryDetails =
+  css
+    [ plHalfStyle
+    ]
+
+cartEntryVariant : Attribute msg
+cartEntryVariant =
+  css
+    [ color theme.dark_grey
+    , textTransform capitalize
+    ]
+
+
+cartEntryName : Attribute msg
+cartEntryName =
+  css 
+    [ textTransform capitalize
+    ]
+
+cartEntryPrice : Attribute msg
+cartEntryPrice =
+  css
+    [
+    ]
+
+
+cartEntrySize : Attribute msg
+cartEntrySize =
+  css 
+    [ textTransform capitalize
+    ]
 
 
 filterPanel : Attribute msg

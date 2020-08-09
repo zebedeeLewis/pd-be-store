@@ -5,7 +5,9 @@ module UseCase exposing
 
  -- Production Exports, uncomment the exposing block below for
  -- production and comment out the "Test Exports" above.
-  ( viewListContent
+  ( ShoppingListView
+  , CartEntryViewR
+  , viewListContent
   )
 
 
@@ -27,14 +29,15 @@ import ShoppingList
 of a shopping list.
 -}
 type alias ShoppingListView view =
-  (List ShoppingEntryViewR) -> view
+  (List CartEntryViewR) -> view
 
 
-type alias ShoppingEntryViewR =
+type alias CartEntryViewR =
   { name       : String
   , brand      : String
   , variant    : String
   , size       : String
+  , image      : String
   , listTotal  : String
   , saleTotal  : String
   , qty        : String
@@ -70,7 +73,7 @@ viewListContent renderer list =
 {-| produce a shopping list entry view record from the given Shopping
 list entry.
 -}
-entryToViewR : ShoppingList.Entry -> ShoppingEntryViewR
+entryToViewR : ShoppingList.Entry -> CartEntryViewR
 entryToViewR entry =
   let item = ShoppingList.item entry
       qty = ShoppingList.qty entry
@@ -81,7 +84,10 @@ entryToViewR entry =
     , brand      = Item.brand item 
     , variant    = Item.variant item
     , size       = Item.sizeToString <| Item.size item
+    , image      = Item.image item
     , listTotal  = String.fromFloat listTotal 
     , saleTotal  = String.fromFloat saleTotal
     , qty        = String.fromInt qty
     }
+
+

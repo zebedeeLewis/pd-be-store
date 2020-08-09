@@ -14,10 +14,12 @@ import Html.Events
 import Html.Attributes
 import Html.Styled exposing
   ( Html , br , h1 , h2, input, a, button, span, ul, li, div, text
-  , fromUnstyled, toUnstyled
+  , fromUnstyled, toUnstyled, img
   )
 import Html.Styled.Attributes exposing
-  (id, placeholder, value, type_, class, css, href, src, style)
+  (id, placeholder, value, type_, class, css, href, src, style
+  , attribute
+  )
 import Html.Styled.Events exposing (onClick)
 
 import Material.IconButton as IconButton
@@ -26,6 +28,7 @@ import Material.Icon as Icon
 
 import Item
 import ShoppingList
+import UseCase
 import ViewStyle
 
 
@@ -76,7 +79,7 @@ type NavbarC = NavbarC
 type NavdrawerC = NavdrawerC Bool (List NavItem)
 
 
-type CartdrawerC = CartdrawerC Bool (ShoppingList.Model)
+type CartdrawerC = CartdrawerC Bool
 
 
 type alias NavItem =
@@ -136,8 +139,8 @@ toggleNavdrawer header =
 
 toggleCartdrawer : HeaderC -> HeaderC
 toggleCartdrawer header =
-  let (CartdrawerC toggled cart) = header.cartdrawer
-      cartdrawer = CartdrawerC (not toggled) cart
+  let (CartdrawerC toggled) = header.cartdrawer
+      cartdrawer = CartdrawerC (not toggled)
 
   in { header | cartdrawer = cartdrawer }
 
@@ -153,7 +156,7 @@ renderItemBrowser cart items model =
         div
           [ ViewStyle.appContainer ]
           [ renderHeader header.navbar header.navdrawer
-          , renderCartdrawer header.cartdrawer
+          , renderCartdrawer cart header.cartdrawer
           , renderItemBrowserContent items model
           ]
 
@@ -163,19 +166,17 @@ renderItemBrowser cart items model =
         [ text "Invalid Data passed to Item browser" ]
 
 
-renderCartdrawer : CartdrawerC -> Html Msg
-renderCartdrawer cartdrawer =
-  let (CartdrawerC toggled cart) = cartdrawer
+renderCartdrawer : ShoppingList.Model -> CartdrawerC -> Html Msg
+renderCartdrawer cart cartdrawer =
+  let (CartdrawerC toggled) = cartdrawer
   in
     div
       [ if toggled 
           then ViewStyle.cartdrawerShown
           else ViewStyle.cartdrawerHidden
-      , class "elevation1"
       ]
       [ div
-          [ ViewStyle.cartdrawerContent
-          ]
+          [ ]
           [ div
               [ ViewStyle.drawerTopBar ]
               [ div
@@ -193,29 +194,51 @@ renderCartdrawer cartdrawer =
                   ]
               ]
           , div
-              [ ViewStyle.cartdrawerContent ]
+              [ ViewStyle.cartdrawerActionLine ]
+              [ button
+                  [ ViewStyle.btnFilledPrimaryBlock ]
+                  [ text "check out" ]
+              ]
+          , div
+              [ ViewStyle.cartdrawerContent
+              ]
               [ div
                   [ ViewStyle.cartdrawerSummary ]
                   [ div
-                      [ ViewStyle.cartdrawerSubTotal ]
+                      [ ViewStyle.cartdrawerDiscounts ]
                       [ span
                           [ ViewStyle.cartdrawerContentLabel ]
-                          [ text "sub-total" ]
+                          [ button
+                              [ ViewStyle.btnDiscount ]
+                              [ text "sub-total"
+                              , fromUnstyled
+                                  (Icon.icon
+                                    [ Html.Attributes.style
+                                        "font-size" "13px"
+                                    , Html.Attributes.style
+                                        "vertical-align" "text-bottom"
+                                    , Html.Events.onClick
+                                        NoOp
+                                    ]
+                                    "keyboard_arrow_down")
+                              ]
+                          ]
                       , span
                           [ ViewStyle.cartdrawerContentValue ]
-                          [ text "$300.00" ]
+                          [ text "$35.00" ]
                       ]
+                  , UseCase.viewListContent renderShoppingCart cart
                   , div
                       [ ViewStyle.cartdrawerDiscounts ]
                       [ span
                           [ ViewStyle.cartdrawerContentLabel ]
                           [ button
-                              [ ViewStyle.btnSimple ]
+                              [ ViewStyle.btnDiscount ]
                               [ text "discounts"
                               , fromUnstyled
                                   (Icon.icon
                                     [ Html.Attributes.style
-                                        "font-size" "14px"
+                                        "font-size" "13px"
                                     , Html.Attributes.style
                                         "vertical-align" "text-bottom"
                                     , Html.Events.onClick
@@ -332,22 +355,47 @@ renderCartdrawer cartdrawer =
                           [ ViewStyle.cartdrawerContentValue ]
                           [ text "$300.00" ]
                       ]
-                  , div
-                      [ ViewStyle.cartdrawerActionLine ]
-                      [ button
-                          [ ViewStyle.btnPrimary ]
-                          [ text "check out" ]
-                      , button
-                          [ ViewStyle.btnDangerCartdrawer ]
-                          [ text "clear cart" ]
-                      ]
                   ]
-              , div
-                  [ ViewStyle.cartdrawerItems ]
-                  [ text "Todo..." ]
               ]
           ]
       ]
+
+
+renderShoppingCart : UseCase.ShoppingListView (Html Msg)
+renderShoppingCart entrySet =
+  div
+    [ ViewStyle.cartdrawerEntries ]
+    (List.map renderCartEntry entrySet)
+
+
+renderCartEntry : UseCase.CartEntryViewR -> Html Msg
+renderCartEntry entry =
+  div
+    [ ViewStyle.cartdrawerEntry ]
+    [ img 
+        [ src entry.image
+        , ViewStyle.cartEntryImg
+        ] []
+    , div
+        [ ViewStyle.cartEntryDetails
+        ]
+        [ span
+            [ ViewStyle.cartEntryName ]
+            [ text entry.name ]
+        , br [] []
+        , span
+            [ ViewStyle.cartEntryVariant ]
+            [ text entry.variant ]
+        , br [] []
+        , span
+            [ ViewStyle.cartEntrySize ]
+            [ text entry.size ]
+        , br [] []
+        , span
+            [ ViewStyle.cartEntryPrice ]
+            [ text entry.saleTotal ]
+        ]
+    ]
 
 
 renderItemBrowserContent : Item.Set -> Model -> Html Msg

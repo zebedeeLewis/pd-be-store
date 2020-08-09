@@ -22,6 +22,7 @@ module Item exposing
   , id
   , sizeToString
   , name
+  , image
   , size
   , variant
   , listPrice
@@ -986,6 +987,12 @@ size item =
     Brief record -> record.size
 
 
+image : Model -> String
+image item =
+  case item of
+    Brief record -> record.imageThumbnail
+
+
 {-| produce the list price of the given item
 -}
 listPrice : Model -> Float
@@ -1028,6 +1035,7 @@ discountPercentage (Discount record) = record.value
 addToSet : Model -> Set -> Set
 addToSet item (Set filters items) =
   Set filters (item::items)
+
 
 {-| produce a new set from a list list of Item Data
 -}
