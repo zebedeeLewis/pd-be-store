@@ -183,7 +183,7 @@ renderCartdrawer cart cartdrawer =
                   [ ViewStyle.drawerTopBarTitle ]
                   [ text "shopping Cart" ]
               , button
-                  [ ViewStyle.btnClose
+                  [ ViewStyle.btnCloseCart
                   , onClick ToggleCartdrawer
                   ]
                   [ fromUnstyled
@@ -379,22 +379,66 @@ renderCartEntry entry =
     , div
         [ ViewStyle.cartEntryDetails
         ]
-        [ span
-            [ ViewStyle.cartEntryName ]
-            [ text entry.name ]
-        , br [] []
+        [ renderEntryName (entry.name ++ " by " ++ entry.brand)
         , span
             [ ViewStyle.cartEntryVariant ]
-            [ text entry.variant ]
-        , br [] []
+            [ text (entry.variant ++ ", ") ]
         , span
             [ ViewStyle.cartEntrySize ]
             [ text entry.size ]
-        , br [] []
-        , span
-            [ ViewStyle.cartEntryPrice ]
-            [ text entry.saleTotal ]
+        , div
+            [ ViewStyle.qtyWrapper ]
+            [ button
+                [ ViewStyle.qtyBtnDec
+                , onClick NoOp
+                ]
+                [ text "-" ]
+            , span
+                [ ViewStyle.qtyVal ]
+                [ text (String.fromInt entry.qty) ]
+            , button
+                [ ViewStyle.qtyBtnInc
+                , onClick NoOp
+                ]
+                [ text "+" ]
+            ]
         ]
+    , div
+        [ ViewStyle.cartEntryPrice ]
+        <| [ div
+               [ if entry.saleTotal < entry.listTotal
+                   then ViewStyle.wasPrice
+                   else ViewStyle.nowPrice
+               ]
+               [ text <| "$ " ++ (String.fromFloat entry.listTotal) ]
+           ] ++ 
+           if entry.saleTotal < entry.listTotal
+             then [ div
+                      [ ViewStyle.nowPrice ]
+                      [ text
+                          <| "$ " ++ (String.fromFloat entry.saleTotal)
+                      ]
+                  ]
+             else []
+        
+
+    ]
+
+
+renderEntryName : String -> Html Msg
+renderEntryName name =
+  div
+    [ ViewStyle.cartEntryName ]
+    [ let maybeFirstWord = List.head (String.words name)
+      in
+        case maybeFirstWord of
+          Nothing -> text name
+          Just firstWord ->
+            if String.length firstWord > 17
+              then text <| (String.dropRight 3 firstWord) ++ " ..."
+            else if String.length name > 24
+              then text <| (String.dropRight 3 name) ++ " ..."
+              else text name
     ]
 
 

@@ -38,9 +38,9 @@ type alias CartEntryViewR =
   , variant    : String
   , size       : String
   , image      : String
-  , listTotal  : String
-  , saleTotal  : String
-  , qty        : String
+  , listTotal  : Float
+  , saleTotal  : Float
+  , qty        : Int
   }
 
 
@@ -85,9 +85,9 @@ entryToViewR entry =
     , variant    = Item.variant item
     , size       = Item.sizeToString <| Item.size item
     , image      = Item.image item
-    , listTotal  = String.fromFloat listTotal 
-    , saleTotal  = String.fromFloat saleTotal
-    , qty        = String.fromInt qty
+    , listTotal  = listTotal 
+    , saleTotal  = saleTotal
+    , qty        = qty
     }
 
 

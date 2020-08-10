@@ -34,6 +34,8 @@ type alias Theme =
   , primary_light   : Color
   , primary_dark    : Color
   , secondary       : Color
+  , secondary_light : Color
+  , secondary_dark  : Color
   , danger          : Color
   , danger_light    : Color
   , on_danger_light : Color
@@ -41,6 +43,7 @@ type alias Theme =
   , on_danger_dark  : Color
   , background      : Color
   , on_primary      : Color
+  , on_secondary    : Color
   , on_surface      : Color
   , dark_grey       : Color
   , light_grey      : Color
@@ -51,10 +54,12 @@ type alias Theme =
 
 theme : Theme
 theme =
-  { primary         = hex "041e42"
-  , primary_light   = hex "35456d"
-  , primary_dark    = hex "00001c"
-  , secondary       = hex "f68139"
+  { primary         = hex "1a237e"
+  , primary_light   = hex "534bae"
+  , primary_dark    = hex "000051"
+  , secondary       = hex "00bfa5"
+  , secondary_light = hex "5df2d6"
+  , secondary_dark  = hex "008e76"
   , danger          = hex "d50000"
   , danger_light    = hex "ff5131"
   , on_danger_light = hex "000"
@@ -62,9 +67,10 @@ theme =
   , on_danger_dark  = hex "fff"
   , background      = hex "fff"
   , on_primary      = hex "fff"
+  , on_secondary    = hex "000"
   , on_surface      = hex "041e42"
   , light_grey      = hex "77859940"
-  , dark_grey      = hex "738195"
+  , dark_grey       = hex "738195"
   , lighter_grey    = hex "f5f6f7"
   , light_green     = hex "#76ff03"
   }
@@ -307,7 +313,8 @@ drawerTopBar =
   css
     [ displayFlex
     , textAlign right
-    , color theme.light_grey
+    -- , color theme.light_grey
+    , backgroundColor theme.primary_light
     , paddingLeft (px 12)
     , paddingRight (px 12)
     , boxSizing borderBox
@@ -318,7 +325,7 @@ drawerTopBarTitle : Attribute msg
 drawerTopBarTitle =
   css
     [ fontSize (px 18)
-    , color theme.primary
+    , color theme.on_primary
     , textTransform capitalize
     , paddingTop (px 12)
     , paddingBottom (px 12)
@@ -349,7 +356,7 @@ cartdrawerStyle : Style
 cartdrawerStyle =
   batch
     [ width (pct 100)
-    , paddingTop (px 60)
+    , paddingTop (px 48)
     , maxWidth (px drawerMaxWidth)
     , height (vh 100)
     , position absolute
@@ -395,6 +402,19 @@ cartdrawerContentLabel =
     , textTransform capitalize
     , fontWeight bold
     ]
+
+
+wasPrice : Attribute ms
+wasPrice =
+  css
+    [ textDecoration lineThrough
+    , color theme.dark_grey
+    ]
+
+
+nowPrice : Attribute ms
+nowPrice =
+  css [ ]
 
 
 cartdrawerContentLine : Style
@@ -477,6 +497,20 @@ cartdrawerDiscountBtnStyle =
 btnClose : Attribute msg
 btnClose =
   css
+    [ btnCloseStyle ]
+
+
+btnCloseCart : Attribute msg
+btnCloseCart =
+  css
+    [ btnCloseStyle
+    , color theme.on_primary
+    ]
+
+
+btnCloseStyle : Style
+btnCloseStyle =
+  batch
     [ btnSimpleStyle
     , display inlineBlock
     , marginLeft auto
@@ -728,7 +762,6 @@ cartdrawerActionLine : Attribute msg
 cartdrawerActionLine =
   css
     [ displayFlex
-    , mt1Style
     , pb1Style
     ]
 
@@ -760,8 +793,8 @@ cartdrawerEntry =
     , borderColor theme.lighter_grey
     , displayFlex
     , lineHeight (num 1.5)
-    , fontSize (px 12)
-    , color theme.primary
+    , fontSize (px 13)
+    , color theme.primary_dark
     ]
 
 
@@ -776,6 +809,9 @@ cartEntryDetails : Attribute msg
 cartEntryDetails =
   css
     [ plHalfStyle
+    , flexGrow (num 0)
+    , flexShrink (num 0)
+    , flexBasis (pct 44)
     ]
 
 cartEntryVariant : Attribute msg
@@ -786,16 +822,26 @@ cartEntryVariant =
     ]
 
 
+entryNameLineH = 18
+
 cartEntryName : Attribute msg
 cartEntryName =
   css 
     [ textTransform capitalize
+    , fontSize (px 14)
+    , lineHeight (px entryNameLineH)
+    , fontWeight bold
+    , height <| px (2 * entryNameLineH)
+    , overflow hidden
     ]
 
 cartEntryPrice : Attribute msg
 cartEntryPrice =
   css
-    [
+    [ textAlign right
+    , fontSize (px 14)
+    , plHalfStyle
+    , mlAutoStyle
     ]
 
 
@@ -803,6 +849,61 @@ cartEntrySize : Attribute msg
 cartEntrySize =
   css 
     [ textTransform capitalize
+    ]
+
+
+qtyWrapper : Attribute msg
+qtyWrapper =
+  css
+   [ mt1Style
+   , displayFlex
+   ]
+
+
+qtyBtnDec : Attribute msg
+qtyBtnDec =
+  css
+    [ qtyBtnStyle
+    , borderTopLeftRadius (px 4)
+    , borderBottomLeftRadius (px 4)
+    ]
+
+
+qtyBtnInc : Attribute msg
+qtyBtnInc =
+  css
+    [ qtyBtnStyle
+    , borderTopRightRadius (px 4)
+    , borderBottomRightRadius (px 4)
+    ]
+
+
+qtyBtnStyle : Style
+qtyBtnStyle =
+  batch
+    [ ptHalfStyle
+    , pbHalfStyle
+    , flexGrow (num 2)
+    , flexShrink (num 2)
+    , flexBasis auto
+    , lineHeight (px 2)
+    , pl1Style
+    , pr1Style
+    , backgroundColor theme.lighter_grey
+    , borderStyle none
+    , outline none
+    ]
+
+
+qtyVal : Attribute msg
+qtyVal =
+  css
+    [ display inlineBlock
+    , flexGrow (num 3)
+    , flexShrink (num 3)
+    , flexBasis auto
+    , textAlign center
+    , backgroundColor (hex "fff")
     ]
 
 

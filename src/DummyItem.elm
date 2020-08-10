@@ -21,7 +21,7 @@ randomItemName seed =
   let mapper x =
         case x of
           0 -> "chicken legs"
-          1 -> "tortialla chips"
+          1 -> "fried tortilla chips from mexican desert"
           2 -> "ground beaf"
           3 -> "ice cream"
           4 -> "sliced bread"
