@@ -811,7 +811,7 @@ cartEntryDetails =
     [ plHalfStyle
     , flexGrow (num 0)
     , flexShrink (num 0)
-    , flexBasis (pct 44)
+    , flexBasis (pct 40)
     ]
 
 cartEntryVariant : Attribute msg

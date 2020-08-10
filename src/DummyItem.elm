@@ -1,5 +1,6 @@
 module DummyItem exposing (..)
 
+import Round
 import Random
 import UUID
 
@@ -82,19 +83,56 @@ randomVariant seed =
   in Random.step generator (Random.initialSeed seed) |> Tuple.first
 
 
-randomAvailability : Int -> Item.Availability
-randomAvailability seed =
+-- randomAvailability : Int -> Item.Availability
+-- randomAvailability seed =
+--   let mapper x =
+--         case x of
+--           1 -> Item.IN_STOCK
+--           2 -> Item.OUT_STOCK
+--           _ -> Item.ORDER_ONLY
+--       generator = Random.map mapper (Random.int 1 3)
+--   in Random.step generator (Random.initialSeed seed) |> Tuple.first
+
+
+randomStrAvailability : Int -> String
+randomStrAvailability seed =
   let mapper x =
         case x of
-          1 -> Item.IN_STOCK
-          2 -> Item.OUT_STOCK
-          _ -> Item.ORDER_ONLY
+          1 -> "IN_STOCK"
+          2 -> "OUT_STOCK"
+          _ -> "ORDER_ONLY"
       generator = Random.map mapper (Random.int 1 3)
   in Random.step generator (Random.initialSeed seed) |> Tuple.first
 
 
-randomSize : Int -> Item.Size
-randomSize seed =
+-- randomSize : Int -> Item.Size
+-- randomSize seed =
+--   let
+--     mapper constructor value measure  =
+--       let x = (constructor, value, measure)
+--       in
+--         case x of
+--           (1, value_, measure_) ->
+--             case measure of
+--               1 -> Item.Grad value Item.ML
+--               2 -> Item.Grad value Item.MM
+--               3 -> Item.Grad value Item.CC
+--               _ -> Item.Grad value Item.MG
+--           (2, _, _) -> Item.LG
+--           (3, _, _) -> Item.XL
+--           (4, _, _) -> Item.SM
+--           (5, _, _) -> Item.XS
+--           (_, _, _) -> Item.M
+--     generator = Random.map3
+--                   mapper
+--                   (Random.int 1 6)
+--                   (Random.float 0 200)
+--                   (Random.int 1 4)
+--   in Random.step generator (Random.initialSeed seed) |> Tuple.first
+
+
+randomStrSize : Int -> String
+randomStrSize seed =
   let
     mapper constructor value measure  =
       let x = (constructor, value, measure)
@@ -102,19 +140,19 @@ randomSize seed =
         case x of
           (1, value_, measure_) ->
             case measure of
-              1 -> Item.Grad value Item.ML
-              2 -> Item.Grad value Item.MM
-              3 -> Item.Grad value Item.CC
-              _ -> Item.Grad value Item.MG
-          (2, _, _) -> Item.LG
-          (3, _, _) -> Item.XL
-          (4, _, _) -> Item.SM
-          (5, _, _) -> Item.XS
-          (_, _, _) -> Item.M
+              1 -> String.join " " [(String.fromFloat value), "ml"]
+              2 -> String.join " " [(String.fromFloat value), "mm"]
+              3 -> String.join " " [(String.fromFloat value), "cc"]
+              _ -> String.join " " [(String.fromFloat value), "mg"]
+          (2, _, _) -> "LG"
+          (3, _, _) -> "XL"
+          (4, _, _) -> "SM"
+          (5, _, _) -> "XS"
+          (_, _, _) -> "M"
     generator = Random.map3
                   mapper
                   (Random.int 1 6)
-                  (Random.float 0 200)
+                  (Random.float 1 20000)
                   (Random.int 1 4)
   in Random.step generator (Random.initialSeed seed) |> Tuple.first
 
@@ -169,8 +207,8 @@ randomItemBriefData seed =
   , imageThumbnail  = randomImageUrl seed
   , brand           = randomBrand seed
   , variant         = randomVariant seed
-  , listPrice       = String.fromFloat (randomFloat seed)
-  , size            = Item.sizeToString (randomSize seed)
+  , listPrice       = Round.round 2 (randomFloat seed)
+  , size            = randomStrSize seed
   , departmentTags  = [
                           { id = "UID789"
                           , name = "deptTag"
@@ -191,8 +229,10 @@ randomItemBriefData seed =
                           , name = "searchTag"
                           }
                       ]
-  , availability    = Item.availabilityToStr (randomAvailability seed)
-  , discount        = Just (randomDiscount seed)
+  , availability    = randomStrAvailability seed
+  , discount        = if randomInt 0 1 seed == 1
+                        then Just (randomDiscount seed)
+                        else Nothing
   }
 
 

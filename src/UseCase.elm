@@ -8,8 +8,12 @@ module UseCase exposing
   ( ShoppingListView
   , CartEntryViewR
   , viewListContent
+  , removeOneCartItem
+  , addOneCartItem
   )
 
+
+import Round
 
 import Item
 import ShoppingList
@@ -33,7 +37,8 @@ type alias ShoppingListView view =
 
 
 type alias CartEntryViewR =
-  { name       : String
+  { id         : String
+  , name       : String
   , brand      : String
   , variant    : String
   , size       : String
@@ -48,6 +53,20 @@ type alias CartEntryViewR =
 -----------------------------------------------------------------------
 -- FUNCTION DEFINITIONS
 -----------------------------------------------------------------------
+
+removeOneCartItem : String -> ShoppingList.Model -> ShoppingList.Model
+removeOneCartItem itemId cart = ShoppingList.remove itemId cart
+
+
+addOneCartItem : String -> ShoppingList.Model -> ShoppingList.Model
+addOneCartItem itemId cart =
+  let maybeEntry = ShoppingList.maybeEntry itemId cart
+  in
+   case maybeEntry of
+     Nothing -> cart
+     Just entry ->
+       ShoppingList.add (ShoppingList.item entry) cart
+
 
 {-| produce a view of the given item brief. The type of the view depends
 on the return type of the ItemBriefView function.
@@ -77,10 +96,13 @@ entryToViewR : ShoppingList.Entry -> CartEntryViewR
 entryToViewR entry =
   let item = ShoppingList.item entry
       qty = ShoppingList.qty entry
-      listTotal = (toFloat qty) * (Item.listPrice item)
-      saleTotal = (toFloat qty) * (Item.salePrice item)
+      listTotal = Round.roundNum 2
+                    <| (toFloat qty) * (Item.listPrice item)
+      saleTotal = Round.roundNum 2
+                    <| (toFloat qty) * (Item.salePrice item)
   in
-    { name       = Item.name item
+    { id         = Item.id item
+    , name       = Item.name item
     , brand      = Item.brand item 
     , variant    = Item.variant item
     , size       = Item.sizeToString <| Item.size item

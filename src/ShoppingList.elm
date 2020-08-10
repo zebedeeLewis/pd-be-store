@@ -16,6 +16,9 @@ module ShoppingList exposing
 -- , maybeEntry
 -- )
 
+
+import Round
+
 import Item
 
 
@@ -71,11 +74,13 @@ empty = ShoppingList []
 -}
 subTotal : Model -> Float
 subTotal (ShoppingList entries_) =
-  List.foldl
-    (\entry_ acc ->
-      let itemSubtotal = Item.listPrice <| item entry_
-      in acc + ((toFloat <| qty entry_) * itemSubtotal)
-    ) 0 entries_
+  Round.roundNum 2
+  <| List.foldl
+       (\entry_ acc ->
+         let listPrice = Item.listPrice (item entry_)
+             itemSubTotal = ((toFloat <| qty entry_) * listPrice)
+         in acc + itemSubTotal
+       ) 0 entries_
 
 
 {-| remove the entry identified by the given id from the ShoppingList

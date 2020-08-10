@@ -14,6 +14,7 @@ import Task
 
 import Item
 import ShoppingList
+import UseCase
 
 -- TEST PURPOSES ONLY
 import DummyItem
@@ -42,6 +43,8 @@ type Msg
   = NoOp
   | CartLoaded Int
   | DataLoaded Int
+  | DecEntryQty String
+  | IncEntryQty String
 
 
 
@@ -71,6 +74,22 @@ update msg model =
           ItemBrowser
             <| ItemBrowserM (cart model)
                             (DummyItem.randomSet data)
+
+    DecEntryQty entryId ->
+      case model of
+        ItemBrowser _ ->
+          ItemBrowser
+            <| ItemBrowserM
+                (UseCase.removeOneCartItem entryId <| cart model)
+                (itemSet model)
+
+    IncEntryQty entryId ->
+      case model of
+        ItemBrowser _ ->
+          ItemBrowser
+            <| ItemBrowserM
+                (UseCase.addOneCartItem entryId <| cart model)
+                (itemSet model)
 
 
 loadCart : Model -> Cmd Msg

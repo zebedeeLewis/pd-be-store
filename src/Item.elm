@@ -7,9 +7,9 @@ module Item exposing
   , BriefDataR
   , DiscountDataR
   , Set
-  , Size(..)
-  , Measure(..)
-  , Availability(..)
+  , Size
+  , Measure
+  , Availability
   , ValidationErr(..)
   , newBrief
   , priceToPair
@@ -516,18 +516,19 @@ filterBy department items =
   items
 
 
-{-|
-  produce the string representation of an Size
+{-| produce the string representation of an Size
+Assumptions: we assume that the size is already rounded correct to
+3 decimal places.
 -}
 sizeToString : Size -> String
 sizeToString size_ =
   case size_ of
     Grad value measure ->
       case measure of
-        ML -> (Round.round 3 value) ++ " ml" 
-        CC -> (Round.round 3 value) ++ " cc"
-        MG -> (Round.round 3 value) ++ " mg"
-        MM -> (Round.round 3 value) ++ " mm"
+        ML -> (String.fromFloat value) ++ " ml" 
+        CC -> (String.fromFloat value) ++ " cc"
+        MG -> (String.fromFloat value) ++ " mg"
+        MM -> (String.fromFloat value) ++ " mm"
     LG -> "LG"
     XL -> "XL"
     SM -> "SM"

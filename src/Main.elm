@@ -79,9 +79,20 @@ update msg model =
     LinkClicked urlRequest -> (model, Cmd.none)
 
     ViewMsg viewMsg ->
-      ( { model | view = View.update viewMsg model.view }
-      , Cmd.none
-      )
+      if View.isAppMsg viewMsg
+        then
+          case View.unwrapAppMsg viewMsg of
+            Nothing -> ( model, Cmd.none )
+            Just appMsg ->
+              ( { model
+                | app = App.update appMsg model.app
+                }
+              , Cmd.none
+              )
+        else
+          ( { model | view = View.update viewMsg model.view }
+          , Cmd.none
+          )
 
     AppMsg appMsg ->
       ( { model | app = App.update appMsg model.app }

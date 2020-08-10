@@ -50,6 +50,7 @@ type Model
 type Msg
   = ToggleNavdrawer
   | ToggleCartdrawer
+  | AppMsg App.Msg
   | NoOp
 
 
@@ -130,7 +131,23 @@ update msg model =
                 }
           in ItemBrowser modelView_
 
+    AppMsg _ -> model
+
     NoOp -> model
+
+
+isAppMsg : Msg -> Bool
+isAppMsg msg =
+  case msg of
+    AppMsg _ -> True
+    _ -> False
+
+
+unwrapAppMsg : Msg -> Maybe App.Msg
+unwrapAppMsg msg =
+  case msg of
+    AppMsg appMsg -> Just appMsg
+    _ -> Nothing
 
 
 toggleNavdrawer : HeaderC -> HeaderC
@@ -392,7 +409,7 @@ renderCartEntry entry =
             [ ViewStyle.qtyWrapper ]
             [ button
                 [ ViewStyle.qtyBtnDec
-                , onClick NoOp
+                , onClick <| AppMsg (App.DecEntryQty entry.id)
                 ]
                 [ text "-" ]
             , span
@@ -400,7 +417,7 @@ renderCartEntry entry =
                 [ text (String.fromInt entry.qty) ]
             , button
                 [ ViewStyle.qtyBtnInc
-                , onClick NoOp
+                , onClick <| AppMsg (App.IncEntryQty entry.id)
                 ]
                 [ text "+" ]
             ]
