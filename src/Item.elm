@@ -36,6 +36,8 @@ module Item exposing
 
 import Time
 
+import Round
+
 
 -----------------------------------------------------------------------
 -- CONSTANT DEFINITIONS
@@ -324,7 +326,7 @@ itemDiscount =
 type alias DiscountR =
   { discount_code    : String
   , name             : String
-  , value            : Float
+  , value            : Int
   , items            : List String
   }
 
@@ -522,10 +524,10 @@ sizeToString size_ =
   case size_ of
     Grad value measure ->
       case measure of
-        ML  -> (String.fromFloat value) ++ " ml" 
-        CC -> (String.fromFloat value) ++ " cc"
-        MG -> (String.fromFloat value) ++ " mg"
-        MM -> (String.fromFloat value) ++ " mm"
+        ML -> (Round.round 3 value) ++ " ml" 
+        CC -> (Round.round 3 value) ++ " cc"
+        MG -> (Round.round 3 value) ++ " mg"
+        MM -> (Round.round 3 value) ++ " mm"
     LG -> "LG"
     XL -> "XL"
     SM -> "SM"
@@ -552,15 +554,15 @@ example:
 newDiscount
   : String
   -> String
-  -> Float
+  -> Int
   -> List String
   -> Discount
 newDiscount  code name_ value items =
   Discount { discount_code = code
-               , name          = name_
-               , value         = value
-               , items         = items
-               }
+           , name          = name_
+           , value         = value
+           , items         = items
+           }
 
 
 {-| Validate the given input data and produce a new Item
@@ -756,7 +758,7 @@ discountToData maybeDiscount =
     Just (Discount discountR) -> 
       Just { discount_code = discountR.discount_code
            , name = discountR.name
-           , value = String.fromFloat discountR.value
+           , value = String.fromInt discountR.value
            , items = discountR.items
            }
 
@@ -867,7 +869,7 @@ validateDiscount itemId maybeDiscountData initialItem =
     Nothing -> Ok { initialItem | discount = Nothing }
 
     Just discountData ->
-      let maybeValue = String.toFloat discountData.value
+      let maybeValue = String.toInt discountData.value
       in
         case maybeValue of
           Nothing    ->
@@ -1020,13 +1022,14 @@ salePrice item =
 -}
 applyDiscount : Float -> Discount -> Float
 applyDiscount listPrice_ discount =
-  let discountVal = listPrice_ * ((discountPercentage discount)/100)
+  let discountVal =
+        listPrice_ * ((toFloat <| discountPercentage discount)/100)
   in listPrice_ - discountVal 
 
 
 {-| produce the percentage of the given discount
 -}
-discountPercentage : Discount -> Float
+discountPercentage : Discount -> Int
 discountPercentage (Discount record) = record.value
 
 
