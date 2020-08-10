@@ -153,7 +153,7 @@ randomDiscount : Int -> Item.DiscountDataR
 randomDiscount seed =
   { discount_code    = randomId seed
   , name             = randomVariant seed
-  , value            = String.fromFloat (randomFloat seed)
+  , value            = String.fromInt (randomInt 1 25 seed)
   , items            = List.map
                          (\i ->
                            let seed_ = seed+i

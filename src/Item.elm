@@ -803,7 +803,7 @@ validatePrice itemId strPrice initialItem =
       if fPrice < 0
         then Err <| NegativePrice itemId strPrice
       else
-        Ok { initialItem | listPrice = fPrice }
+        Ok { initialItem | listPrice = Round.roundNum 2 fPrice }
 
 
 {-| produce a new pair from the given price where the first element is
@@ -925,7 +925,10 @@ strToMaybeGrad strGrad =
     maybeVal =
       case  List.head gradFields of
         Nothing -> Nothing
-        Just strVal -> String.toFloat strVal
+        Just strVal ->
+          case String.toFloat strVal of
+            Nothing -> Nothing
+            Just fVal -> Just (Round.roundNum 3 fVal)
 
   in
     case maybeVal of
@@ -1024,7 +1027,7 @@ applyDiscount : Float -> Discount -> Float
 applyDiscount listPrice_ discount =
   let discountVal =
         listPrice_ * ((toFloat <| discountPercentage discount)/100)
-  in listPrice_ - discountVal 
+  in Round.roundNum 2 (listPrice_ - discountVal)
 
 
 {-| produce the percentage of the given discount
