@@ -8,10 +8,10 @@ import Html.Styled exposing (toUnstyled)
 import Browser
 import Browser.Navigation as Nav
 
-import Item
 import ShoppingList
 import UseCase
 import View
+import App
 
 -- TEST PURPOSES ONLY
 import DummyItem
@@ -23,21 +23,16 @@ import DummyShoppingList
 -----------------------------------------------------------------------
 
 type alias Model =
-  { app  : App
+  { app  : App.Model
   , view : View.Model
   }
-
-
-type App
-  = Loading ShoppingList.Model
-  | ItemBrowser ShoppingList.Model Item.Set
 
 
 type Msg
   = UrlChanged Url.Url
   | LinkClicked Browser.UrlRequest
   | ViewMsg View.Msg
-  | GotDummyData Int
+  | AppMsg App.Msg
 
 
 
@@ -59,12 +54,10 @@ main =
 
 init : () -> Url.Url -> Nav.Key -> (Model, Cmd Msg)
 init  _ url key =
-  let app = ItemBrowser ShoppingList.empty Item.emptySet
+  let app = App.newItemBrowser
   in
-    ( { app  = app
-      , view = appView app
-      }
-    , loadDummyData
+    ( { app  = app , view = View.app app }
+    , liftCmd (Cmd.batch [App.loadData app, App.loadCart app])
     )
 
 
@@ -73,12 +66,9 @@ view model =
   let
     content =
       case model.app of
-        Loading cart -> Html.div [] []
-
-        ItemBrowser cart items ->
-          toUnstyled <| View.renderItemBrowser cart items model.view
-  in
-    { title = "test" , body = [ liftHtml content ] }
+        App.ItemBrowser _ ->
+          toUnstyled <| View.renderItemBrowser model.app model.view
+  in { title = "test" , body = [ liftHtml content ] }
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -93,49 +83,17 @@ update msg model =
       , Cmd.none
       )
 
-    GotDummyData seed ->
-      ( { model
-        | app = ItemBrowser (DummyShoppingList.randomList seed)
-                            (DummyItem.randomSet seed)
-        }
+    AppMsg appMsg ->
+      ( { model | app = App.update appMsg model.app }
       , Cmd.none
       )
-
 
 
 liftHtml : Html View.Msg -> Html Msg
 liftHtml = Html.map (\viewMsg -> ViewMsg viewMsg)
 
 
-{-| produce a view for the given app
--}
-appView : App -> View.Model
-appView app = 
-  let header =
-        { navdrawer =
-            View.NavdrawerC
-              False
-              [ { label = "test1"
-                , value = "test"
-                , active = False
-                }
-              ]
-        , navbar = View.NavbarC
-        , cartdrawer = View.CartdrawerC False
-        }
-  in
-    case app of
-      Loading cart ->
-        View.Loading { header = header }
-
-      ItemBrowser cart items ->
-        View.ItemBrowser 
-          { header = header }
+liftCmd : Cmd App.Msg -> Cmd Msg
+liftCmd = Cmd.map (\appMsg -> AppMsg appMsg)
 
 
-loadDummyData : Cmd Msg
-loadDummyData =
-  Task.perform
-    (\pTime ->
-      GotDummyData (Time.posixToMillis pTime)
-    ) Time.now

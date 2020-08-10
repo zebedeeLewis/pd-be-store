@@ -30,6 +30,7 @@ import Item
 import ShoppingList
 import UseCase
 import ViewStyle
+import App
 
 
 -----------------------------------------------------------------------
@@ -43,8 +44,7 @@ import ViewStyle
 -----------------------------------------------------------------------
 
 type Model
-  = Loading LoadingV
-  | ItemBrowser ItemBrowserV
+  = ItemBrowser ItemBrowserV
 
 
 type Msg
@@ -70,9 +70,6 @@ type alias HeaderC =
   }
 
 
-type alias LoadingV = { header : HeaderC }
-
-
 type NavbarC = NavbarC
 
 
@@ -91,18 +88,32 @@ type alias NavItem =
 -- FUNCTION DEFINITIONS
 -----------------------------------------------------------------------
 
+{-| produce a view for the given app
+-}
+app : App.Model -> Model
+app appModel = 
+  let header =
+        { navdrawer =
+            NavdrawerC
+              False
+              [ { label = "test1"
+                , value = "test"
+                , active = False
+                }
+              ]
+        , navbar = NavbarC
+        , cartdrawer = CartdrawerC False
+        }
+  in
+    case appModel of
+      App.ItemBrowser _ -> ItemBrowser { header = header }
+
+
 update : Msg -> Model -> Model
 update msg model =
   case msg of
     ToggleNavdrawer ->
       case model of
-        Loading modelView ->
-          let modelView_ =
-                { modelView
-                | header = toggleNavdrawer modelView.header
-                }
-          in Loading modelView_
-
         ItemBrowser modelView ->
           let modelView_ =
                 { modelView
@@ -112,13 +123,6 @@ update msg model =
 
     ToggleCartdrawer ->
       case model of
-        Loading modelView ->
-          let modelView_ =
-                { modelView
-                | header = toggleCartdrawer modelView.header
-                }
-          in Loading modelView_
-
         ItemBrowser modelView ->
           let modelView_ =
                 { modelView
@@ -147,8 +151,11 @@ toggleCartdrawer header =
 
 -- RENDERS
 
-renderItemBrowser : ShoppingList.Model -> Item.Set -> Model -> Html Msg
-renderItemBrowser cart items model =
+renderItemBrowser : App.Model -> Model -> Html Msg
+renderItemBrowser appModel model =
+  let cart = App.cart appModel
+      items = App.itemSet appModel
+  in
   case model of
     ItemBrowser browserView ->
       let header = browserView.header
@@ -159,11 +166,6 @@ renderItemBrowser cart items model =
           , renderCartdrawer cart header.cartdrawer
           , renderItemBrowserContent items model
           ]
-
-    _ ->
-      div
-        [ ViewStyle.appContainer ]
-        [ text "Invalid Data passed to Item browser" ]
 
 
 renderCartdrawer : ShoppingList.Model -> CartdrawerC -> Html Msg
