@@ -35,8 +35,8 @@ import DummyShoppingList
 type Model
   = ItemBrowser ItemBrowserM
 
-
-type ItemBrowserM = ItemBrowserM ShoppingList.Model Item.Set
+--                               shopping cart/list  page data
+type ItemBrowserM = ItemBrowserM ShoppingList.Model  Item.Set 
 
 
 type Msg
@@ -45,6 +45,7 @@ type Msg
   | DataLoaded Int
   | DecEntryQty String
   | IncEntryQty String
+  | ProceedToCheckout ShoppingList.Model
 
 
 
@@ -52,9 +53,9 @@ type Msg
 -- FUNCTION DEFINITIONS
 -----------------------------------------------------------------------
 
-newItemBrowser : Model
-newItemBrowser =
-  ItemBrowser <| ItemBrowserM ShoppingList.empty Item.emptySet
+newItemBrowser : Float -> Model
+newItemBrowser tax =
+  ItemBrowser <| ItemBrowserM (ShoppingList.empty tax) Item.emptySet
 
 
 update : Msg -> Model -> Model
@@ -90,6 +91,10 @@ update msg model =
             <| ItemBrowserM
                 (UseCase.addOneCartItem entryId <| cart model)
                 (itemSet model)
+
+    ProceedToCheckout cart_ ->
+      case model of
+        ItemBrowser _ -> model
 
 
 loadCart : Model -> Cmd Msg

@@ -42,6 +42,7 @@ type alias Theme =
   , danger_dark     : Color
   , on_danger_dark  : Color
   , background      : Color
+  , content_bg      : Color
   , on_primary      : Color
   , on_secondary    : Color
   , on_surface      : Color
@@ -66,6 +67,7 @@ theme =
   , danger_dark     = hex "9b0000"
   , on_danger_dark  = hex "fff"
   , background      = hex "fff"
+  , content_bg      = hex "eaeded"
   , on_primary      = hex "fff"
   , on_secondary    = hex "000"
   , on_surface      = hex "041e42"
@@ -88,7 +90,7 @@ space =
 appContainer : Attribute msg
 appContainer =
   css
-    [ backgroundColor theme.background
+    [ backgroundColor theme.content_bg
     , position relative
     , overflowX hidden
     , minHeight (vh 100)
@@ -271,6 +273,7 @@ navbar =
     , zIndex (int navbarZIndex)
     , height (px navbarHeight)
     , width (pct 100)
+    , elevation3Style
     ]
 
 
@@ -364,13 +367,11 @@ cartdrawerStyle =
     , right (px 0)
     , zIndex (int cartdrawerZIndex)
     , boxSizing borderBox
-    , borderLeftStyle solid
-    , borderColor theme.lighter_grey
-    , borderWidth (px 1)
     , backgroundColor theme.background
     , fontSize (px defaultFontSize)
     , overflowY hidden
     , overflowX hidden
+    , elevation2Style
     ]
 
 
@@ -401,6 +402,7 @@ cartdrawerContentLabel =
     , color theme.primary
     , textTransform capitalize
     , fontWeight bold
+    , fontSize (px 14)
     ]
 
 
@@ -450,12 +452,22 @@ btnSimple =
     ]
 
 
-btnDiscount : Attribute msg
-btnDiscount =
+btnCollapse : Attribute msg
+btnCollapse =
   css
     [ btnSimpleStyle
-    , fontSize (px 13)
+    , fontSize (px 14)
     , fontWeight bold
+    , displayFlex
+    , alignItems center
+    ]
+
+iconCollapse : Attribute msg
+iconCollapse =
+  css
+    [ fontSize (px 20)
+    , display inlineBlock
+    , mlHalfStyle
     ]
 
 
@@ -595,6 +607,7 @@ btnFilledPrimaryBlockStyle =
     [ btnPrimaryStyle
     , btnFilledPrimaryStyle
     , width (pct 100)
+    , fontWeight bold
     ]
 
 
@@ -606,6 +619,35 @@ btnPrimaryBlock =
     ]
 
 
+btnFilledPrimary : Attribute msg
+btnFilledPrimary =
+  css
+    [ btnFilledPrimaryStyle
+    , btnMediumStyle
+    , btnStyle
+    , borderStyle none
+    , fontWeight bold
+    ]
+
+
+btnFilledSecondary : Attribute msg
+btnFilledSecondary =
+  css
+    [ btnFilledSecondaryStyle
+    , btnMediumStyle
+    , btnStyle
+    , borderStyle none
+    ]
+
+
+cartdrawerFinalCta : Attribute msg
+cartdrawerFinalCta =
+  css
+    [ displayFlex
+    , pt3Style
+    ]
+
+
 btnFilledPrimaryStyle : Style
 btnFilledPrimaryStyle =
   batch
@@ -614,9 +656,22 @@ btnFilledPrimaryStyle =
     ]
 
 
+btnFilledSecondaryStyle : Style
+btnFilledSecondaryStyle =
+  batch
+    [ backgroundColor theme.secondary
+    , color theme.on_secondary
+    ]
+
+
 btnPrimary : Attribute msg
 btnPrimary =
   css [ btnPrimaryStyle ]
+
+
+btnSecondary : Attribute msg
+btnSecondary =
+  css [ btnSecondaryStyle ]
 
 
 btnPrimaryStyle : Style
@@ -626,6 +681,17 @@ btnPrimaryStyle =
     , btnOutlineStyle
     , borderColor theme.primary
     , color theme.primary
+    , btnMediumStyle
+    ]
+
+
+btnSecondaryStyle : Style
+btnSecondaryStyle =
+  batch
+    [ btnStyle
+    , btnOutlineStyle
+    , borderColor theme.secondary
+    , color theme.on_secondary
     , btnMediumStyle
     ]
 
@@ -758,6 +824,14 @@ cartdrawerTotal =
     ]
 
 
+cartdrawerSavings : Attribute msg
+cartdrawerSavings =
+  css
+    [ cartdrawerContentLine
+    , pt1Style
+    ]
+
+
 cartdrawerActionLine : Attribute msg
 cartdrawerActionLine =
   css
@@ -771,14 +845,33 @@ cartdrawerContentValue =
   css
     [ textAlign right
     , color theme.primary
+    , fontSize (px 14)
     ]
 
 
 cartdrawerEntries : Attribute msg
 cartdrawerEntries =
   css
-    [ width (pct 100)
+    [ cartdrawerEntriesStyle
+    , overflow hidden
+    , height (px 0)
+    , Transitions.transition
+        [ Transitions.height 4000 ]
+    ]
+
+
+toggledCartdrawerEntries : Attribute msg
+toggledCartdrawerEntries =
+  css
+    [ cartdrawerEntriesStyle
     , pt2Style
+    ]
+
+
+cartdrawerEntriesStyle : Style
+cartdrawerEntriesStyle =
+  batch
+    [ width (pct 100)
     ]
 
 
@@ -1168,6 +1261,10 @@ mlAutoStyle : Style
 mlAutoStyle = marginLeft auto
 
 
+mlHalfStyle : Style
+mlHalfStyle = marginLeft space.sHalf
+
+
 ml1Style : Style
 ml1Style = marginLeft space.s1
 
@@ -1237,6 +1334,10 @@ pb2Style = paddingBottom space.s2
 
 pt2Style : Style
 pt2Style = paddingTop space.s2
+
+
+pt3Style : Style
+pt3Style = paddingTop space.s3
 
 
 pxHalfStyle : Style

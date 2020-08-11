@@ -35,7 +35,8 @@ import Item
 
 {-| Represents a users shopping list.
 -}
-type Model = ShoppingList (List Entry)
+--                        tax    list-of-items
+type Model = ShoppingList Float  (List Entry)
 
 
 {-| Represents a single entry in a user shopping list. contains a
@@ -66,21 +67,47 @@ type Entry = Entry Int Item.Model
 
 {-| produce a new empty shopping list.
 -}
-empty : Model
-empty = ShoppingList []
+empty : Float -> Model
+empty tax_ = ShoppingList tax_ []
 
 
-{-| poduce the subtotal on the given shopping list.
+{-| poduce the total list price on the given shopping list.
 -}
-subTotal : Model -> Float
-subTotal (ShoppingList entries_) =
+listTotal : Model -> Float
+listTotal model =
   Round.roundNum 2
   <| List.foldl
        (\entry_ acc ->
          let listPrice = Item.listPrice (item entry_)
-             itemSubTotal = ((toFloat <| qty entry_) * listPrice)
-         in acc + itemSubTotal
-       ) 0 entries_
+             listTotal_ = ((toFloat <| qty entry_) * listPrice)
+         in acc + listTotal_
+       ) 0 (entries model)
+
+
+saleTotal : Model -> Float
+saleTotal model =
+  Round.roundNum 2
+  <| List.foldl
+       (\entry_ acc ->
+         let salePrice = Item.salePrice (item entry_)
+             saleTotal_ = ((toFloat <| qty entry_) * salePrice)
+         in acc + saleTotal_
+       ) 0 (entries model)
+
+
+calcSavings : Model -> Float
+calcSavings model =
+  (listTotal model) - (saleTotal model)
+
+
+taxedListTotal : Model -> Float
+taxedListTotal list =
+  Round.roundNum 2 <| (listTotal list) * (tax list)/100
+
+
+taxedSaleTotal : Model -> Float
+taxedSaleTotal list =
+  Round.roundNum 2 <| (saleTotal list) * (tax list)/100
 
 
 {-| remove the entry identified by the given id from the ShoppingList
@@ -90,28 +117,28 @@ the quantity by 1.
 remove : String -> Model -> Model
 remove itemId list =
   let
-    remove_ itemId_ (ShoppingList entries_) =
-      ShoppingList
+    remove_ itemId_ =
+      ShoppingList (tax list)
         <| List.filter
              (\entry_ ->
                not ((Item.id <| item entry_) == itemId_)
-             ) entries_
+             ) (entries list)
 
-    dec itemId_ (ShoppingList entries_) =
-      ShoppingList
+    dec itemId_ =
+      ShoppingList (tax list)
         <| List.map
           (\entry_ ->
             if (Item.id <| item entry_) == itemId_ 
               then Entry ((qty entry_) - 1) (item entry_)
               else Entry (qty entry_) (item entry_)
-          ) entries_
+          ) (entries list)
   in
     case maybeEntry itemId list of
       Nothing -> list
       Just entry_ ->
         if (qty entry_) > 1
-          then dec (Item.id <| item entry_) list
-          else remove_ (Item.id <| item entry_) list
+          then dec (Item.id <| item entry_)
+          else remove_ (Item.id <| item entry_)
 
 
 {-| produce a new ShoppingList with a new entry for the given item
@@ -120,23 +147,23 @@ add : Item.Model -> Model -> Model
 add item_ list =
   let
     itemId = Item.id item_
-    addTo (ShoppingList entries_) =
-      ShoppingList <| (singletonEntry item_)::entries_
+    add_ =
+      ShoppingList (tax list) <| (singletonEntry item_)::(entries list)
 
-    inc (ShoppingList entries_) =
-      ShoppingList
+    inc =
+      ShoppingList (tax list)
         <| List.map
           (\entry_ ->
             if (Item.id <| item entry_) == itemId
               then Entry ((qty entry_) + 1) (item entry_)
               else Entry (qty entry_) (item entry_)
-          ) entries_
+          ) (entries list)
   in
     case maybeEntry itemId list of
       Nothing ->
-        addTo list
+        add_
       Just _ ->
-        inc list
+        inc
 
 
 {-| produce the entry in the list with the given id or
@@ -164,7 +191,11 @@ singletonEntry item_ = Entry 1 item_
 {-| produce a list of all entries in the given list
 -}
 entries : Model -> List Entry
-entries (ShoppingList entries_) = entries_
+entries (ShoppingList _ entries_) = entries_
+
+
+tax : Model -> Float
+tax (ShoppingList tax_ _) = tax_
 
 
 item : Entry -> Item.Model

@@ -26,7 +26,7 @@ randomEntry seed =
 
 randomList : Int -> ShoppingList.Model
 randomList seed =
-  let list = ShoppingList.empty
+  let list = ShoppingList.empty 12
   in List.foldl
       (\i list_ ->
         let item = ShoppingList.item (randomEntry <| seed+i)

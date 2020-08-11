@@ -19,6 +19,14 @@ import DummyShoppingList
 
 
 -----------------------------------------------------------------------
+-- CONSTANT DEFINITIONS
+-----------------------------------------------------------------------
+
+defaultTax = 12.4
+
+
+
+-----------------------------------------------------------------------
 -- DATA DEFINITIONS
 -----------------------------------------------------------------------
 
@@ -54,7 +62,7 @@ main =
 
 init : () -> Url.Url -> Nav.Key -> (Model, Cmd Msg)
 init  _ url key =
-  let app = App.newItemBrowser
+  let app = App.newItemBrowser defaultTax
   in
     ( { app  = app , view = View.app app }
     , liftCmd (Cmd.batch [App.loadData app, App.loadCart app])
