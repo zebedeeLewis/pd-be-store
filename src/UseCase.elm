@@ -7,9 +7,12 @@ module UseCase exposing
  -- production and comment out the "Test Exports" above.
   ( CartView
   , EntryViewR
-  , removeOneCartItem
-  , addOneCartItem
-  , viewShoppingCart
+  , Error
+  , startShopping
+  , removeItemFromCart
+  , addItemToCart
+  , viewCart
+  , dummyStore
   )
 
 
@@ -29,6 +32,14 @@ import ShoppingList
 -- DATA DEFINITIONS
 -----------------------------------------------------------------------
 
+
+--                 GST     ShoppingCart         Store Catalog
+type Store = Store Float   ShoppingList.Model   Item.Set
+
+
+type Error = ItemNotInCatalog String Store
+
+
 {-| Interface defines a function used to display a view of the contents
 of a shopping list.
 -}
@@ -38,7 +49,7 @@ type alias CartView view
   -> Float                 -- cartTaxVal
   -> Float                 -- cartSaleTotal
   -> Float                 -- cartTotalSavings
-  -> (List EntryViewR) -- cartEntries
+  -> (List EntryViewR)     -- cartEntries
   -> view
 
 
@@ -61,68 +72,49 @@ type alias EntryViewR =
 -- FUNCTION DEFINITIONS
 -----------------------------------------------------------------------
 
-removeOneCartItem : String -> ShoppingList.Model -> ShoppingList.Model
-removeOneCartItem itemId cart = ShoppingList.remove itemId cart
+
+startShopping : Float -> Store
+startShopping gst =
+  let cart = ShoppingList.empty gst 
+      catalog = Item.emptySet
+  in Store gst cart catalog
 
 
-addOneCartItem : String -> ShoppingList.Model -> ShoppingList.Model
-addOneCartItem itemId cart =
-  let maybeEntry = ShoppingList.maybeEntry itemId cart
+getCartFrom : Store -> ShoppingList.Model
+getCartFrom (Store _ cart _) = cart
+
+
+getCatalogFrom : Store -> Item.Set
+getCatalogFrom (Store _ _ catalog) = catalog
+
+
+getGstFrom : Store -> Float
+getGstFrom (Store gst _ _) = gst
+
+
+removeItemFromCart : String -> Store -> Store
+removeItemFromCart itemId store =
+  let cart = getCartFrom store
+      catalog = getCatalogFrom store
+  in Store (getGstFrom store) (ShoppingList.remove itemId cart) catalog
+
+
+addItemToCart : String -> Store -> Result Error Store
+addItemToCart itemId store =
+  let cart = getCartFrom store
+      catalog = getCatalogFrom store
+      maybeItem = Item.querySetFor itemId catalog
   in
-   case maybeEntry of
-     Nothing -> cart
-     Just entry ->
-       ShoppingList.add (ShoppingList.item entry) cart
+   case maybeItem of
+     Nothing -> Err ItemNotInCatalog itemId store
+     Just item ->
+       Ok Store (getGstFrom store) (ShoppingList.add item cart) catalog
 
 
--- {-| produce a view of the given item brief. The type of the view depends
--- on the return type of the ItemBriefView function.
--- -}
--- viewItemBrief
---   : ( Item.BriefDataR -> view )
---   -> Item.Model
---   -> view
--- viewItemBrief viewFn item =
---   viewFn <| Item.toData item
-
-
--- {-| produce a view of the contents of the given shopping list.
--- -}
--- viewListContent : ShoppingListView view -> ShoppingList.Model -> view
--- viewListContent renderer list =
---   let entries = ShoppingList.entries list
---       listViewData = 
---         List.map entryToViewR entries
---   in renderer listViewData
-
-
-{-| produce a shopping list entry view record from the given Shopping
-list entry.
--}
-entryToViewR : ShoppingList.Entry -> EntryViewR
-entryToViewR entry =
-  let item = ShoppingList.item entry
-      qty = ShoppingList.qty entry
-      listTotal = Round.roundNum 2
-                    <| (toFloat qty) * (Item.listPrice item)
-      saleTotal = Round.roundNum 2
-                    <| (toFloat qty) * (Item.salePrice item)
-  in
-    { id         = Item.id item
-    , name       = Item.name item
-    , brand      = Item.brand item 
-    , variant    = Item.variant item
-    , size       = Item.sizeToString <| Item.size item
-    , image      = Item.image item
-    , listTotal  = listTotal 
-    , saleTotal  = saleTotal
-    , qty        = qty
-    }
-
-
-viewShoppingCart : CartView view -> ShoppingList.Model -> view
-viewShoppingCart cartView cart =
-  let taxPct = ShoppingList.tax cart
+viewCart : CartView view -> Store -> view
+viewCart cartView store =
+  let cart = getCartFrom store
+      taxPct = ShoppingList.tax cart
       subtotal unitPriceFn =
         Round.roundNum 2
           <| List.foldl
@@ -149,3 +141,38 @@ viewShoppingCart cartView cart =
               saleTotal
               totalSavings
               cartEntries
+
+
+{-| produce a shopping list entry view record from the given Shopping
+list entry.
+-}
+entryToViewR : ShoppingList.Entry -> EntryViewR
+entryToViewR entry =
+  let item = ShoppingList.item entry
+      qty = ShoppingList.qty entry
+      listTotal = Round.roundNum 2
+                    <| (toFloat qty) * (Item.listPrice item)
+      saleTotal = Round.roundNum 2
+                    <| (toFloat qty) * (Item.salePrice item)
+  in
+    { id         = Item.id item
+    , name       = Item.name item
+    , brand      = Item.brand item 
+    , variant    = Item.variant item
+    , size       = Item.sizeToString <| Item.size item
+    , image      = Item.image item
+    , listTotal  = listTotal 
+    , saleTotal  = saleTotal
+    , qty        = qty
+    }
+
+
+-- DUMMY DATA FOR TESTING
+
+dummyStore : Store
+dummyStore seed =
+  Store (DummyItem.randomFloat 12 15 seed)
+        (DummyShoppinList.randomList seed)
+        (DummyItem.randomSet seed)
+
+

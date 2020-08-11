@@ -13,7 +13,6 @@ import Time
 import Task
 
 import Item
-import ShoppingList
 import UseCase
 
 -- TEST PURPOSES ONLY
@@ -62,6 +61,7 @@ update : Msg -> Model -> Model
 update msg model =
   case msg of
     NoOp -> model
+
     CartLoaded cart_ -> 
       case model of
         ItemBrowser _ ->
@@ -81,7 +81,7 @@ update msg model =
         ItemBrowser _ ->
           ItemBrowser
             <| ItemBrowserM
-                (UseCase.removeOneCartItem entryId <| cart model)
+                (UseCase.removeItemFromCart entryId <| cart model)
                 (itemSet model)
 
     IncEntryQty entryId ->
@@ -89,7 +89,7 @@ update msg model =
         ItemBrowser _ ->
           ItemBrowser
             <| ItemBrowserM
-                (UseCase.addOneCartItem entryId <| cart model)
+                (UseCase.addItemToCart entryId <| cart model)
                 (itemSet model)
 
     ProceedToCheckout cart_ ->

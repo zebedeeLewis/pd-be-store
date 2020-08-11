@@ -203,7 +203,8 @@ renderItemBrowser appModel model =
         div
           [ ViewStyle.appContainer ]
           [ renderHeader header.navbar header.navdrawer
-          , UseCase.viewShoppingCart (cartView header.cartdrawer) cart
+          -- TODO!!!
+          , UseCase.viewCart (cartView header.cartdrawer) (UseCase.startShopping 12234)
           , renderItemBrowserContent items model
           ]
 

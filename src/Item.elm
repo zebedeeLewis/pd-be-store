@@ -13,6 +13,7 @@ module Item exposing
   , ValidationErr(..)
   , newBrief
   , priceToPair
+  , querySetFor
   , priceToString
   , blankBrief
   , emptySet
@@ -1049,4 +1050,18 @@ addToSet item (Set filters items) =
 dataListToSet : List BriefDataR -> Set
 dataListToSet lod =
   Set [] <| List.filterMap (\data-> Result.toMaybe (newBrief data)) lod
+
+
+querySetFor : String -> Set -> Maybe Model
+querySetFor itemId (Set _ loi) =
+  let query itemId loi_ =
+        let maybeSubj = List.head loi_
+        in
+          case maybeSubj of
+            Nothing -> Nothing
+            Just subj ->
+              if (id subj) == itemId
+                then Just subj
+                else query itemId (List.drop 1 loi_)
+
 

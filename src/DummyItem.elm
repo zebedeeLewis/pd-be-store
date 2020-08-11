@@ -179,6 +179,14 @@ randomFloat seed =
   |> Tuple.first
 
 
+randomFloat2 : Int -> Int -> Int -> Float
+randomFloat2 min max seed =
+  Random.step
+  (Random.float min max)
+  (Random.initialSeed seed)
+  |> Tuple.first
+
+
 randomInt : Int -> Int -> Int -> Int
 randomInt min max seed =
   Random.step
