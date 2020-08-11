@@ -12,13 +12,7 @@ module App exposing
 import Time
 import Task
 
-import Item
 import UseCase
-
--- TEST PURPOSES ONLY
-import DummyItem
-import DummyShoppingList
-
 
 
 -----------------------------------------------------------------------

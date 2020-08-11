@@ -410,7 +410,7 @@ wasPrice : Attribute ms
 wasPrice =
   css
     [ textDecoration lineThrough
-    , color theme.dark_grey
+    , color theme.light_grey
     ]
 
 

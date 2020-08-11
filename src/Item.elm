@@ -11,6 +11,7 @@ module Item exposing
   , Measure
   , Availability
   , ValidationErr(..)
+  , listFromSet
   , newBrief
   , priceToPair
   , querySetFor
@@ -1006,6 +1007,10 @@ listPrice : Model -> Float
 listPrice item =
   case item of
     Brief record -> record.listPrice
+
+
+listFromSet : Set -> List Model
+listFromSet (Set _ items) = items
 
 
 {-| produce the discount sales price of the given item

@@ -431,7 +431,7 @@ cartView cartdrawer
         ]
 
 
-renderShoppingCart : Bool -> List UseCase.EntryViewR -> Html Msg
+renderShoppingCart : Bool -> List UseCase.EntryViewD -> Html Msg
 renderShoppingCart toggled entrySet =
   div
     [ if toggled
@@ -444,29 +444,31 @@ renderShoppingCart toggled entrySet =
     ]
 
 
-renderCartEntry : UseCase.EntryViewR -> Html Msg
+renderCartEntry : UseCase.EntryViewD -> Html Msg
 renderCartEntry entry =
+  let item = entry.item
+  in
   div
     [ ViewStyle.cartdrawerEntry ]
     [ img 
-        [ src entry.image
+        [ src item.image
         , ViewStyle.cartEntryImg
         ] []
     , div
         [ ViewStyle.cartEntryDetails
         ]
-        [ renderEntryName (entry.name ++ " by " ++ entry.brand)
+        [ renderEntryName (item.name ++ " by " ++ item.brand)
         , span
             [ ViewStyle.cartEntryVariant ]
-            [ text (entry.variant ++ ", ") ]
+            [ text (item.variant ++ ", ") ]
         , span
             [ ViewStyle.cartEntrySize ]
-            [ text entry.size ]
+            [ text item.size ]
         , div
             [ ViewStyle.qtyWrapper ]
             [ button
                 [ ViewStyle.qtyBtnDec
-                , onClick <| AppMsg (App.RemoveItemFromCart entry.id)
+                , onClick <| AppMsg (App.RemoveItemFromCart item.id)
                 ]
                 [ text "-" ]
             , span
@@ -474,7 +476,7 @@ renderCartEntry entry =
                 [ text (String.fromInt entry.qty) ]
             , button
                 [ ViewStyle.qtyBtnInc
-                , onClick <| AppMsg (App.AddItemToCart entry.id)
+                , onClick <| AppMsg (App.AddItemToCart item.id)
                 ]
                 [ text "+" ]
             ]
@@ -516,11 +518,19 @@ renderEntryName name =
 
 
 {-|TODO!!!-}
-catalogView : String -> Html Msg
-catalogView todo =
+catalogView : List UseCase.ItemViewD -> Html Msg
+catalogView data =
+  div [] (List.map renderCatalogItem data)
+
+
+{-| TODO!!! -}
+renderCatalogItem : UseCase.ItemViewD -> Html Msg
+renderCatalogItem item =
   div
     []
-    [ text todo
+    [ div [] [ text item.name ]
+    , img [ src item.image ] []
+    , div [] [ text (floatToMoney item.salePrice) ]
     ]
 
 

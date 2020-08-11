@@ -7,7 +7,8 @@ module UseCase exposing
  -- production and comment out the "Test Exports" above.
   ( Store
   , CartView
-  , EntryViewR
+  , ItemViewD
+  , EntryViewD
   , Error(..)
   , startShopping
   , removeItemFromCart
@@ -55,25 +56,31 @@ type alias CartView view
   -> Float                 -- cartTaxVal
   -> Float                 -- cartSaleTotal
   -> Float                 -- cartTotalSavings
-  -> (List EntryViewR)     -- cartEntries
+  -> (List EntryViewD)     -- cartEntries
   -> view
 
 
-{-|TODO!!!-}
 type alias CatalogView view
-  = String -> view
+  = List ItemViewD -> view
 
 
-type alias EntryViewR =
+type alias EntryViewD =
+  { qty : Int 
+  , item : ItemViewD
+  , listTotal : Float
+  , saleTotal : Float
+  }
+
+
+type alias ItemViewD =
   { id         : String
   , name       : String
   , brand      : String
   , variant    : String
   , size       : String
   , image      : String
-  , listTotal  : Float
-  , saleTotal  : Float
-  , qty        : Int
+  , listPrice  : Float
+  , salePrice  : Float
   }
 
 
@@ -102,10 +109,12 @@ getGstFrom : Store -> Float
 getGstFrom (Store gst _ _) = gst
 
 
-{-|TODO!!!-}
 browseCatalog : CatalogView view -> Store -> view
 browseCatalog catalogView store =
-  catalogView "todo"
+  let catalog = getCatalogFrom store
+      loi = Item.listFromSet catalog
+      viewData = List.map itemToViewD loi
+  in catalogView viewData
 
 
 removeItemFromCart : String -> Store -> Store
@@ -151,7 +160,7 @@ viewCart cartView store =
       listTotal = listSubTotal + listTax
       totalSavings = listTotal - saleTotal
       cartEntries =
-        List.map entryToViewR (ShoppingList.entries cart)
+        List.map entryToViewD (ShoppingList.entries cart)
 
   in cartView saleSubTotal
               taxPct
@@ -164,8 +173,8 @@ viewCart cartView store =
 {-| produce a shopping list entry view record from the given Shopping
 list entry.
 -}
-entryToViewR : ShoppingList.Entry -> EntryViewR
-entryToViewR entry =
+entryToViewD : ShoppingList.Entry -> EntryViewD
+entryToViewD entry =
   let item = ShoppingList.item entry
       qty = ShoppingList.qty entry
       listTotal = Round.roundNum 2
@@ -173,16 +182,24 @@ entryToViewR entry =
       saleTotal = Round.roundNum 2
                     <| (toFloat qty) * (Item.salePrice item)
   in
-    { id         = Item.id item
-    , name       = Item.name item
-    , brand      = Item.brand item 
-    , variant    = Item.variant item
-    , size       = Item.sizeToString <| Item.size item
-    , image      = Item.image item
-    , listTotal  = listTotal 
+    { qty        = qty
+    , listTotal  = listTotal
     , saleTotal  = saleTotal
-    , qty        = qty
+    , item       = itemToViewD item
     }
+
+
+itemToViewD : Item.Model -> ItemViewD
+itemToViewD item =
+  { id         = Item.id item
+  , name       = Item.name item
+  , brand      = Item.brand item 
+  , variant    = Item.variant item
+  , size       = Item.sizeToString <| Item.size item
+  , image      = Item.image item
+  , listPrice  = Item.listPrice item 
+  , salePrice  = Item.salePrice item
+  }
 
 
 -- DUMMY DATA FOR TESTING

@@ -8,14 +8,9 @@ import Html.Styled exposing (toUnstyled)
 import Browser
 import Browser.Navigation as Nav
 
-import ShoppingList
 import UseCase
 import View
 import App
-
--- TEST PURPOSES ONLY
-import DummyItem
-import DummyShoppingList
 
 
 -----------------------------------------------------------------------
