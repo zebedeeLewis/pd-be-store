@@ -1054,14 +1054,15 @@ dataListToSet lod =
 
 querySetFor : String -> Set -> Maybe Model
 querySetFor itemId (Set _ loi) =
-  let query itemId loi_ =
+  let query itemId_ loi_ =
         let maybeSubj = List.head loi_
         in
           case maybeSubj of
             Nothing -> Nothing
             Just subj ->
-              if (id subj) == itemId
+              if (id subj) == itemId_
                 then Just subj
-                else query itemId (List.drop 1 loi_)
+                else query itemId_ (List.drop 1 loi_)
 
+  in query itemId loi
 

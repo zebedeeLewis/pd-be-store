@@ -27,8 +27,6 @@ import Material.TopAppBar as TopAppBar
 import Material.Icon as Icon
 import Round
 
-import Item
-import ShoppingList
 import UseCase
 import ViewStyle
 import App
@@ -108,8 +106,9 @@ app appModel =
         , cartdrawer = CartdrawerC False True
         }
   in
-    case appModel of
-      App.ItemBrowser _ -> ItemBrowser { header = header }
+    if (App.isItemBrowser appModel )
+      then ItemBrowser { header = header }
+      else ItemBrowser { header = header }
 
 
 update : Msg -> Model -> Model
@@ -192,10 +191,7 @@ floatToMoney price = "$ " ++ Round.round 2 price
 -- RENDERS
 
 renderItemBrowser : App.Model -> Model -> Html Msg
-renderItemBrowser appModel model =
-  let cart = App.cart appModel
-      items = App.itemSet appModel
-  in
+renderItemBrowser app_ model =
   case model of
     ItemBrowser browserView ->
       let header = browserView.header
@@ -203,9 +199,9 @@ renderItemBrowser appModel model =
         div
           [ ViewStyle.appContainer ]
           [ renderHeader header.navbar header.navdrawer
-          -- TODO!!!
-          , UseCase.viewCart (cartView header.cartdrawer) (UseCase.startShopping 12234)
-          , renderItemBrowserContent items model
+          , UseCase.viewCart (cartView header.cartdrawer)
+                             (App.store app_)
+          , UseCase.browseCatalog catalogView (App.store app_)
           ]
 
 
@@ -470,7 +466,7 @@ renderCartEntry entry =
             [ ViewStyle.qtyWrapper ]
             [ button
                 [ ViewStyle.qtyBtnDec
-                , onClick <| AppMsg (App.DecEntryQty entry.id)
+                , onClick <| AppMsg (App.RemoveItemFromCart entry.id)
                 ]
                 [ text "-" ]
             , span
@@ -478,7 +474,7 @@ renderCartEntry entry =
                 [ text (String.fromInt entry.qty) ]
             , button
                 [ ViewStyle.qtyBtnInc
-                , onClick <| AppMsg (App.IncEntryQty entry.id)
+                , onClick <| AppMsg (App.AddItemToCart entry.id)
                 ]
                 [ text "+" ]
             ]
@@ -519,11 +515,12 @@ renderEntryName name =
     ]
 
 
-renderItemBrowserContent : Item.Set -> Model -> Html Msg
-renderItemBrowserContent items model =
+{-|TODO!!!-}
+catalogView : String -> Html Msg
+catalogView todo =
   div
     []
-    [
+    [ text todo
     ]
 
 

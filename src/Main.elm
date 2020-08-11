@@ -71,11 +71,13 @@ init  _ url key =
 
 view : Model -> Browser.Document Msg
 view model =
-  let
-    content =
-      case model.app of
-        App.ItemBrowser _ ->
-          toUnstyled <| View.renderItemBrowser model.app model.view
+  let content =
+        if (App.isItemBrowser model.app)
+          then
+            toUnstyled <| View.renderItemBrowser model.app model.view
+          else
+            toUnstyled <| View.renderItemBrowser model.app model.view
+
   in { title = "test" , body = [ liftHtml content ] }
 
 

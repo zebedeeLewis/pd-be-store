@@ -1,11 +1,11 @@
 module App exposing
-  ( Model(..)
+  ( Model
   , Msg(..)
   , newItemBrowser
+  , store
+  , isItemBrowser
   , loadData
   , loadCart
-  , itemSet
-  , cart
   , update
   )
 
@@ -32,19 +32,23 @@ import DummyShoppingList
 -----------------------------------------------------------------------
 
 type Model
-  = ItemBrowser ItemBrowserM
+  = ItemBrowser UseCase.Store
 
---                               shopping cart/list  page data
-type ItemBrowserM = ItemBrowserM ShoppingList.Model  Item.Set 
+-- type Model
+--   = ItemBrowser ItemBrowserM
+-- 
+-- --                               shopping cart/list  page data
+-- type ItemBrowserM = ItemBrowserM ShoppingList.Model  Item.Set 
 
 
 type Msg
   = NoOp
   | CartLoaded Int
   | DataLoaded Int
-  | DecEntryQty String
-  | IncEntryQty String
-  | ProceedToCheckout ShoppingList.Model
+  | RemoveItemFromCart String
+  | AddItemToCart String
+  | ProceedToCheckout UseCase.Store
+  | Log String
 
 
 
@@ -54,52 +58,46 @@ type Msg
 
 newItemBrowser : Float -> Model
 newItemBrowser tax =
-  ItemBrowser <| ItemBrowserM (ShoppingList.empty tax) Item.emptySet
+  ItemBrowser (UseCase.startShopping tax)
 
 
 update : Msg -> Model -> Model
-update msg model =
+update msg app =
   case msg of
-    NoOp -> model
+    NoOp -> app
 
     CartLoaded cart_ -> 
-      case model of
+      case app of
         ItemBrowser _ ->
-          ItemBrowser
-            <| ItemBrowserM (DummyShoppingList.randomList cart_)
-                            (itemSet model)
+          ItemBrowser (UseCase.dummyStore cart_)
 
     DataLoaded data ->
-      case model of
+      case app of
         ItemBrowser _ ->
-          ItemBrowser
-            <| ItemBrowserM (cart model)
-                            (DummyItem.randomSet data)
+          ItemBrowser (UseCase.dummyStore data)
 
-    DecEntryQty entryId ->
-      case model of
+    RemoveItemFromCart itemId ->
+      case app of
         ItemBrowser _ ->
-          ItemBrowser
-            <| ItemBrowserM
-                (UseCase.removeItemFromCart entryId <| cart model)
-                (itemSet model)
+          ItemBrowser (UseCase.removeItemFromCart itemId <| store app)
 
-    IncEntryQty entryId ->
-      case model of
+    AddItemToCart itemId ->
+      case app of
         ItemBrowser _ ->
-          ItemBrowser
-            <| ItemBrowserM
-                (UseCase.addItemToCart entryId <| cart model)
-                (itemSet model)
-
+          case (UseCase.addItemToCart itemId <| store app) of
+            Err _ -> ItemBrowser (store app)
+            Ok store_ -> ItemBrowser (store app)
+      
     ProceedToCheckout cart_ ->
-      case model of
-        ItemBrowser _ -> model
+      case app of
+        ItemBrowser _ -> app
+
+    Log _ -> app
 
 
 loadCart : Model -> Cmd Msg
-loadCart model =
-  case model of
+loadCart app =
+  case app of
     ItemBrowser _ ->
       Task.perform
         (\pTime ->
@@ -108,8 +106,8 @@ loadCart model =
 
 
 loadData : Model -> Cmd Msg
-loadData model =
-  case model of
+loadData app =
+  case app of
     ItemBrowser _ ->
       Task.perform
         (\pTime ->
@@ -117,14 +115,15 @@ loadData model =
         ) Time.now
 
 
-itemSet : Model -> Item.Set
-itemSet model =
-  case model of
-    ItemBrowser (ItemBrowserM _ itemSet_) -> itemSet_
+store : Model -> UseCase.Store
+store app = 
+  case app of
+    ItemBrowser store_ -> store_
 
 
-cart : Model -> ShoppingList.Model
-cart model =
-  case model of
-    ItemBrowser (ItemBrowserM cart_ _) -> cart_
+isItemBrowser : Model -> Bool
+isItemBrowser app =
+  case app of
+    ItemBrowser _ -> True
+
 

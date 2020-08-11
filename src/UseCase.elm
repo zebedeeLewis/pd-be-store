@@ -5,14 +5,16 @@ module UseCase exposing
 
  -- Production Exports, uncomment the exposing block below for
  -- production and comment out the "Test Exports" above.
-  ( CartView
+  ( Store
+  , CartView
   , EntryViewR
-  , Error
+  , Error(..)
   , startShopping
   , removeItemFromCart
   , addItemToCart
   , viewCart
   , dummyStore
+  , browseCatalog
   )
 
 
@@ -20,6 +22,10 @@ import Round
 
 import Item
 import ShoppingList
+
+import DummyItem
+import DummyShoppingList
+
 
 
 -----------------------------------------------------------------------
@@ -53,6 +59,11 @@ type alias CartView view
   -> view
 
 
+{-|TODO!!!-}
+type alias CatalogView view
+  = String -> view
+
+
 type alias EntryViewR =
   { id         : String
   , name       : String
@@ -64,7 +75,6 @@ type alias EntryViewR =
   , saleTotal  : Float
   , qty        : Int
   }
-
 
 
 
@@ -92,6 +102,12 @@ getGstFrom : Store -> Float
 getGstFrom (Store gst _ _) = gst
 
 
+{-|TODO!!!-}
+browseCatalog : CatalogView view -> Store -> view
+browseCatalog catalogView store =
+  catalogView "todo"
+
+
 removeItemFromCart : String -> Store -> Store
 removeItemFromCart itemId store =
   let cart = getCartFrom store
@@ -106,9 +122,11 @@ addItemToCart itemId store =
       maybeItem = Item.querySetFor itemId catalog
   in
    case maybeItem of
-     Nothing -> Err ItemNotInCatalog itemId store
+     Nothing -> Err (ItemNotInCatalog itemId store)
      Just item ->
-       Ok Store (getGstFrom store) (ShoppingList.add item cart) catalog
+       Ok <| Store (getGstFrom store)
+                   (ShoppingList.add item cart)
+                   catalog
 
 
 viewCart : CartView view -> Store -> view
@@ -169,10 +187,10 @@ entryToViewR entry =
 
 -- DUMMY DATA FOR TESTING
 
-dummyStore : Store
+dummyStore : Int -> Store
 dummyStore seed =
-  Store (DummyItem.randomFloat 12 15 seed)
-        (DummyShoppinList.randomList seed)
+  Store (DummyItem.randomFloat2 12 15 seed)
+        (DummyShoppingList.randomList seed)
         (DummyItem.randomSet seed)
 
 
