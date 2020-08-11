@@ -203,243 +203,238 @@ renderItemBrowser appModel model =
         div
           [ ViewStyle.appContainer ]
           [ renderHeader header.navbar header.navdrawer
-          , renderCartdrawer cart header.cartdrawer
+          , UseCase.viewShoppingCart (cartView header.cartdrawer) cart
           , renderItemBrowserContent items model
           ]
 
 
-renderCartdrawer : ShoppingList.Model -> CartdrawerC -> Html Msg
-renderCartdrawer cart cartdrawer =
-  let (CartdrawerC toggled subTotalToggled) = cartdrawer
-  in
-    div
-      [ if toggled 
-          then ViewStyle.cartdrawerShown
-          else ViewStyle.cartdrawerHidden
-      ]
-      [ div
-          [ ]
-          [ div
-              [ ViewStyle.drawerTopBar ]
-              [ div
-                  [ ViewStyle.drawerTopBarTitle ]
-                  [ text "shopping Cart" ]
-              , button
-                  [ ViewStyle.btnCloseCart
-                  , onClick ToggleCartdrawer
-                  ]
-                  [ fromUnstyled
-                      <| Icon.icon
-                          [ Html.Attributes.style "font-size" "18px"
-                          ]
-                          "close"
-                  ]
-              ]
-          , div
-              [ ViewStyle.cartdrawerActionLine ]
-              [ button
-                  [ ViewStyle.btnFilledPrimaryBlock
-                  ]
-                  [ text "proceed check out" ]
-              ]
-          , div
-              [ ViewStyle.cartdrawerContent
-              ]
-              [ div
-                  [ ViewStyle.cartdrawerSummary ]
-                  [ div
-                      [ ViewStyle.cartdrawerDiscounts ]
-                      [ span
-                          [ ViewStyle.cartdrawerContentLabel ]
-                          [ button
-                              [ ViewStyle.btnCollapse
-                              , onClick ToggleCartdrawerSubTotal
-                              ]
-                              [ text "sub-total"
-                              , i [ class "material-icons"
-                                  , ViewStyle.iconCollapse
-                                  ]
-                                  [ text
-                                      (if subTotalToggled
-                                        then "expand_less"
-                                        else "expand_more")
-                                  ]
-                              ]
-                          ]
-                      , span
-                          [ ViewStyle.cartdrawerContentValue ]
-                          [ text
-                              <| floatToMoney
-                                   (ShoppingList.saleTotal cart)
-                          ]
-                      ]
-                  , UseCase.viewListContent
-                      (renderShoppingCart subTotalToggled)
-                      cart
-                  -- , div
-                  --     [ ViewStyle.cartdrawerDiscounts ]
-                  --     [ span
-                  --         [ ViewStyle.cartdrawerContentLabel ]
-                  --         [ button
-                  --             [ ViewStyle.btnDiscount ]
-                  --             [ text "discounts"
-                  --             , fromUnstyled
-                  --                 (Icon.icon
-                  --                   [ Html.Attributes.style
-                  --                       "font-size" "13px"
-                  --                   , Html.Attributes.style
-                  --                       "vertical-align" "text-bottom"
-                  --                   , Html.Events.onClick
-                  --                       NoOp
-                  --                   ]
-                  --                   "keyboard_arrow_down")
-                  --             ]
-                  --         ]
-                  --     , span
-                  --         [ ViewStyle.cartdrawerContentValue ]
-                  --         [ text "$35.00" ]
-                  --     ]
-                  -- , div 
-                  --     [ ViewStyle.cartdrawerDiscountPanel ]
-                  --     [ div 
-                  --         [ ViewStyle.cartdrawerDiscountItem ]
-                  --         [ div
-                  --             [ ViewStyle.cartdrawerDiscountItemLabel ]
-                  --             [ a
-                  --                 [ ViewStyle.cartdrawerDiscountLabelLink
-                  --                 , href "#"
-                  --                 ]
-                  --                 [ text "discount 1" ]
-                  --             ]
-                  --         , div
-                  --             [ ViewStyle.cartdrawerDiscountPct ]
-                  --             [ text "15%"]
-                  --         , div
-                  --             [ ViewStyle.cartdrawerDiscountAction ]
-                  --             [ button
-                  --                 [ ViewStyle.cartdrawerApplyDiscountBtn
-                  --                 , onClick NoOp
-                  --                 ]
-                  --                 [ fromUnstyled
-                  --                     (Icon.icon
-                  --                       [ Html.Attributes.style
-                  --                           "font-size" "14px"
-                  --                       ]
-                  --                       "check")
-                  --                 ]
-                  --             ]
-                  --         , div
-                  --             [ ViewStyle.cartdrawerAppliedDiscountItemVal ]
-                  --             [ text "-$15.00"]
-                  --         ]
-                  --     , div 
-                  --         [ ViewStyle.cartdrawerDiscountItem ]
-                  --         [ div
-                  --             [ ViewStyle.cartdrawerDiscountItemLabel ]
-                  --             [ a
-                  --                 [ ViewStyle.cartdrawerDiscountLabelLink
-                  --                 , href "#"
-                  --                 ]
-                  --                 [ text "discount 2" ]
-                  --             ]
-                  --         , div
-                  --             [ ViewStyle.cartdrawerDiscountPct ]
-                  --             [ text "10%"]
-                  --         , div
-                  --             [ ViewStyle.cartdrawerDiscountAction ]
-                  --             [ button
-                  --                 [ ViewStyle.cartdrawerRemoveDiscountBtn
-                  --                 , onClick NoOp
-                  --                 ]
-                  --                 [ fromUnstyled
-                  --                     (Icon.icon
-                  --                       [ Html.Attributes.style
-                  --                           "font-size" "14px"
-                  --                       ]
-                  --                       "close")
-                  --                 ]
-                  --             ]
-                  --         , div
-                  --             [ ViewStyle.cartdrawerDiscountItemVal ]
-                  --             [ text "-$32.00"]
-                  --         ]
-                  --     , div 
-                  --         [ ViewStyle.cartdrawerDiscountItem ]
-                  --         [ div
-                  --             [ ViewStyle.cartdrawerDiscountItemLabel ]
-                  --             [ a
-                  --                 [ ViewStyle.cartdrawerDiscountLabelLink
-                  --                 , href "#"
-                  --                 ]
-                  --                 [ text "discount 3" ]
-                  --             ]
-                  --         , div
-                  --             [ ViewStyle.cartdrawerDiscountPct ]
-                  --             [ text "20%"]
-                  --         , div
-                  --             [ ViewStyle.cartdrawerDiscountAction ]
-                  --             [
-                  --             ]
-                  --         , div
-                  --             [ ViewStyle.cartdrawerAppliedDiscountItemVal ]
-                  --             [ text "-$20.00"]
-                  --         ]
-                  --     ]
-                  , div
-                      [ ViewStyle.cartdrawerTax ]
-                      [ span
-                          [ ViewStyle.cartdrawerContentLabel ]
-                          [ text 
-                              ( "tax (" ++
-                                (Round.round 2
-                                  <| ShoppingList.tax cart) ++
-                                "%)"
-                              )
-                          ]
-                      , span
-                          [ ViewStyle.cartdrawerContentValue ]
-                          [ text 
-                              <| floatToMoney
-                                   (ShoppingList.taxedSaleTotal cart)
-                          ]
-                      ]
-                  , div
-                      [ ViewStyle.cartdrawerTotal ]
-                      [ span
-                          [ ViewStyle.cartdrawerContentLabel ]
-                          [ text "total" ]
-                      , span
-                          [ ViewStyle.cartdrawerContentValue ]
-                          [ text
-                              <| floatToMoney
-                                   (ShoppingList.saleTotal cart)
-                          ]
-                      ]
-                  , div
-                      [ ViewStyle.cartdrawerSavings ]
-                      [ span
-                          [ ViewStyle.cartdrawerContentLabel ]
-                          [ text "total savings" ]
-                      , span
-                          [ ViewStyle.cartdrawerContentValue ]
-                          [ text
-                              <| floatToMoney
-                                   (ShoppingList.calcSavings cart)
-                          ]
-                      ]
-                  , div
-                      [ ViewStyle.cartdrawerFinalCta ]
-                      [ button
-                          [ ViewStyle.btnFilledPrimary ]
-                          [ text "proceed to checkout" ]
-                      ]
-                  ]
-              ]
-          ]
-      ]
+cartView : CartdrawerC -> UseCase.CartView (Html Msg)
+cartView cartdrawer
+         saleSubTotal
+         taxPct
+         saleTax
+         saleTotal
+         totalSavings
+         cartEntries
+  = let (CartdrawerC toggled subTotalToggled) = cartdrawer
+    in
+      div
+        [ if toggled 
+            then ViewStyle.cartdrawerShown
+            else ViewStyle.cartdrawerHidden
+        ]
+        [ div
+            [ ]
+            [ div
+                [ ViewStyle.drawerTopBar ]
+                [ div
+                    [ ViewStyle.drawerTopBarTitle ]
+                    [ text "shopping Cart" ]
+                , button
+                    [ ViewStyle.btnCloseCart
+                    , onClick ToggleCartdrawer
+                    ]
+                    [ fromUnstyled
+                        <| Icon.icon
+                            [ Html.Attributes.style "font-size" "18px"
+                            ]
+                            "close"
+                    ]
+                ]
+            , div
+                [ ViewStyle.cartdrawerActionLine ]
+                [ button
+                    [ ViewStyle.btnFilledPrimaryBlock
+                    ]
+                    [ text "proceed check out" ]
+                ]
+            , div
+                [ ViewStyle.cartdrawerContent
+                ]
+                [ div
+                    [ ViewStyle.cartdrawerSummary ]
+                    [ div
+                        [ ViewStyle.cartdrawerDiscounts ]
+                        [ span
+                            [ ViewStyle.cartdrawerContentLabel ]
+                            [ button
+                                [ ViewStyle.btnCollapse
+                                , onClick ToggleCartdrawerSubTotal
+                                ]
+                                [ text "sub-total"
+                                , i [ class "material-icons"
+                                    , ViewStyle.iconCollapse
+                                    ]
+                                    [ text
+                                        (if subTotalToggled
+                                          then "expand_less"
+                                          else "expand_more")
+                                    ]
+                                ]
+                            ]
+                        , span
+                            [ ViewStyle.cartdrawerContentValue ]
+                            [ text (floatToMoney saleTotal)
+                            ]
+                        ]
+                    , renderShoppingCart subTotalToggled cartEntries
+                    -- , div
+                    --     [ ViewStyle.cartdrawerDiscounts ]
+                    --     [ span
+                    --         [ ViewStyle.cartdrawerContentLabel ]
+                    --         [ button
+                    --             [ ViewStyle.btnDiscount ]
+                    --             [ text "discounts"
+                    --             , fromUnstyled
+                    --                 (Icon.icon
+                    --                   [ Html.Attributes.style
+                    --                       "font-size" "13px"
+                    --                   , Html.Attributes.style
+                    --                       "vertical-align" "text-bottom"
+                    --                   , Html.Events.onClick
+                    --                       NoOp
+                    --                   ]
+                    --                   "keyboard_arrow_down")
+                    --             ]
+                    --         ]
+                    --     , span
+                    --         [ ViewStyle.cartdrawerContentValue ]
+                    --         [ text "$35.00" ]
+                    --     ]
+                    -- , div 
+                    --     [ ViewStyle.cartdrawerDiscountPanel ]
+                    --     [ div 
+                    --         [ ViewStyle.cartdrawerDiscountItem ]
+                    --         [ div
+                    --             [ ViewStyle.cartdrawerDiscountItemLabel ]
+                    --             [ a
+                    --                 [ ViewStyle.cartdrawerDiscountLabelLink
+                    --                 , href "#"
+                    --                 ]
+                    --                 [ text "discount 1" ]
+                    --             ]
+                    --         , div
+                    --             [ ViewStyle.cartdrawerDiscountPct ]
+                    --             [ text "15%"]
+                    --         , div
+                    --             [ ViewStyle.cartdrawerDiscountAction ]
+                    --             [ button
+                    --                 [ ViewStyle.cartdrawerApplyDiscountBtn
+                    --                 , onClick NoOp
+                    --                 ]
+                    --                 [ fromUnstyled
+                    --                     (Icon.icon
+                    --                       [ Html.Attributes.style
+                    --                           "font-size" "14px"
+                    --                       ]
+                    --                       "check")
+                    --                 ]
+                    --             ]
+                    --         , div
+                    --             [ ViewStyle.cartdrawerAppliedDiscountItemVal ]
+                    --             [ text "-$15.00"]
+                    --         ]
+                    --     , div 
+                    --         [ ViewStyle.cartdrawerDiscountItem ]
+                    --         [ div
+                    --             [ ViewStyle.cartdrawerDiscountItemLabel ]
+                    --             [ a
+                    --                 [ ViewStyle.cartdrawerDiscountLabelLink
+                    --                 , href "#"
+                    --                 ]
+                    --                 [ text "discount 2" ]
+                    --             ]
+                    --         , div
+                    --             [ ViewStyle.cartdrawerDiscountPct ]
+                    --             [ text "10%"]
+                    --         , div
+                    --             [ ViewStyle.cartdrawerDiscountAction ]
+                    --             [ button
+                    --                 [ ViewStyle.cartdrawerRemoveDiscountBtn
+                    --                 , onClick NoOp
+                    --                 ]
+                    --                 [ fromUnstyled
+                    --                     (Icon.icon
+                    --                       [ Html.Attributes.style
+                    --                           "font-size" "14px"
+                    --                       ]
+                    --                       "close")
+                    --                 ]
+                    --             ]
+                    --         , div
+                    --             [ ViewStyle.cartdrawerDiscountItemVal ]
+                    --             [ text "-$32.00"]
+                    --         ]
+                    --     , div 
+                    --         [ ViewStyle.cartdrawerDiscountItem ]
+                    --         [ div
+                    --             [ ViewStyle.cartdrawerDiscountItemLabel ]
+                    --             [ a
+                    --                 [ ViewStyle.cartdrawerDiscountLabelLink
+                    --                 , href "#"
+                    --                 ]
+                    --                 [ text "discount 3" ]
+                    --             ]
+                    --         , div
+                    --             [ ViewStyle.cartdrawerDiscountPct ]
+                    --             [ text "20%"]
+                    --         , div
+                    --             [ ViewStyle.cartdrawerDiscountAction ]
+                    --             [
+                    --             ]
+                    --         , div
+                    --             [ ViewStyle.cartdrawerAppliedDiscountItemVal ]
+                    --             [ text "-$20.00"]
+                    --         ]
+                    --     ]
+                    , div
+                        [ ViewStyle.cartdrawerTax ]
+                        [ span
+                            [ ViewStyle.cartdrawerContentLabel ]
+                            [ text
+                                ( "tax (" ++
+                                  (String.fromFloat taxPct) ++
+                                  "%)"
+                                )
+                            ]
+                        , span
+                            [ ViewStyle.cartdrawerContentValue ]
+                            [ text (floatToMoney saleTax)
+                            ]
+                        ]
+                    , div
+                        [ ViewStyle.cartdrawerTotal ]
+                        [ span
+                            [ ViewStyle.cartdrawerContentLabel ]
+                            [ text "total" ]
+                        , span
+                            [ ViewStyle.cartdrawerContentValue ]
+                            [ text (floatToMoney saleTotal)
+                            ]
+                        ]
+                    , div
+                        [ ViewStyle.cartdrawerSavings ]
+                        [ span
+                            [ ViewStyle.cartdrawerContentLabel ]
+                            [ text "total savings" ]
+                        , span
+                            [ ViewStyle.cartdrawerContentValue ]
+                            [ text (floatToMoney totalSavings)
+                            ]
+                        ]
+                    , div
+                        [ ViewStyle.cartdrawerFinalCta ]
+                        [ button
+                            [ ViewStyle.btnFilledPrimary ]
+                            [ text "proceed to checkout" ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
 
 
-renderShoppingCart : Bool -> UseCase.ShoppingListView (Html Msg)
+renderShoppingCart : Bool -> List UseCase.EntryViewR -> Html Msg
 renderShoppingCart toggled entrySet =
   div
     [ if toggled
@@ -452,7 +447,7 @@ renderShoppingCart toggled entrySet =
     ]
 
 
-renderCartEntry : UseCase.CartEntryViewR -> Html Msg
+renderCartEntry : UseCase.EntryViewR -> Html Msg
 renderCartEntry entry =
   div
     [ ViewStyle.cartdrawerEntry ]

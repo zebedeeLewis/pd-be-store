@@ -2,19 +2,23 @@ module ShoppingList exposing
  -- Test Exports, uncomment the exposing block below for
  -- testing.
  
- (..)
+-- (..)
 
- -- Production Exports, uncomment the exposing block below for
- -- production and comment out the "Test Exports" above.
--- ( ShoppingList
--- , ItemTotalFn
--- , Entry
--- , total
--- , remove
--- , add
--- , empty
--- , maybeEntry
--- )
+-- Production Exports, uncomment the exposing block below for
+-- production and comment out the "Test Exports" above.
+  ( Model
+  , Entry
+  , newEntry
+  , remove
+  , fromListOfItems
+  , add
+  , item
+  , tax
+  , entries
+  , qty
+  , empty
+  , maybeEntry
+  )
 
 
 import Round
@@ -65,49 +69,65 @@ type Entry = Entry Int Item.Model
 -- FUNCTION DEFINITIONS
 -----------------------------------------------------------------------
 
+fromListOfItems : Float -> List Item.Model -> Model
+fromListOfItems tax_ loi =
+  let list = empty tax_
+  in List.foldl add list loi
+
+
+newEntry : Int -> Item.Model -> Entry
+newEntry qty_  item_ =
+  Entry qty_ item_
+
+
 {-| produce a new empty shopping list.
 -}
 empty : Float -> Model
 empty tax_ = ShoppingList tax_ []
 
 
-{-| poduce the total list price on the given shopping list.
--}
-listTotal : Model -> Float
-listTotal model =
-  Round.roundNum 2
-  <| List.foldl
-       (\entry_ acc ->
-         let listPrice = Item.listPrice (item entry_)
-             listTotal_ = ((toFloat <| qty entry_) * listPrice)
-         in acc + listTotal_
-       ) 0 (entries model)
+-- {-| poduce the total list price on the given shopping list.
+-- -}
+-- listTotal : Model -> Float
+-- listTotal model =
+--   Round.roundNum 2
+--   <| List.foldl
+--        (\entry_ acc ->
+--          let listPrice = Item.listPrice (item entry_)
+--              listTotal_ = ((toFloat <| qty entry_) * listPrice)
+--          in acc + listTotal_
+--        ) 0 (entries model)
 
 
-saleTotal : Model -> Float
-saleTotal model =
-  Round.roundNum 2
-  <| List.foldl
-       (\entry_ acc ->
-         let salePrice = Item.salePrice (item entry_)
-             saleTotal_ = ((toFloat <| qty entry_) * salePrice)
-         in acc + saleTotal_
-       ) 0 (entries model)
+-- saleTotal : Model -> Float
+-- saleTotal model =
+--   Round.roundNum 2
+--   <| List.foldl
+--        (\entry_ acc ->
+--          let salePrice = Item.salePrice (item entry_)
+--              saleTotal_ = ((toFloat <| qty entry_) * salePrice)
+--          in acc + saleTotal_
+--        ) 0 (entries model)
 
 
-calcSavings : Model -> Float
-calcSavings model =
-  (listTotal model) - (saleTotal model)
+-- calcSavings : Model -> Float
+-- calcSavings model =
+--   (listTotal model) - (saleTotal model)
 
 
-taxedListTotal : Model -> Float
-taxedListTotal list =
-  Round.roundNum 2 <| (listTotal list) * (tax list)/100
+-- applyTaxTo : Float -> Model -> Float
+-- applyTaxTo price list =
+--   Round.roundNum 2 (price + (price * (tax list)/100))
 
 
-taxedSaleTotal : Model -> Float
-taxedSaleTotal list =
-  Round.roundNum 2 <| (saleTotal list) * (tax list)/100
+-- taxedListTotal : Model -> Float
+-- taxedListTotal list =
+--   Round.roundNum 2 <| (listTotal list) * (tax list)/100
+
+
+-- taxedSaleTotal : Model -> Float
+-- taxedSaleTotal list =
+--   Round.roundNum 2 <| (saleTotal list) * (tax list)/100
 
 
 {-| remove the entry identified by the given id from the ShoppingList

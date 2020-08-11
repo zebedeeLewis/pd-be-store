@@ -81,8 +81,7 @@ addItem =
       <| \_->
            Expect.equal
              (ShoppingList.add itemBrief emptyList)
-             (ShoppingList.ShoppingList 12
-               [ShoppingList.Entry 1 itemBrief])
+             (ShoppingList.fromListOfItems 12 [itemBrief])
 
     , it ("increments the quantity of the entry for each " ++
           "subsequent entry of the same item.")
@@ -91,8 +90,7 @@ addItem =
              (ShoppingList.add itemBrief
              << ShoppingList.add itemBrief
              << ShoppingList.add itemBrief <| emptyList)
-             (ShoppingList.ShoppingList 12
-               [ShoppingList.Entry 3 itemBrief])
+             (ShoppingList.fromListOfItems 12 <|List.repeat 3 itemBrief)
     ]
 
 
@@ -103,9 +101,9 @@ removeItem =
       (\_->
         Expect.equal
           (ShoppingList.remove (Item.id itemBrief)
-             <| ShoppingList.ShoppingList 12
-                  [ShoppingList.Entry 1 itemBrief])
-          (ShoppingList.ShoppingList 12 [])
+             <| ShoppingList.fromListOfItems 12
+                  (List.repeat 1 itemBrief))
+          (ShoppingList.empty 12)
       )
 
     , it ("decrement the quantity value of the entry w/ the given " ++
@@ -113,9 +111,9 @@ removeItem =
       (\_->
         Expect.equal
           (ShoppingList.remove (Item.id itemBrief)
-             <| ShoppingList.ShoppingList 12
-                  [ShoppingList.Entry 5 itemBrief])
-          (ShoppingList.ShoppingList 12 [ShoppingList.Entry 4 itemBrief])
+             <| ShoppingList.fromListOfItems 12
+                  (List.repeat 5 itemBrief))
+          (ShoppingList.fromListOfItems 12 (List.repeat 4 itemBrief))
       )
     ]
 

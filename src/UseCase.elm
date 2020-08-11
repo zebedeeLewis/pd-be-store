@@ -5,11 +5,11 @@ module UseCase exposing
 
  -- Production Exports, uncomment the exposing block below for
  -- production and comment out the "Test Exports" above.
-  ( ShoppingListView
-  , CartEntryViewR
-  , viewListContent
+  ( CartView
+  , EntryViewR
   , removeOneCartItem
   , addOneCartItem
+  , viewShoppingCart
   )
 
 
@@ -32,11 +32,17 @@ import ShoppingList
 {-| Interface defines a function used to display a view of the contents
 of a shopping list.
 -}
-type alias ShoppingListView view =
-  (List CartEntryViewR) -> view
+type alias CartView view
+  =  Float                 -- cartSaleSubTotal
+  -> Float                 -- cartTaxPct
+  -> Float                 -- cartTaxVal
+  -> Float                 -- cartSaleTotal
+  -> Float                 -- cartTotalSavings
+  -> (List EntryViewR) -- cartEntries
+  -> view
 
 
-type alias CartEntryViewR =
+type alias EntryViewR =
   { id         : String
   , name       : String
   , brand      : String
@@ -47,6 +53,7 @@ type alias CartEntryViewR =
   , saleTotal  : Float
   , qty        : Int
   }
+
 
 
 
@@ -68,31 +75,31 @@ addOneCartItem itemId cart =
        ShoppingList.add (ShoppingList.item entry) cart
 
 
-{-| produce a view of the given item brief. The type of the view depends
-on the return type of the ItemBriefView function.
--}
-viewItemBrief
-  : ( Item.BriefDataR -> view )
-  -> Item.Model
-  -> view
-viewItemBrief viewFn item =
-  viewFn <| Item.toData item
+-- {-| produce a view of the given item brief. The type of the view depends
+-- on the return type of the ItemBriefView function.
+-- -}
+-- viewItemBrief
+--   : ( Item.BriefDataR -> view )
+--   -> Item.Model
+--   -> view
+-- viewItemBrief viewFn item =
+--   viewFn <| Item.toData item
 
 
-{-| produce a view of the contents of the given shopping list.
--}
-viewListContent : ShoppingListView view -> ShoppingList.Model -> view
-viewListContent renderer list =
-  let entries = ShoppingList.entries list
-      listViewData = 
-        List.map entryToViewR entries
-  in renderer listViewData
+-- {-| produce a view of the contents of the given shopping list.
+-- -}
+-- viewListContent : ShoppingListView view -> ShoppingList.Model -> view
+-- viewListContent renderer list =
+--   let entries = ShoppingList.entries list
+--       listViewData = 
+--         List.map entryToViewR entries
+--   in renderer listViewData
 
 
 {-| produce a shopping list entry view record from the given Shopping
 list entry.
 -}
-entryToViewR : ShoppingList.Entry -> CartEntryViewR
+entryToViewR : ShoppingList.Entry -> EntryViewR
 entryToViewR entry =
   let item = ShoppingList.item entry
       qty = ShoppingList.qty entry
@@ -113,3 +120,32 @@ entryToViewR entry =
     }
 
 
+viewShoppingCart : CartView view -> ShoppingList.Model -> view
+viewShoppingCart cartView cart =
+  let taxPct = ShoppingList.tax cart
+      subtotal unitPriceFn =
+        Round.roundNum 2
+          <| List.foldl
+               (\entry acc ->
+                 let unitPrice = unitPriceFn (ShoppingList.item entry)
+                     subtotal_ =
+                       (toFloat <| ShoppingList.qty entry)*unitPrice
+                 in acc + subtotal_
+               ) 0 (ShoppingList.entries cart)
+
+      saleSubTotal = subtotal Item.salePrice
+      saleTax = Round.roundNum 2 (saleSubTotal * taxPct/100)
+      saleTotal = saleSubTotal + saleTax
+      listSubTotal = subtotal Item.listPrice
+      listTax = Round.roundNum 2 (listSubTotal * taxPct/100)
+      listTotal = listSubTotal + listTax
+      totalSavings = listTotal - saleTotal
+      cartEntries =
+        List.map entryToViewR (ShoppingList.entries cart)
+
+  in cartView saleSubTotal
+              taxPct
+              saleTax
+              saleTotal
+              totalSavings
+              cartEntries

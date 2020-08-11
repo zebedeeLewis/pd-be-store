@@ -21,7 +21,7 @@ randomEntry : Int -> ShoppingList.Entry
 randomEntry seed =
   let qty = DummyItem.randomInt 0 6 seed
       item = DummyItem.randomItemBrief seed
-  in ShoppingList.Entry qty item
+  in ShoppingList.newEntry qty item
 
 
 randomList : Int -> ShoppingList.Model
