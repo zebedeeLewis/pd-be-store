@@ -14,6 +14,7 @@ drawerContentAnimationDuration = 300 -- ms
 baseline = 16 -- px
 defaultFontSize = 13 -- px
 navbarHeight = 48 -- px
+catalogItemWidth = 200  --px
 
 
 navbarZIndex = 10
@@ -93,9 +94,126 @@ appContainer =
     [ backgroundColor theme.content_bg
     , position relative
     , overflowX hidden
+    , overflowY hidden
     , minHeight (vh 100)
     , fontSize (px defaultFontSize)
     , fontFamilies [ "Roboto", "sans-serif" ]
+    ]
+
+
+catalogContainer : Attribute msg
+catalogContainer =
+  css
+    [ marginTop (px navbarHeight)
+    , displayFlex
+    , flexWrap wrap
+    , alignItems stretch
+    , plHalfStyle
+    ]
+
+
+catalogItemWrapper : Attribute msg
+catalogItemWrapper =
+  css
+    [ backgroundColor transparent
+    , width (pct 50)
+    , boxSizing borderBox
+    , pbHalfStyle
+    , prHalfStyle
+    ]
+
+
+catalogItem : Attribute msg
+catalogItem =
+  css
+    [ backgroundColor theme.background
+    , p1Style
+    , lineHeight (num 1.5)
+    ]
+
+
+catalogItem__name : Attribute msg
+catalogItem__name =
+  css
+    [ fontSize (px 14)
+    , fontWeight bold
+    , textTransform capitalize
+    , color theme.primary
+    , pb1Style
+    , height (px 48)
+    ]
+
+catalogItem__priceBlock : Attribute msg
+catalogItem__priceBlock =
+  css
+    [ pt1Style
+    , height (px 48)
+    , displayFlex
+    , flexWrap wrap
+    , alignItems flexEnd
+    ]
+
+
+catalogItem__nowPrice : Attribute msg
+catalogItem__nowPrice =
+  css
+    [ fontSize (px 14)
+    , fontWeight bold
+    , color theme.primary
+    , textAlign center
+    , width (pct 100)
+    , lineHeight (px 16)
+    ]
+
+
+catalogItem__discountBanner : Attribute msg
+catalogItem__discountBanner =
+  css
+    [ display block
+    , textAlign center
+    , width (px 138)
+    , height (px 18)
+    , backgroundColor theme.secondary
+    , color theme.on_primary
+    , top (px 0)
+    , position absolute
+    , transforms
+        [ (rotate (deg -45))
+        , (translateX (px -41))
+        , (translateY (px -24))
+        ]
+    , fontWeight bold
+    , fontSize (px 12)
+    , textTransform uppercase
+    ]
+
+
+catalogItem__wasPrice : Attribute msg
+catalogItem__wasPrice =
+  css
+    [ fontSize (px 14)
+    , fontWeight bold
+    , color theme.light_grey
+    , width (pct 100)
+    , textAlign center
+    , textDecoration lineThrough
+    ]
+
+
+catalogItem__imgWrapper : Attribute msg
+catalogItem__imgWrapper =
+  css
+    [ position relative
+    , overflow hidden
+    ]
+
+
+catalogItem__img : Attribute msg
+catalogItem__img =
+  css
+    [ width (pct 100)
+    , display block
+    , height auto
     ]
 
 
@@ -269,7 +387,7 @@ navbar =
     , color theme.primary
     , displayFlex
     , alignItems center
-    , position absolute
+    , position fixed
     , zIndex (int navbarZIndex)
     , height (px navbarHeight)
     , width (pct 100)
@@ -362,7 +480,7 @@ cartdrawerStyle =
     , paddingTop (px 48)
     , maxWidth (px drawerMaxWidth)
     , height (vh 100)
-    , position absolute
+    , position fixed
     , top (px 0)
     , right (px 0)
     , zIndex (int cartdrawerZIndex)
@@ -1301,6 +1419,14 @@ px2Style =
     ]
 
 
+py2Style : Style
+py2Style =
+  batch
+    [ pt2Style
+    , pb2Style
+    ]
+
+
 p1Style : Style
 p1Style = padding space.s1
 
@@ -1322,6 +1448,14 @@ pr1Style = paddingRight space.s1
 
 pr2Style : Style
 pr2Style = paddingRight space.s2
+
+
+p2Style : Style
+p2Style =
+  batch
+    [ px2Style
+    , py2Style
+    ]
 
 
 pl2Style : Style

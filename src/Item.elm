@@ -33,6 +33,7 @@ module Item exposing
   , toData
   , dataListToSet
   , availabilityToStr
+  , discountPct
   )
 
 
@@ -1032,15 +1033,23 @@ salePrice item =
 -}
 applyDiscount : Float -> Discount -> Float
 applyDiscount listPrice_ discount =
-  let discountVal =
-        listPrice_ * ((toFloat <| discountPercentage discount)/100)
+  let (Discount record) = discount
+      discountPct_ = record.value
+      discountVal =
+        listPrice_ * ((toFloat discountPct_)/100)
   in Round.roundNum 2 (listPrice_ - discountVal)
 
 
 {-| produce the percentage of the given discount
 -}
-discountPercentage : Discount -> Int
-discountPercentage (Discount record) = record.value
+discountPct : Model -> Int
+discountPct item =
+  case item of
+    Brief record ->
+      case record.discount of
+        Nothing -> 0
+        Just (Discount discount) ->
+          discount.value
 
 
 {-| add an item to the set

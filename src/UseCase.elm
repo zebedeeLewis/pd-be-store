@@ -73,14 +73,15 @@ type alias EntryViewD =
 
 
 type alias ItemViewD =
-  { id         : String
-  , name       : String
-  , brand      : String
-  , variant    : String
-  , size       : String
-  , image      : String
-  , listPrice  : Float
-  , salePrice  : Float
+  { id          : String
+  , name        : String
+  , brand       : String
+  , variant     : String
+  , size        : String
+  , image       : String
+  , listPrice   : Float
+  , salePrice   : Float
+  , discountPct : Int
   }
 
 
@@ -191,14 +192,15 @@ entryToViewD entry =
 
 itemToViewD : Item.Model -> ItemViewD
 itemToViewD item =
-  { id         = Item.id item
-  , name       = Item.name item
-  , brand      = Item.brand item 
-  , variant    = Item.variant item
-  , size       = Item.sizeToString <| Item.size item
-  , image      = Item.image item
-  , listPrice  = Item.listPrice item 
-  , salePrice  = Item.salePrice item
+  { id           = Item.id item
+  , name         = Item.name item
+  , brand        = Item.brand item 
+  , variant      = Item.variant item
+  , size         = Item.sizeToString <| Item.size item
+  , image        = Item.image item
+  , listPrice    = Item.listPrice item 
+  , salePrice    = Item.salePrice item
+  , discountPct  = Item.discountPct item
   }
 
 

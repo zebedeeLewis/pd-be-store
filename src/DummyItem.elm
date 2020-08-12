@@ -255,7 +255,7 @@ randomSet seed =
   let data = List.map
                (\i ->
                  let seed_ = seed+i
-                 in randomItemBriefData seed
+                 in randomItemBriefData seed_
                ) <| List.range 1 30
   in Item.dataListToSet data
 

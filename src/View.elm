@@ -517,20 +517,60 @@ renderEntryName name =
     ]
 
 
-{-|TODO!!!-}
 catalogView : List UseCase.ItemViewD -> Html Msg
 catalogView data =
-  div [] (List.map renderCatalogItem data)
+  div
+    [ViewStyle.catalogContainer]
+    (List.map renderCatalogItem data)
 
 
 {-| TODO!!! -}
 renderCatalogItem : UseCase.ItemViewD -> Html Msg
 renderCatalogItem item =
   div
-    []
-    [ div [] [ text item.name ]
-    , img [ src item.image ] []
-    , div [] [ text (floatToMoney item.salePrice) ]
+    [ ViewStyle.catalogItemWrapper ]
+    [ div
+        [ ViewStyle.catalogItem ]
+        [ div
+            [ ViewStyle.catalogItem__name ]
+            [ text item.name ]
+        , div
+            [ViewStyle.catalogItem__imgWrapper ]
+            ( if item.discountPct > 0
+                then 
+                  [ div
+                      [ ViewStyle.catalogItem__discountBanner ]
+                      [ text <|
+                          (String.fromInt item.discountPct) ++ "% off"
+                      ]
+                  , img
+                      [ src item.image , ViewStyle.catalogItem__img ]
+                      []
+                  ]
+                else
+                  [ img
+                      [ src item.image , ViewStyle.catalogItem__img ]
+                      []
+                  ]
+            )
+        , div 
+            [ ViewStyle.catalogItem__priceBlock ]
+            ( if item.salePrice < item.listPrice
+                then 
+                  [ div
+                      [ ViewStyle.catalogItem__wasPrice ]
+                      [ text (floatToMoney item.listPrice) ]
+                  , div
+                      [ ViewStyle.catalogItem__nowPrice ]
+                      [ text (floatToMoney item.salePrice) ]
+                  ]
+                else
+                  [ div
+                      [ ViewStyle.catalogItem__nowPrice ]
+                      [ text (floatToMoney item.salePrice) ]
+                  ]
+            )
+        ]
     ]
 
 
