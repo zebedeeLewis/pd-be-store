@@ -61,6 +61,12 @@ type Component
 
 type alias ItemBrowserV =
   { header : HeaderC
+  , catalog : CatalogC
+  }
+
+
+type alias CatalogC =
+  { cartToggled : Bool
   }
 
 
@@ -77,7 +83,8 @@ type NavbarC = NavbarC
 type NavdrawerC = NavdrawerC Bool (List NavItem)
 
 
-type CartdrawerC = CartdrawerC Bool Bool
+--                             toggled 
+type CartdrawerC = CartdrawerC Bool     Bool
 
 
 type alias NavItem =
@@ -93,7 +100,8 @@ type alias NavItem =
 -}
 app : App.Model -> Model
 app appModel = 
-  let header =
+  let cartToggled = False
+      header =
         { navdrawer =
             NavdrawerC
               False
@@ -103,12 +111,16 @@ app appModel =
                 }
               ]
         , navbar = NavbarC
-        , cartdrawer = CartdrawerC False True
+        , cartdrawer = CartdrawerC cartToggled True
         }
   in
     if (App.isItemBrowser appModel )
-      then ItemBrowser { header = header }
-      else ItemBrowser { header = header }
+      then
+        let catalog = { cartToggled = cartToggled }
+        in ItemBrowser { header = header, catalog = catalog }
+      else
+        let catalog = { cartToggled = cartToggled }
+        in ItemBrowser { header = header, catalog = catalog }
 
 
 update : Msg -> Model -> Model
@@ -126,9 +138,12 @@ update msg model =
     ToggleCartdrawer ->
       case model of
         ItemBrowser modelView ->
-          let modelView_ =
+          let header = toggleCartdrawer modelView.header
+              modelView_ =
                 { modelView
-                | header = toggleCartdrawer modelView.header
+                | header = header
+                , catalog =
+                    toggleCartGutter header modelView.catalog
                 }
           in ItemBrowser modelView_
 
@@ -176,6 +191,12 @@ toggleCartdrawer header =
   in { header | cartdrawer = cartdrawer }
 
 
+toggleCartGutter : HeaderC -> CatalogC -> CatalogC
+toggleCartGutter header catalog =
+  let (CartdrawerC toggled _) = header.cartdrawer
+  in { catalog | cartToggled = toggled }
+
+
 toggleCartdrawerSubTotal : HeaderC -> HeaderC
 toggleCartdrawerSubTotal header =
   let (CartdrawerC toggled subTotalCollapsed) = header.cartdrawer
@@ -195,14 +216,32 @@ renderItemBrowser app_ model =
   case model of
     ItemBrowser browserView ->
       let header = browserView.header
+          catalog = browserView.catalog
       in
         div
           [ ViewStyle.appContainer ]
           [ renderHeader header.navbar header.navdrawer
           , UseCase.viewCart (cartView header.cartdrawer)
                              (App.store app_)
-          , UseCase.browseCatalog catalogView (App.store app_)
+          , renderAddBanner
+          , UseCase.browseCatalog (catalogView catalog)
+                                  (App.store app_)
+          , renderFooter
           ]
+
+
+renderFooter : Html Msg
+renderFooter =
+  div
+    [ ViewStyle.footer ]
+    []
+
+
+renderAddBanner : Html Msg
+renderAddBanner =
+  div
+    [ ViewStyle.addBanner ]
+    []
 
 
 cartView : CartdrawerC -> UseCase.CartView (Html Msg)
@@ -240,10 +279,10 @@ cartView cartdrawer
                 ]
             , div
                 [ ViewStyle.cartdrawerActionLine ]
-                [ button
-                    [ ViewStyle.btnFilledPrimaryBlock
-                    ]
-                    [ text "proceed check out" ]
+                [ -- button
+                  --   [ ViewStyle.btnFilledPrimaryBlock
+                  --   ]
+                  --   [ text "proceed check out" ]
                 ]
             , div
                 [ ViewStyle.cartdrawerContent
@@ -271,7 +310,7 @@ cartView cartdrawer
                             ]
                         , span
                             [ ViewStyle.cartdrawerContentValue ]
-                            [ text (floatToMoney saleTotal)
+                            [ text (floatToMoney saleSubTotal)
                             ]
                         ]
                     , renderShoppingCart subTotalToggled cartEntries
@@ -517,22 +556,25 @@ renderEntryName name =
     ]
 
 
-catalogView : List UseCase.ItemViewD -> Html Msg
-catalogView data =
+catalogView : CatalogC -> List UseCase.ItemViewD -> Html Msg
+catalogView catalog data =
+  let cartToggled = catalog.cartToggled
+  in
   div
-    [ViewStyle.catalogContainer]
+    [ ViewStyle.catalogContainer cartToggled ]
     (List.map renderCatalogItem data)
 
 
-{-| TODO!!! -}
 renderCatalogItem : UseCase.ItemViewD -> Html Msg
 renderCatalogItem item =
   div
     [ ViewStyle.catalogItemWrapper ]
     [ div
         [ ViewStyle.catalogItem ]
-        [ div
-            [ ViewStyle.catalogItem__name ]
+        [ a
+            [ href "#"
+            , ViewStyle.catalogItem__name
+            ]
             [ text item.name ]
         , div
             [ViewStyle.catalogItem__imgWrapper ]
@@ -654,31 +696,34 @@ renderNavbar navbar =
   div
     [ ViewStyle.navbar
     ]
-    [ fromUnstyled
-        (IconButton.iconButton
-          ( IconButton.config
-           |> IconButton.setOnClick ToggleNavdrawer
-           |> IconButton.setAttributes
-                [ TopAppBar.navigationIcon
-                ]
-          )
-          "menu")
-    , div
-        [ ViewStyle.logo
-        ]
-        [ text "Logo"
-        ]
-    , div
-        [ ViewStyle.navbarCartToggle ]
+    [ div
+        [ ViewStyle.navbarContentWrapper ]
         [ fromUnstyled
             (IconButton.iconButton
               ( IconButton.config
-               |> IconButton.setOnClick ToggleCartdrawer
+               |> IconButton.setOnClick ToggleNavdrawer
                |> IconButton.setAttributes
                     [ TopAppBar.navigationIcon
                     ]
               )
-              "shopping_cart")
+              "menu")
+        , div
+            [ ViewStyle.logo
+            ]
+            [ text "Logo"
+            ]
+        , div
+            [ ViewStyle.navbarCartToggle ]
+            [ fromUnstyled
+                (IconButton.iconButton
+                  ( IconButton.config
+                   |> IconButton.setOnClick ToggleCartdrawer
+                   |> IconButton.setAttributes
+                        [ TopAppBar.navigationIcon
+                        ]
+                  )
+                  "shopping_cart")
+            ]
         ]
     ]
 

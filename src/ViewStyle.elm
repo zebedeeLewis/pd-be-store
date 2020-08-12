@@ -8,6 +8,7 @@ import Html.Styled.Attributes exposing (css)
 
 
 drawerMaxWidth = 320 -- px
+drawerMdMaxWidth = 49 -- vw
 drawerContentWidth = 280 -- px
 drawerAnimationDuration = 1 -- ms
 drawerContentAnimationDuration = 300 -- ms
@@ -101,14 +102,52 @@ appContainer =
     ]
 
 
-catalogContainer : Attribute msg
-catalogContainer =
+catalogContainer : Bool -> Attribute msg
+catalogContainer cartToggled =
   css
-    [ marginTop (px navbarHeight)
+    [ marginTop (px -46)
     , displayFlex
     , flexWrap wrap
     , alignItems stretch
-    , plHalfStyle
+    -- , plHalfStyle
+    , maxWidth (px 1440)
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 1440) ] ]
+        -- [ paddingLeft (px 0)
+        [ marginLeft auto
+        , marginRight auto
+        ]
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 1180) ] ]
+        (List.append
+          [ ]
+          ( if cartToggled
+              then [ marginRight (vw 31)
+                   ]
+              else []
+          )
+        )
+          
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 920) ] ]
+        (List.append
+          [ ]
+          ( if cartToggled
+              then [ marginRight (vw 40)
+                   ]
+              else []
+          )
+        )
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 720) ] ]
+        (List.append
+          [ ]
+          ( if cartToggled
+              then [ marginRight (vw 49)
+                   ]
+              else []
+          )
+        )
     ]
 
 
@@ -116,10 +155,45 @@ catalogItemWrapper : Attribute msg
 catalogItemWrapper =
   css
     [ backgroundColor transparent
-    , width (pct 50)
+    , width (vw 50)
     , boxSizing borderBox
     , pbHalfStyle
-    , prHalfStyle
+    , paddingRight (px 4)
+    , paddingLeft (px 8)
+    , marginRight (px -4)
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 1440) ] ]
+        [ paddingLeft (px 10)
+        , paddingRight (px 10)
+        ]
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 1180) ] ]
+        [ width (vw 17.2)
+        ]
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 920) ] ]
+        [ width (vw 20.6)
+        , paddingLeft (px 20)
+        , paddingRight (px 10)
+        , paddingBottom (px 20)
+        , marginRight (px -10)
+        ]
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 720) ] ]
+        [ pb1Style
+        , paddingLeft (px 16)
+        , paddingRight (px 8)
+        , marginRight (px -8)
+        , width (vw 25.6)
+        ]
+    -- , Media.withMedia
+    --     [ Media.only Media.screen [ Media.minWidth (px 680) ] ]
+    --     [ width (vw 25.5)
+    --     ]
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 480) ] ]
+        [ width (vw 33.5)
+        ]
     ]
 
 
@@ -129,6 +203,11 @@ catalogItem =
     [ backgroundColor theme.background
     , p1Style
     , lineHeight (num 1.5)
+    , hover
+        [ elevation6Style
+        ]
+    , Transitions.transition
+        [ Transitions.boxShadow 400 ]
     ]
 
 
@@ -141,6 +220,8 @@ catalogItem__name =
     , color theme.primary
     , pb1Style
     , height (px 48)
+    , textDecoration none
+    , display block
     ]
 
 catalogItem__priceBlock : Attribute msg
@@ -417,14 +498,28 @@ navbar : Attribute msg
 navbar =
   css
     [ backgroundColor theme.background
-    , color theme.primary
-    , displayFlex
-    , alignItems center
     , position fixed
     , zIndex (int navbarZIndex)
     , height (px navbarHeight)
     , width (pct 100)
     , elevation3Style
+    ]
+
+
+navbarContentWrapper : Attribute msg
+navbarContentWrapper =
+  css
+    [ displayFlex
+    , color theme.primary
+    , alignItems center
+    , maxWidth (px 1440)
+    , marginLeft auto
+    , marginRight auto
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 920) ] ]
+        [ paddingRight (px 10)
+        , paddingLeft (px 10)
+        ]
     ]
 
 
@@ -468,7 +563,7 @@ drawerTopBar =
     [ displayFlex
     , textAlign right
     -- , color theme.light_grey
-    , backgroundColor theme.primary_light
+    , backgroundColor theme.secondary
     , paddingLeft (px 12)
     , paddingRight (px 12)
     , boxSizing borderBox
@@ -483,6 +578,17 @@ drawerTopBarTitle =
     , textTransform capitalize
     , paddingTop (px 12)
     , paddingBottom (px 12)
+    ]
+
+
+addBanner : Attribute msg
+addBanner =
+  css
+    [ backgroundImage
+        <| linearGradient (stop theme.background)
+                          (stop (hsla 0 0 0 0))  []
+    , height (px 125)
+    , marginTop (px 48)
     ]
 
 
@@ -503,6 +609,18 @@ cartdrawerHidden =
     , transform (translateX (px drawerMaxWidth))
     , Transitions.transition
         [Transitions.transform drawerContentAnimationDuration]
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 1180) ] ]
+        [ transform (translateX (vw 32))
+        ]
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 920) ] ]
+        [ transform (translateX (vw 40))
+        ]
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 720) ] ]
+        [ transform (translateX (vw drawerMdMaxWidth))
+        ]
     ]
 
 
@@ -512,8 +630,10 @@ cartdrawerStyle =
     [ width (pct 100)
     , paddingTop (px 48)
     , maxWidth (px drawerMaxWidth)
-    , height (vh 100)
-    , position fixed
+    -- , height (vh 100)
+    -- , position fixed
+    , height (pct 100)
+    , position absolute
     , top (px 0)
     , right (px 0)
     , zIndex (int cartdrawerZIndex)
@@ -523,6 +643,20 @@ cartdrawerStyle =
     , overflowY hidden
     , overflowX hidden
     , elevation2Style
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 1180) ] ]
+        [ maxWidth (vw 31)
+        ]
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 920) ] ]
+        [ maxWidth (vw 40)
+        ]
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 720) ] ]
+        [ pb1Style
+        , maxWidth (vw drawerMdMaxWidth)
+        , boxShadow none
+        ]
     ]
 
 
@@ -537,7 +671,7 @@ cartdrawerContentStyle : Style
 cartdrawerContentStyle =
   batch
     [ width (pct 100)
-    , height (pct 90)
+    -- , height (pct 90)
     , overflowY auto
     , paddingTop (px 12)
     , paddingLeft (px 12)
@@ -987,7 +1121,8 @@ cartdrawerActionLine : Attribute msg
 cartdrawerActionLine =
   css
     [ displayFlex
-    , pb1Style
+    , backgroundColor theme.secondary_dark
+    , height (px 30)
     ]
 
 
@@ -1093,6 +1228,20 @@ cartEntrySize : Attribute msg
 cartEntrySize =
   css 
     [ textTransform capitalize
+    ]
+
+
+footer : Attribute msg
+footer =
+  css
+    [ marginTop (px 64)
+    , paddingTop (px 16)
+    , paddingBottom (px 8)
+    , height (px 50)
+    , borderTopStyle solid
+    , borderWidth (px 25)
+    , borderColor theme.secondary
+    , backgroundColor theme.secondary_dark
     ]
 
 

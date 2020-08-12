@@ -28,12 +28,6 @@ import UseCase
 type Model
   = ItemBrowser UseCase.Store
 
--- type Model
---   = ItemBrowser ItemBrowserM
--- 
--- --                               shopping cart/list  page data
--- type ItemBrowserM = ItemBrowserM ShoppingList.Model  Item.Set 
-
 
 type Msg
   = NoOp
@@ -42,6 +36,7 @@ type Msg
   | RemoveItemFromCart String
   | AddItemToCart String
   | ProceedToCheckout UseCase.Store
+  | ViewItemDetails String
   | Log String
 
 
@@ -80,11 +75,13 @@ update msg app =
         ItemBrowser _ ->
           case (UseCase.addItemToCart itemId <| store app) of
             Err _ -> ItemBrowser (store app)
-            Ok store_ -> ItemBrowser (store app)
+            Ok store_ -> ItemBrowser store_
       
     ProceedToCheckout cart_ ->
       case app of
         ItemBrowser _ -> app
+
+    ViewItemDetails itemId -> app
 
     Log _ -> app
 
