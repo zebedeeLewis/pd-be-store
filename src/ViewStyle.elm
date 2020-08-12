@@ -217,6 +217,39 @@ catalogItem__img =
     ]
 
 
+btnCatalogItem : Attribute msg
+btnCatalogItem =
+  css
+    [ btnStyle
+    , btnFilledSecondaryStyle
+    , borderColor theme.secondary
+    , color theme.on_primary
+    , btnMediumStyle
+    , borderStyle none
+    , display block
+    , width (pct 100)
+    , fontSize (px 14)
+    , fontWeight bold
+    ]
+
+
+btnCatalogItem__icon : Attribute msg
+btnCatalogItem__icon =
+  css
+    [ fontSize (px 16)
+    , display inlineBlock
+    , mlHalfStyle
+    , verticalAlign bottom
+    ]
+
+
+catalogItem__ctaBlock : Attribute msg
+catalogItem__ctaBlock =
+  css
+    [ pt1Style
+    ]
+
+
 searchResultsContainer : Attribute msg
 searchResultsContainer =
   css []

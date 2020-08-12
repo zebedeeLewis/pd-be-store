@@ -570,6 +570,20 @@ renderCatalogItem item =
                       [ text (floatToMoney item.salePrice) ]
                   ]
             )
+        , div
+            [ ViewStyle.catalogItem__ctaBlock ]
+            [ button
+                [ ViewStyle.btnCatalogItem
+                , onClick <| AppMsg (App.AddItemToCart item.id)
+                ]
+                [ text "add"
+                , i
+                    [ ViewStyle.btnCatalogItem__icon
+                    , class "material-icons"
+                    ]
+                    [ text "add_shopping_cart" ]
+                ]
+            ]
         ]
     ]
 
