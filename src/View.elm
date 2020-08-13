@@ -51,8 +51,8 @@ type Model
 
 type Msg
   = ToggleNavdrawer
-  | ToggleCartdrawer
-  | ToggleCartdrawerSubTotal
+  | ViewCart
+  | ViewCartSubTotal
   | AppMsg App.Msg
   | NoOp
 
@@ -80,6 +80,7 @@ type alias Theme =
   , onDangerLight  : String  -- hex
   , dangerDark     : String  -- hex
   , onDangerDark   : String  -- hex
+  , onBackground   : String  -- hex
   , background     : String  -- hex
   , contentBg      : String  -- hex
   , onPrimary      : String  -- hex
@@ -128,7 +129,7 @@ type alias CatalogItemSettings =
 type alias HeaderC =
   { navbar      : NavbarC
   , navdrawer   : NavdrawerC
-  , cartdrawer  : CartdrawerC
+  , cartdrawer  : CartC
   }
 
 
@@ -138,8 +139,12 @@ type NavbarC = NavbarC
 type NavdrawerC = NavdrawerC Bool (List NavItem)
 
 
---                             toggled 
-type CartdrawerC = CartdrawerC Bool     Bool
+type alias CartC =
+  { toggled            : Bool
+  , entriesShown  : Bool
+  , spacing            : Spacing
+  , theme              : Theme
+  }
 
 
 type alias NavItem =
@@ -156,31 +161,19 @@ type alias NavItem =
 app : App.Model -> Model
 app appModel = 
   let cartToggled = False
-      header =
-        { navdrawer =
-            NavdrawerC
-              False
-              [ { label = "test1"
-                , value = "test"
-                , active = False
-                }
-              ]
-        , navbar = NavbarC
-        , cartdrawer = CartdrawerC cartToggled True
-        }
-
       base = 20
+
       spacing =
-       { base     = base
-       , s1       = base * 0.5
-       , s2       = base * 1.0
-       , s3       = base * 1.5
-       , s4       = base * 2.0
-       , s5       = base * 2.5
-       , s6       = base * 3.0
-       , s7       = base * 3.5
-       , s8       = base * 4.0
-       , s9       = base * 4.5
+       { base  = base
+       , s1    = base * 0.5
+       , s2    = base * 1.0
+       , s3    = base * 1.5
+       , s4    = base * 2.0
+       , s5    = base * 2.5
+       , s6    = base * 3.0
+       , s7    = base * 3.5
+       , s8    = base * 4.0
+       , s9    = base * 4.5
        }
 
       theme =
@@ -198,12 +191,33 @@ app appModel =
         , background     = "fff"
         , contentBg      = "eaeded"
         , onPrimary      = "fff"
+        , onBackground   = "4f4f4f"
         , onSecondary    = "fff"
         , onSurface      = "041e42"
         , lightGrey      = "77859940"
         , darkGrey       = "738195"
         , lighterGrey    = "f5f6f7"
         , lightGreen     = "76ff03"
+        }
+
+      cartdrawer =
+        { toggled            = cartToggled
+        , entriesShown  = True
+        , spacing            = spacing
+        , theme              = theme
+        }
+
+      header =
+        { navdrawer =
+            NavdrawerC
+              False
+              [ { label = "test1"
+                , value = "test"
+                , active = False
+                }
+              ]
+        , navbar = NavbarC
+        , cartdrawer = cartdrawer
         }
 
       itemSettings =
@@ -238,7 +252,7 @@ update msg model =
                 }
           in ItemBrowser modelView_
 
-    ToggleCartdrawer ->
+    ViewCart ->
       case model of
         ItemBrowser modelView ->
           let header = toggleCartdrawer modelView.header
@@ -250,7 +264,7 @@ update msg model =
                 }
           in ItemBrowser modelView_
 
-    ToggleCartdrawerSubTotal ->
+    ViewCartSubTotal ->
       case model of
         ItemBrowser modelView ->
           let modelView_ =
@@ -288,22 +302,25 @@ toggleNavdrawer header =
 
 toggleCartdrawer : HeaderC -> HeaderC
 toggleCartdrawer header =
-  let (CartdrawerC toggled subTotalCollapsed) = header.cartdrawer
-      cartdrawer = CartdrawerC (not toggled) subTotalCollapsed
+  let cartdrawer_ = header.cartdrawer
+      toggled = cartdrawer_.toggled
+      entriesShown = cartdrawer_.entriesShown
+      cartdrawer = { cartdrawer_ | toggled = (not toggled) }
 
   in { header | cartdrawer = cartdrawer }
 
 
 toggleCartGutter : HeaderC -> CatalogC -> CatalogC
 toggleCartGutter header catalog =
-  let (CartdrawerC toggled _) = header.cartdrawer
-  in { catalog | cartToggled = toggled }
+  { catalog | cartToggled = header.cartdrawer.toggled }
 
 
 toggleCartdrawerSubTotal : HeaderC -> HeaderC
 toggleCartdrawerSubTotal header =
-  let (CartdrawerC toggled subTotalCollapsed) = header.cartdrawer
-      cartdrawer = CartdrawerC toggled (not subTotalCollapsed)
+  let cartdrawer_ = header.cartdrawer
+      entriesShown = cartdrawer_.entriesShown
+      cartdrawer =
+        { cartdrawer_ | entriesShown = (not entriesShown) }
 
   in { header | cartdrawer = cartdrawer }
 
@@ -392,316 +409,416 @@ renderAddBanner =
     []
 
 
-cartView : CartdrawerC -> UseCase.CartView (Html Msg)
-cartView cartdrawer
+cartView : CartC -> UseCase.CartView (Html Msg)
+cartView cart
          saleSubTotal
          taxPct
          saleTax
          saleTotal
          totalSavings
          cartEntries
-  = let (CartdrawerC toggled subTotalToggled) = cartdrawer
-    in
-      div
-        [ if toggled 
-            then ViewStyle.cartdrawerShown
-            else ViewStyle.cartdrawerHidden
-        ]
-        [ div
-            [ ]
-            [ div
-                [ ViewStyle.drawerTopBar ]
-                [ div
-                    [ ViewStyle.drawerTopBarTitle ]
-                    [ text "shopping Cart" ]
-                , button
-                    [ ViewStyle.btnCloseCart
-                    , onClick ToggleCartdrawer
-                    ]
-                    [ fromUnstyled
-                        <| Icon.icon
-                            [ Html.Attributes.style "font-size" "18px"
-                            ]
-                            "close"
-                    ]
-                ]
-            , div
-                [ ViewStyle.cartdrawerActionLine ]
-                [ -- button
-                  --   [ ViewStyle.btnFilledPrimaryBlock
-                  --   ]
-                  --   [ text "proceed check out" ]
-                ]
-            , div
-                [ ViewStyle.cartdrawerContent
-                ]
-                [ div
-                    [ ViewStyle.cartdrawerSummary ]
-                    [ div
-                        [ ViewStyle.cartdrawerDiscounts ]
-                        [ span
-                            [ ViewStyle.cartdrawerContentLabel ]
-                            [ button
-                                [ ViewStyle.btnCollapse
-                                , onClick ToggleCartdrawerSubTotal
-                                ]
-                                [ text "sub-total"
-                                , i [ class "material-icons"
-                                    , ViewStyle.iconCollapse
-                                    ]
-                                    [ text
-                                        (if subTotalToggled
-                                          then "expand_less"
-                                          else "expand_more")
-                                    ]
-                                ]
-                            ]
-                        , span
-                            [ ViewStyle.cartdrawerContentValue ]
-                            [ text (floatToMoney saleSubTotal)
-                            ]
-                        ]
-                    , renderShoppingCart subTotalToggled cartEntries
-                    -- , div
-                    --     [ ViewStyle.cartdrawerDiscounts ]
-                    --     [ span
-                    --         [ ViewStyle.cartdrawerContentLabel ]
-                    --         [ button
-                    --             [ ViewStyle.btnDiscount ]
-                    --             [ text "discounts"
-                    --             , fromUnstyled
-                    --                 (Icon.icon
-                    --                   [ Html.Attributes.style
-                    --                       "font-size" "13px"
-                    --                   , Html.Attributes.style
-                    --                       "vertical-align" "text-bottom"
-                    --                   , Html.Events.onClick
-                    --                       NoOp
-                    --                   ]
-                    --                   "keyboard_arrow_down")
-                    --             ]
-                    --         ]
-                    --     , span
-                    --         [ ViewStyle.cartdrawerContentValue ]
-                    --         [ text "$35.00" ]
-                    --     ]
-                    -- , div 
-                    --     [ ViewStyle.cartdrawerDiscountPanel ]
-                    --     [ div 
-                    --         [ ViewStyle.cartdrawerDiscountItem ]
-                    --         [ div
-                    --             [ ViewStyle.cartdrawerDiscountItemLabel ]
-                    --             [ a
-                    --                 [ ViewStyle.cartdrawerDiscountLabelLink
-                    --                 , href "#"
-                    --                 ]
-                    --                 [ text "discount 1" ]
-                    --             ]
-                    --         , div
-                    --             [ ViewStyle.cartdrawerDiscountPct ]
-                    --             [ text "15%"]
-                    --         , div
-                    --             [ ViewStyle.cartdrawerDiscountAction ]
-                    --             [ button
-                    --                 [ ViewStyle.cartdrawerApplyDiscountBtn
-                    --                 , onClick NoOp
-                    --                 ]
-                    --                 [ fromUnstyled
-                    --                     (Icon.icon
-                    --                       [ Html.Attributes.style
-                    --                           "font-size" "14px"
-                    --                       ]
-                    --                       "check")
-                    --                 ]
-                    --             ]
-                    --         , div
-                    --             [ ViewStyle.cartdrawerAppliedDiscountItemVal ]
-                    --             [ text "-$15.00"]
-                    --         ]
-                    --     , div 
-                    --         [ ViewStyle.cartdrawerDiscountItem ]
-                    --         [ div
-                    --             [ ViewStyle.cartdrawerDiscountItemLabel ]
-                    --             [ a
-                    --                 [ ViewStyle.cartdrawerDiscountLabelLink
-                    --                 , href "#"
-                    --                 ]
-                    --                 [ text "discount 2" ]
-                    --             ]
-                    --         , div
-                    --             [ ViewStyle.cartdrawerDiscountPct ]
-                    --             [ text "10%"]
-                    --         , div
-                    --             [ ViewStyle.cartdrawerDiscountAction ]
-                    --             [ button
-                    --                 [ ViewStyle.cartdrawerRemoveDiscountBtn
-                    --                 , onClick NoOp
-                    --                 ]
-                    --                 [ fromUnstyled
-                    --                     (Icon.icon
-                    --                       [ Html.Attributes.style
-                    --                           "font-size" "14px"
-                    --                       ]
-                    --                       "close")
-                    --                 ]
-                    --             ]
-                    --         , div
-                    --             [ ViewStyle.cartdrawerDiscountItemVal ]
-                    --             [ text "-$32.00"]
-                    --         ]
-                    --     , div 
-                    --         [ ViewStyle.cartdrawerDiscountItem ]
-                    --         [ div
-                    --             [ ViewStyle.cartdrawerDiscountItemLabel ]
-                    --             [ a
-                    --                 [ ViewStyle.cartdrawerDiscountLabelLink
-                    --                 , href "#"
-                    --                 ]
-                    --                 [ text "discount 3" ]
-                    --             ]
-                    --         , div
-                    --             [ ViewStyle.cartdrawerDiscountPct ]
-                    --             [ text "20%"]
-                    --         , div
-                    --             [ ViewStyle.cartdrawerDiscountAction ]
-                    --             [
-                    --             ]
-                    --         , div
-                    --             [ ViewStyle.cartdrawerAppliedDiscountItemVal ]
-                    --             [ text "-$20.00"]
-                    --         ]
-                    --     ]
-                    , div
-                        [ ViewStyle.cartdrawerTax ]
-                        [ span
-                            [ ViewStyle.cartdrawerContentLabel ]
-                            [ text
-                                ( "tax (" ++
-                                  (String.fromFloat taxPct) ++
-                                  "%)"
-                                )
-                            ]
-                        , span
-                            [ ViewStyle.cartdrawerContentValue ]
-                            [ text (floatToMoney saleTax)
-                            ]
-                        ]
-                    , div
-                        [ ViewStyle.cartdrawerTotal ]
-                        [ span
-                            [ ViewStyle.cartdrawerContentLabel ]
-                            [ text "total" ]
-                        , span
-                            [ ViewStyle.cartdrawerContentValue ]
-                            [ text (floatToMoney saleTotal)
-                            ]
-                        ]
-                    , div
-                        [ ViewStyle.cartdrawerSavings ]
-                        [ span
-                            [ ViewStyle.cartdrawerContentLabel ]
-                            [ text "total savings" ]
-                        , span
-                            [ ViewStyle.cartdrawerContentValue ]
-                            [ text (floatToMoney totalSavings)
-                            ]
-                        ]
-                    , div
-                        [ ViewStyle.cartdrawerFinalCta ]
-                        [ button
-                            [ ViewStyle.btnFilledPrimary ]
-                            [ text "proceed to checkout" ]
-                        ]
-                    ]
-                ]
+  = let toggled = cart.toggled
+        entriesShown = cart.entriesShown
+        theme = cart.theme
+        spacing = cart.spacing
+
+        topBarStyle =
+          css
+            [ displayFlex
+            , alignItems center
+            , textAlign right
+            , backgroundColor (hex theme.primary)
+            , paddingLeft (px spacing.s1)
+            , paddingRight (px spacing.s1)
+            , boxSizing contentBox
+            , height (px spacing.s6)
+            , borderBottomStyle solid
+            , borderWidth (px spacing.s2)
+            , borderColor (hex theme.primaryDark)
             ]
-        ]
 
+        titleStyle =
+          css
+            [ fontSize (px 18)
+            , color (hex theme.onPrimary)
+            , textTransform capitalize
+            , paddingTop (px spacing.s1)
+            , paddingBottom (px spacing.s1)
+            ]
 
-renderShoppingCart : Bool -> List UseCase.EntryViewD -> Html Msg
-renderShoppingCart toggled entrySet =
-  div
-    [ if toggled
-        then ViewStyle.toggledCartdrawerEntries
-        else ViewStyle.cartdrawerEntries
-    ]
-    [ div
-        []
-        (List.map renderCartEntry entrySet)
-    ]
+        closeBtnStyle =
+          css
+            [ borderStyle none
+            , backgroundColor inherit
+            , outlineStyle none
+            , display inlineBlock
+            , cursor pointer
+            , textDecoration none
+            , marginLeft auto
+            , padding (px spacing.s1)
+            , color (hex theme.onPrimary)
+            ]
 
+        closeIconStyle = css [ fontSize (px 18) ]
 
-renderCartEntry : UseCase.EntryViewD -> Html Msg
-renderCartEntry entry =
-  let item = entry.item
-  in
-  div
-    [ ViewStyle.cartdrawerEntry ]
-    [ img 
-        [ src item.image
-        , ViewStyle.cartEntryImg
-        ] []
-    , div
-        [ ViewStyle.cartEntryDetails
-        ]
-        [ renderEntryName (item.name ++ " by " ++ item.brand)
-        , span
-            [ ViewStyle.cartEntryVariant ]
-            [ text (item.variant ++ ", ") ]
-        , span
-            [ ViewStyle.cartEntrySize ]
-            [ text item.size ]
-        , div
-            [ ViewStyle.qtyWrapper ]
-            [ button
-                [ ViewStyle.qtyBtnDec
-                , onClick <| AppMsg (App.RemoveItemFromCart item.id)
-                ]
-                [ text "-" ]
-            , span
-                [ ViewStyle.qtyVal ]
-                [ text (String.fromInt entry.qty) ]
+        topBar =
+          div
+            [ topBarStyle ]
+            [ div [ titleStyle ] [ text "shopping Cart" ]
             , button
-                [ ViewStyle.qtyBtnInc
-                , onClick <| AppMsg (App.AddItemToCart item.id)
+                [ closeBtnStyle, onClick ViewCart ]
+                [ i [ class "material-icons", closeIconStyle ]
+                    [ text "close" ]
                 ]
-                [ text "+" ]
             ]
-        ]
-    , div
-        [ ViewStyle.cartEntryPrice ]
-        <| [ div
-               [ if entry.saleTotal < entry.listTotal
-                   then ViewStyle.wasPrice
-                   else ViewStyle.nowPrice
-               ]
-               [ text (floatToMoney entry.listTotal)
-               ]
-           ] ++ 
-           if entry.saleTotal < entry.listTotal
-             then [ div
-                      [ ViewStyle.nowPrice ]
-                      [ text (floatToMoney entry.saleTotal) ]
+
+        summaryLineStyle =
+          css
+            [ displayFlex
+            , color (hex theme.onBackground)
+            , lineHeight (px spacing.s2)
+            , justifyContent spaceBetween
+            , paddingBottom (px spacing.s1)
+            ]
+
+        labelStyle =
+          css
+            [ textAlign left
+            , textTransform capitalize
+            , fontWeight bold
+            , fontSize (px 14)
+            ]
+
+        valueStyle =
+          css
+            [ textAlign right
+            , fontSize (px 14)
+            , fontWeight bold
+            ]
+
+        collapseBtnStyle =
+          css
+            [ borderStyle none
+            , backgroundColor inherit
+            , textTransform capitalize
+            , outlineStyle none
+            , cursor pointer
+            , padding (px 0)
+            , textDecoration none
+            , fontSize (px 14)
+            , fontWeight bold
+            , displayFlex
+            , alignItems center
+            , color (hex theme.onBackground)
+            ]
+
+        collapseIconStyle =
+          css
+            [ fontSize (px spacing.s2)
+            , display inlineBlock
+            , marginLeft (px spacing.s1)
+            ]
+
+        entriesPanelStyle_Hidden =
+          css
+            [ width (pct 100)
+            , overflow hidden
+            , height (px 0)
+            , Transitions.transition
+                [ Transitions.height 4000 ]
+            ]
+
+        entriesPanelStyle_Shown =
+          css
+            [ width (pct 100)
+            , paddingTop (px spacing.s2)
+            ]
+
+        subTotalLine =
+          div
+            [ summaryLineStyle ]
+            [ span
+                [ labelStyle ]
+                [ button
+                    [ collapseBtnStyle
+                    , onClick ViewCartSubTotal
+                    ]
+                    [ text "sub-total"
+                    , i [ class "material-icons", collapseIconStyle ]
+                        [ text
+                            (if entriesShown
+                              then "expand_less"
+                              else "expand_more")
+                        ]
+                    ]
+                ]
+            , span [ valueStyle ] [ text (floatToMoney saleSubTotal) ]
+            ]
+
+        entriesPanel =
+          div
+            [ if entriesShown
+                then entriesPanelStyle_Shown
+                else entriesPanelStyle_Hidden
+            ]
+            [ div []
+                (List.map (renderCartEntry theme spacing) cartEntries)
+            ]
+
+        taxLine =
+          div
+            [ summaryLineStyle ]
+            [ span
+                [ labelStyle ]
+                [ text
+                    ( "tax (" ++
+                      (String.fromFloat taxPct) ++
+                      "%)"
+                    )
+                ]
+            , span [ valueStyle ] [ text (floatToMoney saleTax) ]
+            ]
+
+        totalLineStyle =
+          css
+            [ displayFlex
+            , justifyContent spaceBetween
+            , borderTopStyle solid
+            , borderColor (hex theme.lighterGrey)
+            , borderWidth (px 1)
+            , paddingTop (px spacing.s3)
+            , paddingBottom (px spacing.s3)
+            , color (hex theme.onBackground)
+            , lineHeight (px spacing.s2)
+            ]
+
+        totalLine =
+          div
+            [ totalLineStyle ]
+            [ span
+                [ labelStyle ]
+                [ text "total" ]
+            , span [ valueStyle ] [ text (floatToMoney saleTotal) ] ]
+
+        savingsLine =
+          div
+            [ summaryLineStyle ]
+            [ span
+                [ labelStyle ]
+                [ text "total savings" ]
+            , span [ valueStyle ] [ text (floatToMoney totalSavings) ]
+            ]
+
+        ctaBlockStyle = css [ displayFlex, paddingTop (px spacing.s4) ]
+
+        ctaBlock =
+          div
+            [ ctaBlockStyle ]
+            [ button
+                [ ViewStyle.btnFilledSecondary ]
+                [ text "proceed to checkout" ]
+            ]
+
+        contentStyle =
+          css
+            [ width (pct 100)
+            , overflowY auto
+            , paddingTop (px spacing.s3)
+            , paddingLeft (px spacing.s1)
+            , paddingRight (px spacing.s1)
+            , boxSizing borderBox
+            ]
+
+        content =
+          div
+            [ contentStyle ]
+            [ subTotalLine
+            , entriesPanel
+            , taxLine
+            , totalLine
+            , savingsLine
+            , ctaBlock
+            ]
+
+        cartStyle =
+          css
+            [ width (pct 100)
+            , paddingTop (px 48)
+            , boxSizing borderBox
+            , backgroundColor (hex theme.background)
+            , fontSize (px 14)
+            ]
+
+    in div [ cartStyle ] [ topBar, content ]
+
+
+renderCartEntry : Theme -> Spacing -> UseCase.EntryViewD -> Html Msg
+renderCartEntry theme spacing entry =
+  let item = entry.item
+      image =
+        img [ src item.image, css [ width (px 80) ] ] []
+
+      detailsBlockStyle =
+        css
+          [ paddingLeft (px spacing.s1)
+          , flexGrow (num 0)
+          , flexShrink (num 0)
+          , flexBasis (pct 40)
+          , lineHeight (px spacing.s2)
+          ]
+
+      variantStyle = 
+        css
+          [ color (hex theme.darkGrey)
+          , textTransform capitalize
+          ]
+
+      qtyBlockStyle =
+        css
+         [ marginTop (px spacing.s1)
+         , maxWidth (px 140)
+         , displayFlex
+         ]
+
+      qtyBtnStyleClass =
+        batch
+          [ paddingLeft (px spacing.s1)
+          , paddingRight (px spacing.s1)
+          , flexGrow (num 2)
+          , flexShrink (num 2)
+          , flexBasis auto
+          , lineHeight (px spacing.s2)
+          , backgroundColor (hex theme.lighterGrey)
+          , borderStyle none
+          , outline none
+          ]
+
+      qtyBtnDecStyle =
+        css
+          [ qtyBtnStyleClass
+          , borderTopLeftRadius (px 4)
+          , borderBottomLeftRadius (px 4)
+          ]
+
+      qtyBtnIncStyle =
+        css
+          [ qtyBtnStyleClass
+          , borderTopRightRadius (px 4)
+          , borderBottomRightRadius (px 4)
+          ]
+
+      qtyValStyle =
+        css
+          [ display inlineBlock
+          , flexGrow (num 3)
+          , flexShrink (num 3)
+          , flexBasis auto
+          , textAlign center
+          , backgroundColor (hex theme.background)
+          ]
+
+      sizeStyle = css [ textTransform capitalize ]
+
+      entryNameStyle =
+        css 
+          [ textTransform capitalize
+          , fontSize (px 14)
+          , lineHeight (px spacing.s2)
+          , fontWeight bold
+          , height <| px (2 * spacing.s2)
+          , overflow hidden
+          ]
+
+      entryName =
+        div
+          [ entryNameStyle ]
+          [ let name = item.name ++ " by " ++ item.brand
+                maybeFirstWord = List.head (String.words name)
+            in
+              case maybeFirstWord of
+                Nothing -> text name
+                Just firstWord ->
+                  if String.length firstWord > 17
+                    then
+                      text <| (String.dropRight 3 firstWord) ++ " ..."
+                  else if String.length name > 24
+                    then text <| (String.dropRight 3 name) ++ " ..."
+                    else text name
+          ]
+
+      detailsBlock =
+        div
+          [ detailsBlockStyle ]
+          [ entryName
+          , span
+              [ variantStyle ] [ text (item.variant ++ ", ") ]
+          , span
+              [ sizeStyle ] [ text item.size ]
+          , div
+              [ qtyBlockStyle ]
+              [ button
+                  [ qtyBtnDecStyle
+                  , onClick <| AppMsg (App.RemoveItemFromCart item.id)
                   ]
-             else []
-    ]
+                  [ text "-" ]
+              , span
+                  [ qtyValStyle ] [ text (String.fromInt entry.qty) ]
+              , button
+                  [ qtyBtnIncStyle
+                  , onClick <| AppMsg (App.AddItemToCart item.id)
+                  ]
+                  [ text "+" ]
+              ]
+          ]
 
+      priceBlockStyle =
+        css
+          [ textAlign right
+          , fontSize (px 14)
+          , lineHeight (px spacing.s2)
+          , paddingLeft (px spacing.s1)
+          , marginLeft auto
+          ]
 
-renderEntryName : String -> Html Msg
-renderEntryName name =
-  div
-    [ ViewStyle.cartEntryName ]
-    [ let maybeFirstWord = List.head (String.words name)
-      in
-        case maybeFirstWord of
-          Nothing -> text name
-          Just firstWord ->
-            if String.length firstWord > 17
-              then text <| (String.dropRight 3 firstWord) ++ " ..."
-            else if String.length name > 24
-              then text <| (String.dropRight 3 name) ++ " ..."
-              else text name
-    ]
+      listPriceStyle = 
+        css
+          [ textDecoration lineThrough
+          , color (hex theme.lightGrey)
+          ]
+
+      priceBlock =
+        div
+          [ priceBlockStyle ]
+          <| [ div
+                 [ if entry.saleTotal < entry.listTotal
+                     then listPriceStyle
+                     else css []
+                 ]
+                 [ text (floatToMoney entry.listTotal) ]
+             ] ++ 
+             if entry.saleTotal < entry.listTotal
+               then [ div [] [ text (floatToMoney entry.saleTotal) ] ]
+               else []
+
+      entryStyle =
+        css
+          [ width (pct 100)
+          , marginBottom (px spacing.s2)
+          , paddingBottom (px spacing.s1)
+          , borderBottomStyle solid
+          , borderWidth (px 1)
+          , borderColor (hex theme.lighterGrey)
+          , displayFlex
+          , lineHeight (px spacing.s2)
+          , fontSize (px 13)
+          , color (hex theme.onBackground)
+          ]
+
+  in div [ entryStyle ]
+         [ image
+         , detailsBlock
+         , priceBlock
+         ]
 
 
 catalogView : CatalogC -> List UseCase.ItemViewD -> Html Msg
@@ -736,39 +853,6 @@ renderCatalogItem settings item =
           , paddingBottom (px settings.spacing.s1)
           , paddingRight (px (0.5 * settings.spacing.s1))
           , paddingLeft (px (0.5 * settings.spacing.s1))
-
-
-
-          -- , Media.withMedia
-          --     [ Media.only Media.screen [ Media.minWidth (px 1440) ] ]
-          --     [ paddingLeft (px 10)
-          --     , paddingRight (px 10)
-          --     ]
-          -- , Media.withMedia
-          --     [ Media.only Media.screen [ Media.minWidth (px 1180) ] ]
-          --     [ width (vw 17.2)
-          --     ]
-          -- , Media.withMedia
-          --     [ Media.only Media.screen [ Media.minWidth (px 920) ] ]
-          --     [ width (vw 20.6)
-          --     , paddingLeft (px 20)
-          --     , paddingRight (px 10)
-          --     , paddingBottom (px 20)
-          --     , marginRight (px -10)
-          --     ]
-          -- , Media.withMedia
-          --     [ Media.only Media.screen [ Media.minWidth (px 720) ] ]
-          --     [ ViewStyle.pb1Style
-          --     , paddingLeft (px 16)
-          --     , paddingRight (px 8)
-          --     , marginRight (px -8)
-          --     , width (vw 25.6)
-          --     , maxWidth (px 200)
-          --     ]
-          -- , Media.withMedia
-          --     [ Media.only Media.screen [ Media.minWidth (px 480) ] ]
-          --     [ width (vw 33.5)
-          --     ]
           ]
 
       discountBannerStyle =
@@ -838,7 +922,7 @@ renderCatalogItem settings item =
         css
           [ fontSize (px 14)
           , fontWeight bold
-          , color (hex settings.theme.secondary)
+          , color (hex settings.theme.onBackground)
           , textAlign center
           , width (pct 100)
           , lineHeight (px settings.spacing.s2)
@@ -896,7 +980,7 @@ renderCatalogItem settings item =
           [ fontSize (px 14)
           , fontWeight bold
           , textTransform capitalize
-          , color (hex settings.theme.secondary)
+          , color (hex settings.theme.onBackground)
           , paddingBottom (px settings.spacing.s1)
           , height <| px
               ((toFloat settings.nameLinesMax) * settings.spacing.s2)
@@ -1004,7 +1088,7 @@ renderNavbar navbar =
             [ fromUnstyled
                 (IconButton.iconButton
                   ( IconButton.config
-                   |> IconButton.setOnClick ToggleCartdrawer
+                   |> IconButton.setOnClick ViewCart
                    |> IconButton.setAttributes
                         [ TopAppBar.navigationIcon
                         ]

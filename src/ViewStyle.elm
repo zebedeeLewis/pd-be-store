@@ -23,6 +23,14 @@ navdrawerZIndex = 12
 cartdrawerZIndex = 8
 
 
+type alias Breakpoint =
+  { sm  : Float  -- px
+  , md  : Float  -- px
+  , lg  : Float  -- px
+  , xl  : Float  -- px
+  }
+
+
 type alias Space =
   { s1     : Px
   , sHalf  : Px
@@ -52,6 +60,15 @@ type alias Theme =
   , light_grey      : Color
   , lighter_grey    : Color
   , light_green     : Color
+  }
+
+
+breakpoint : Breakpoint
+breakpoint =
+  { sm  = 600
+  , md  = 960
+  , lg  = 1280
+  , xl  = 1920
   }
 
 
@@ -207,7 +224,7 @@ pagination__page =
     , hover
         [ backgroundColor theme.secondary
         , opacity (num 0.4)
-        , color theme.on_primary
+        , color (hex "4F4F4F")
         ]
     ]
 
@@ -253,7 +270,7 @@ pagination__btnStyle =
     , outline none
     , backgroundColor theme.background
     , padding (px 8)
-    , color theme.primary
+    , color (hex "4F4F4F")
     , minWidth (px 40)
     ]
 
@@ -552,6 +569,8 @@ drawerTopBar =
     ]
 
 
+
+
 drawerTopBarTitle : Attribute msg
 drawerTopBarTitle =
   css
@@ -571,205 +590,6 @@ addBanner =
                           (stop (hsla 0 0 0 0))  []
     , height (px 125)
     , marginTop (px 48)
-    ]
-
-
-cartdrawerShown : Attribute msg
-cartdrawerShown =
-  css
-    [ cartdrawerStyle
-    , transform (translateX (pct 0))
-    , Transitions.transition
-        [Transitions.transform drawerContentAnimationDuration]
-    ]
-
-
-cartdrawerHidden : Attribute msg
-cartdrawerHidden =
-  css
-    [ cartdrawerStyle
-    , transform (translateX (px drawerMaxWidth))
-    , Transitions.transition
-        [Transitions.transform drawerContentAnimationDuration]
-    , Media.withMedia
-        [ Media.only Media.screen [ Media.minWidth (px 1180) ] ]
-        [ transform (translateX (vw 32))
-        ]
-    , Media.withMedia
-        [ Media.only Media.screen [ Media.minWidth (px 920) ] ]
-        [ transform (translateX (vw 40))
-        ]
-    , Media.withMedia
-        [ Media.only Media.screen [ Media.minWidth (px 720) ] ]
-        [ transform (translateX (vw drawerMdMaxWidth))
-        ]
-    ]
-
-
-cartdrawerStyle : Style
-cartdrawerStyle =
-  batch
-    [ width (pct 100)
-    , paddingTop (px 48)
-    , maxWidth (px drawerMaxWidth)
-    -- , height (vh 100)
-    -- , position fixed
-    , height (pct 100)
-    , position absolute
-    , top (px 0)
-    , right (px 0)
-    , zIndex (int cartdrawerZIndex)
-    , boxSizing borderBox
-    , backgroundColor theme.background
-    , fontSize (px defaultFontSize)
-    , overflowY hidden
-    , overflowX hidden
-    , elevation2Style
-    , Media.withMedia
-        [ Media.only Media.screen [ Media.minWidth (px 1180) ] ]
-        [ maxWidth (vw 31)
-        ]
-    , Media.withMedia
-        [ Media.only Media.screen [ Media.minWidth (px 920) ] ]
-        [ maxWidth (vw 40)
-        ]
-    , Media.withMedia
-        [ Media.only Media.screen [ Media.minWidth (px 720) ] ]
-        [ pb1Style
-        , maxWidth (vw drawerMdMaxWidth)
-        , boxShadow none
-        ]
-    ]
-
-
-cartdrawerContent : Attribute msg
-cartdrawerContent =
-  css
-    [ cartdrawerContentStyle
-    ]
-
-
-cartdrawerContentStyle : Style
-cartdrawerContentStyle =
-  batch
-    [ width (pct 100)
-    -- , height (pct 90)
-    , overflowY auto
-    , paddingTop (px 12)
-    , paddingLeft (px 12)
-    , paddingRight (px 12)
-    , boxSizing borderBox
-    ]
-
-
-cartdrawerContentLabel : Attribute msg
-cartdrawerContentLabel =
-  css
-    [ textAlign left
-    , color theme.primary
-    , textTransform capitalize
-    , fontWeight bold
-    , fontSize (px 14)
-    ]
-
-
-wasPrice : Attribute ms
-wasPrice =
-  css
-    [ textDecoration lineThrough
-    , color theme.light_grey
-    ]
-
-
-nowPrice : Attribute ms
-nowPrice =
-  css [ ]
-
-
-cartdrawerContentLine : Style
-cartdrawerContentLine =
-  batch
-    [ displayFlex
-    , justifyContent spaceBetween
-    , pb1Style
-    ]
-
-cartdrawerSummary : Attribute msg
-cartdrawerSummary =
-  css []
-
-
-cartdrawerSubTotal : Attribute msg
-cartdrawerSubTotal =
-  css
-    [ cartdrawerContentLine
-    ]
-
-
-cartdrawerDiscounts : Attribute msg
-cartdrawerDiscounts =
-  css
-    [ cartdrawerContentLine ]
-
-
-btnSimple : Attribute msg
-btnSimple =
-  css
-    [ btnSimpleStyle
-    ]
-
-
-btnCollapse : Attribute msg
-btnCollapse =
-  css
-    [ btnSimpleStyle
-    , fontSize (px 14)
-    , fontWeight bold
-    , displayFlex
-    , alignItems center
-    ]
-
-iconCollapse : Attribute msg
-iconCollapse =
-  css
-    [ fontSize (px 20)
-    , display inlineBlock
-    , mlHalfStyle
-    ]
-
-
-cartdrawerApplyDiscountBtn : Attribute msg
-cartdrawerApplyDiscountBtn =
-  css
-    [ btnSimpleStyle
-    ,cartdrawerDiscountBtnStyle
-    , backgroundColor theme.light_green
-    ]
-
-
-cartdrawerRemoveDiscountBtn : Attribute msg
-cartdrawerRemoveDiscountBtn =
-  css
-    [ btnSimpleStyle
-    ,cartdrawerDiscountBtnStyle
-    , backgroundColor theme.lighter_grey
-    ]
-
-
-cartdrawerDiscountLabelLink : Attribute msg
-cartdrawerDiscountLabelLink =
-  css
-    [ btnSimpleStyle
-    , color theme.light_grey
-    ]
-
-
-cartdrawerDiscountBtnStyle : Style
-cartdrawerDiscountBtnStyle =
-  batch
-    [ borderRadius (px 4)
-    , paddingLeft (px 4)
-    , paddingRight (px 4)
     ]
 
 
@@ -907,12 +727,6 @@ btnFilledSecondary =
     ]
 
 
-cartdrawerFinalCta : Attribute msg
-cartdrawerFinalCta =
-  css
-    [ displayFlex
-    , pt3Style
-    ]
 
 
 btnFilledPrimaryStyle : Style
@@ -927,7 +741,7 @@ btnFilledSecondaryStyle : Style
 btnFilledSecondaryStyle =
   batch
     [ backgroundColor theme.secondary
-    , color theme.on_secondary
+    , color theme.on_primary
     ]
 
 
@@ -967,7 +781,7 @@ btnMediumStyle : Style
 btnMediumStyle =
   batch
     [ fontSize (px defaultFontSize)
-    , padding (px 6)
+    , padding (px 10)
     ]
 
 
@@ -1000,217 +814,14 @@ btnOutlineStyle =
 btnStyle =
   batch
     [ outline none
-    , fontWeight normal
+    , fontWeight bold
     , textTransform uppercase
     , textDecoration none
     , cursor pointer
     ]
 
 
-cartdrawerDiscountPanel : Attribute msg
-cartdrawerDiscountPanel =
-  css
-    [ paddingLeft (px 12)
-    , paddingTop (px 12)
-    , paddingBottom (px 12)
-    , width (pct 100)
-    , color theme.primary
-    , borderRadius (px 6)
-    , fontSize (px defaultFontSize)
-    , boxSizing borderBox
-    , textTransform capitalize
-    ]
-
-
-cartdrawerDiscountItem : Attribute msg
-cartdrawerDiscountItem =
-  css
-    [ cartdrawerContentLine ]
-
-
-cartdrawerDiscountItemLabel : Attribute msg
-cartdrawerDiscountItemLabel =
-  css
-    [ textTransform capitalize
-    , color theme.light_grey
-    , width (pct 50)
-    ]
-
-
-cartdrawerDiscountItemVal : Attribute msg
-cartdrawerDiscountItemVal =
-  css
-    [ cartdrawerDiscountItemValStyle ]
-
-
-cartdrawerAppliedDiscountItemVal : Attribute msg
-cartdrawerAppliedDiscountItemVal =
-  css
-    [ cartdrawerDiscountItemValStyle
-    , color theme.primary
-    ]
-
-
-cartdrawerDiscountItemValStyle : Style
-cartdrawerDiscountItemValStyle =
-  batch
-    [ width (pct 20)
-    , color theme.light_grey
-    , textAlign right
-    ]
-
-
-cartdrawerDiscountPct : Attribute msg
-cartdrawerDiscountPct =
-  css
-    [ color theme.light_grey
-    , width (pct 15)
-    ]
-
-
-cartdrawerDiscountAction : Attribute msg
-cartdrawerDiscountAction =
-  css
-    [ width (pct 15)
-    ]
-
-
-cartdrawerTax : Attribute msg
-cartdrawerTax =
-  css [ cartdrawerContentLine ]
-
-
-cartdrawerTotal : Attribute msg
-cartdrawerTotal =
-  css
-    [ cartdrawerContentLine
-    , borderTopStyle solid
-    , borderColor theme.lighter_grey
-    , borderWidth (px 1)
-    , pt2Style
-    ]
-
-
-cartdrawerSavings : Attribute msg
-cartdrawerSavings =
-  css
-    [ cartdrawerContentLine
-    , pt1Style
-    ]
-
-
-cartdrawerActionLine : Attribute msg
-cartdrawerActionLine =
-  css
-    [ displayFlex
-    , backgroundColor theme.secondary_dark
-    , height (px 30)
-    ]
-
-
-cartdrawerContentValue : Attribute msg
-cartdrawerContentValue =
-  css
-    [ textAlign right
-    , color theme.primary
-    , fontSize (px 14)
-    ]
-
-
-cartdrawerEntries : Attribute msg
-cartdrawerEntries =
-  css
-    [ cartdrawerEntriesStyle
-    , overflow hidden
-    , height (px 0)
-    , Transitions.transition
-        [ Transitions.height 4000 ]
-    ]
-
-
-toggledCartdrawerEntries : Attribute msg
-toggledCartdrawerEntries =
-  css
-    [ cartdrawerEntriesStyle
-    , pt2Style
-    ]
-
-
-cartdrawerEntriesStyle : Style
-cartdrawerEntriesStyle =
-  batch
-    [ width (pct 100)
-    ]
-
-
-cartdrawerEntry : Attribute msg
-cartdrawerEntry =
-  css
-    [ width (pct 100)
-    , mb2Style
-    , pb1Style
-    , borderBottomStyle solid
-    , borderWidth (px 1)
-    , borderColor theme.lighter_grey
-    , displayFlex
-    , lineHeight (num 1.5)
-    , fontSize (px 13)
-    , color theme.primary_dark
-    ]
-
-
-cartEntryImg : Attribute msg
-cartEntryImg =
-  css
-    [ width (px 80)
-    ]
-
-
-cartEntryDetails : Attribute msg
-cartEntryDetails =
-  css
-    [ plHalfStyle
-    , flexGrow (num 0)
-    , flexShrink (num 0)
-    , flexBasis (pct 40)
-    ]
-
-cartEntryVariant : Attribute msg
-cartEntryVariant =
-  css
-    [ color theme.dark_grey
-    , textTransform capitalize
-    ]
-
-
 entryNameLineH = 18
-
-cartEntryName : Attribute msg
-cartEntryName =
-  css 
-    [ textTransform capitalize
-    , fontSize (px 14)
-    , lineHeight (px entryNameLineH)
-    , fontWeight bold
-    , height <| px (2 * entryNameLineH)
-    , overflow hidden
-    ]
-
-cartEntryPrice : Attribute msg
-cartEntryPrice =
-  css
-    [ textAlign right
-    , fontSize (px 14)
-    , plHalfStyle
-    , mlAutoStyle
-    ]
-
-
-cartEntrySize : Attribute msg
-cartEntrySize =
-  css 
-    [ textTransform capitalize
-    ]
 
 
 footer : Attribute msg
@@ -1227,61 +838,6 @@ footer =
     , Media.withMedia
         [ Media.only Media.screen [ Media.minWidth (px 720) ] ]
         [ marginTop (px 62) ]
-    ]
-
-
-qtyWrapper : Attribute msg
-qtyWrapper =
-  css
-   [ mt1Style
-   , displayFlex
-   ]
-
-
-qtyBtnDec : Attribute msg
-qtyBtnDec =
-  css
-    [ qtyBtnStyle
-    , borderTopLeftRadius (px 4)
-    , borderBottomLeftRadius (px 4)
-    ]
-
-
-qtyBtnInc : Attribute msg
-qtyBtnInc =
-  css
-    [ qtyBtnStyle
-    , borderTopRightRadius (px 4)
-    , borderBottomRightRadius (px 4)
-    ]
-
-
-qtyBtnStyle : Style
-qtyBtnStyle =
-  batch
-    [ ptHalfStyle
-    , pbHalfStyle
-    , flexGrow (num 2)
-    , flexShrink (num 2)
-    , flexBasis auto
-    , lineHeight (px 2)
-    , pl1Style
-    , pr1Style
-    , backgroundColor theme.lighter_grey
-    , borderStyle none
-    , outline none
-    ]
-
-
-qtyVal : Attribute msg
-qtyVal =
-  css
-    [ display inlineBlock
-    , flexGrow (num 3)
-    , flexShrink (num 3)
-    , flexBasis auto
-    , textAlign center
-    , backgroundColor (hex "fff")
     ]
 
 
