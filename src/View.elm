@@ -226,8 +226,53 @@ renderItemBrowser app_ model =
           , renderAddBanner
           , UseCase.browseCatalog (catalogView catalog)
                                   (App.store app_)
+          , renderPagination
           , renderFooter
           ]
+
+
+renderPagination : Html Msg
+renderPagination =
+  div
+    [ ViewStyle.paginationWrapper ]
+    [ div
+        [ ViewStyle.pagination ]
+        [ button
+            [ ViewStyle.pagination__prev ]
+            [ i
+              [ ViewStyle.pagination__navIcon
+              , class "material-icons"
+              ]
+              [ text "arrow_back" ]
+            ]
+        , span
+            [ ViewStyle.pagination__ellipsisPrev ]
+            [ text "..." ]
+        , div
+            [ ViewStyle.pagination__pageWrapper ]
+            (List.map
+              (\i ->
+                button
+                  (if i == 1
+                    then [ ViewStyle.pagination__currentPage ]
+                    else [ ViewStyle.pagination__page ]
+                  )
+                  [ text (String.fromInt i) ]
+              ) (List.range 1 20)
+            )
+        , span
+            [ ViewStyle.pagination__ellipsisNext ]
+            [ text "..." ]
+        , button
+            [ ViewStyle.pagination__next ]
+            [ i
+              [ ViewStyle.pagination__navIcon
+              , class "material-icons"
+              ]
+              [ text "arrow_forward" ]
+            ]
+        ]
+    ]
 
 
 renderFooter : Html Msg

@@ -102,6 +102,162 @@ appContainer =
     ]
 
 
+paginationWrapper : Attribute msg
+paginationWrapper =
+  css
+    [ paddingLeft (px 8)
+    , paddingRight (px 8)
+    , marginTop (px 10)
+    -- , Media.withMedia
+    --     [ Media.only Media.screen [ Media.minWidth (px 500) ] ]
+    --     [ width (px 320)
+    --     ]
+    ]
+
+
+pagination : Attribute msg
+pagination =
+  css
+    [ backgroundColor theme.background
+    , displayFlex
+    , maxWidth (px 500)
+    , elevation2Style
+    , marginLeft auto
+    , marginRight auto
+    , borderTopRightRadius (px 24)
+    , borderBottomRightRadius (px 24)
+    , borderTopLeftRadius (px 24)
+    , borderBottomLeftRadius (px 24)
+    , overflow hidden
+    ]
+
+
+pagination__ellipsisPrev : Attribute msg
+pagination__ellipsisPrev =
+  css
+    [ pagination__ellipsisStyle
+    , marginLeft auto
+    , textAlign right
+    ]
+
+
+pagination__ellipsisNext : Attribute msg
+pagination__ellipsisNext =
+  css
+    [ pagination__ellipsisStyle
+    , marginRight auto
+    ]
+
+
+pagination__ellipsisStyle : Style
+pagination__ellipsisStyle =
+  batch
+    [ display inlineBlock
+    , padding (px 8)
+    , paddingBottom (px 8)
+    , width (px 40)
+    , fontSize (px 20)
+    ]
+
+
+pagination__prev : Attribute msg
+pagination__prev =
+  css
+    [ pagination__btnStyle
+    ]
+
+
+pagination__pageWrapper : Attribute msg
+pagination__pageWrapper =
+  css
+    [ width (px 200)
+    , displayFlex
+    , overflow hidden
+    -- , Media.withMedia
+    --     [ Media.only Media.screen [ Media.minWidth (px 620) ] ]
+    --     [ width (px 440)
+    --     ]
+    -- , Media.withMedia
+    --     [ Media.only Media.screen [ Media.minWidth (px 580) ] ]
+    --     [ width (px 400)
+    --     ]
+    -- , Media.withMedia
+    --     [ Media.only Media.screen [ Media.minWidth (px 540) ] ]
+    --     [ width (px 360)
+    --     ]
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 500) ] ]
+        [ width (px 320)
+        ]
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 460) ] ]
+        [ width (px 280)
+        ]
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 420) ] ]
+        [ width (px 240)
+        ]
+    ]
+
+
+pagination__page : Attribute msg
+pagination__page =
+  css
+    [ pagination__pageStyle
+    , hover
+        [ backgroundColor theme.secondary
+        , opacity (num 0.4)
+        , color theme.on_primary
+        ]
+    ]
+
+
+pagination__currentPage : Attribute msg
+pagination__currentPage =
+  css
+    [ pagination__pageStyle
+    , backgroundColor (hsla 172 1 0.37 0.4)
+    , color theme.on_primary
+    ]
+
+
+pagination__pageStyle : Style
+pagination__pageStyle =
+  batch
+    [ pagination__btnStyle
+    , fontSize (px 16)
+    , height (pct 100)
+    ]
+
+
+pagination__next : Attribute msg
+pagination__next =
+  css
+    [ pagination__btnStyle
+    , display inlineBlock
+    , marginLeft auto
+    ]
+
+
+pagination__navIcon : Attribute msg
+pagination__navIcon =
+  css
+    [
+    ]
+
+
+pagination__btnStyle : Style
+pagination__btnStyle =
+  batch
+    [ borderStyle none
+    , outline none
+    , backgroundColor theme.background
+    , padding (px 8)
+    , color theme.primary
+    , minWidth (px 40)
+    ]
+
+
 catalogContainer : Bool -> Attribute msg
 catalogContainer cartToggled =
   css
@@ -141,11 +297,13 @@ catalogContainer cartToggled =
     , Media.withMedia
         [ Media.only Media.screen [ Media.minWidth (px 720) ] ]
         (List.append
-          [ ]
+          [ maxWidth (px 780)
+          , marginLeft auto
+          ]
           ( if cartToggled
               then [ marginRight (vw 49)
                    ]
-              else []
+              else [ marginRight auto ]
           )
         )
     ]
@@ -185,6 +343,7 @@ catalogItemWrapper =
         , paddingRight (px 8)
         , marginRight (px -8)
         , width (vw 25.6)
+        , maxWidth (px 200)
         ]
     -- , Media.withMedia
     --     [ Media.only Media.screen [ Media.minWidth (px 680) ] ]
@@ -1234,14 +1393,17 @@ cartEntrySize =
 footer : Attribute msg
 footer =
   css
-    [ marginTop (px 64)
+    [ marginTop (px 24)
     , paddingTop (px 16)
     , paddingBottom (px 8)
     , height (px 50)
     , borderTopStyle solid
-    , borderWidth (px 25)
+    , borderWidth (px 12)
     , borderColor theme.secondary
     , backgroundColor theme.secondary_dark
+    , Media.withMedia
+        [ Media.only Media.screen [ Media.minWidth (px 720) ] ]
+        [ marginTop (px 62) ]
     ]
 
 
