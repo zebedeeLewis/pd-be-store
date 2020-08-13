@@ -12,6 +12,9 @@ module View exposing
 import Html
 import Html.Events
 import Html.Attributes
+import Css exposing (..)
+import Css.Transitions as Transitions
+import Css.Media as Media
 import Html.Styled exposing
   ( Html , br , h1 , h2, input, a, button, span, ul, li, div, text
   , fromUnstyled, toUnstyled, img, i
@@ -65,8 +68,60 @@ type alias ItemBrowserV =
   }
 
 
+type alias Theme =
+  { primary        : String  -- hex
+  , primaryLight   : String  -- hex
+  , primaryDark    : String  -- hex
+  , secondary      : String  -- hex
+  , secondaryLight : String  -- hex
+  , secondaryDark  : String  -- hex
+  , danger         : String  -- hex
+  , dangerLight    : String  -- hex
+  , onDangerLight  : String  -- hex
+  , dangerDark     : String  -- hex
+  , onDangerDark   : String  -- hex
+  , background     : String  -- hex
+  , contentBg      : String  -- hex
+  , onPrimary      : String  -- hex
+  , onSecondary    : String  -- hex
+  , onSurface      : String  -- hex
+  , darkGrey       : String  -- hex
+  , lightGrey      : String  -- hex
+  , lighterGrey    : String  -- hex
+  , lightGreen     : String  -- hex
+  }
+
+
 type alias CatalogC =
-  { cartToggled : Bool
+  { cartToggled  : Bool
+  , itemSettings : CatalogItemSettings
+  , theme        : Theme
+  , spacing      : Spacing
+  }
+
+
+type alias Spacing =
+  { base     : Float
+  , s1       : Float
+  , s2       : Float
+  , s3       : Float
+  , s4       : Float
+  , s5       : Float
+  , s6       : Float
+  , s7       : Float
+  , s8       : Float
+  , s9       : Float
+  }
+
+
+type alias CatalogItemSettings =
+  { maxWidth               : Float      -- px
+  , nameLinesMax           : Int
+  , fontSize               : Float      -- px
+  , priceBlockHeight       : Float      -- px
+  , liftAnimationDuration  : Float      -- ms
+  , theme                  : Theme
+  , spacing                : Spacing
   }
 
 
@@ -113,14 +168,62 @@ app appModel =
         , navbar = NavbarC
         , cartdrawer = CartdrawerC cartToggled True
         }
-  in
-    if (App.isItemBrowser appModel )
-      then
-        let catalog = { cartToggled = cartToggled }
-        in ItemBrowser { header = header, catalog = catalog }
-      else
-        let catalog = { cartToggled = cartToggled }
-        in ItemBrowser { header = header, catalog = catalog }
+
+      base = 20
+      spacing =
+       { base     = base
+       , s1       = base * 0.5
+       , s2       = base * 1.0
+       , s3       = base * 1.5
+       , s4       = base * 2.0
+       , s5       = base * 2.5
+       , s6       = base * 3.0
+       , s7       = base * 3.5
+       , s8       = base * 4.0
+       , s9       = base * 4.5
+       }
+
+      theme =
+        { primary        = "00bfa5"
+        , primaryLight   = "5df2d6"
+        , primaryDark    = "008e76"
+        , secondary      = "1a237e"
+        , secondaryLight = "534bae"
+        , secondaryDark  = "000051"
+        , danger         = "d50000"
+        , dangerLight    = "ff5131"
+        , onDangerLight  = "000"
+        , dangerDark     = "9b0000"
+        , onDangerDark   = "fff"
+        , background     = "fff"
+        , contentBg      = "eaeded"
+        , onPrimary      = "fff"
+        , onSecondary    = "fff"
+        , onSurface      = "041e42"
+        , lightGrey      = "77859940"
+        , darkGrey       = "738195"
+        , lighterGrey    = "f5f6f7"
+        , lightGreen     = "76ff03"
+        }
+
+      itemSettings =
+        { maxWidth               = 200
+        , nameLinesMax           = 3
+        , fontSize               = 14
+        , priceBlockHeight       = 32
+        , liftAnimationDuration  = 400
+        , theme                  = theme
+        , spacing                = spacing
+        }
+
+      catalog =
+        { cartToggled  = cartToggled
+        , itemSettings = itemSettings
+        , theme        = theme
+        , spacing      = spacing
+        }
+
+  in ItemBrowser { header = header, catalog = catalog }
 
 
 update : Msg -> Model -> Model
@@ -604,75 +707,214 @@ renderEntryName name =
 catalogView : CatalogC -> List UseCase.ItemViewD -> Html Msg
 catalogView catalog data =
   let cartToggled = catalog.cartToggled
+      itemSettings = catalog.itemSettings
   in
   div
     [ ViewStyle.catalogContainer cartToggled ]
-    (List.map renderCatalogItem data)
+    (List.map (renderCatalogItem itemSettings) data)
 
 
-renderCatalogItem : UseCase.ItemViewD -> Html Msg
-renderCatalogItem item =
-  div
-    [ ViewStyle.catalogItemWrapper ]
-    [ div
-        [ ViewStyle.catalogItem ]
-        [ a
-            [ href "#"
-            , ViewStyle.catalogItem__name
-            ]
-            [ text item.name ]
-        , div
-            [ViewStyle.catalogItem__imgWrapper ]
-            ( if item.discountPct > 0
-                then 
-                  [ div
-                      [ ViewStyle.catalogItem__discountBanner ]
-                      [ text <|
-                          (String.fromInt item.discountPct) ++ "% off"
-                      ]
-                  , img
-                      [ src item.image , ViewStyle.catalogItem__img ]
-                      []
-                  ]
-                else
-                  [ img
-                      [ src item.image , ViewStyle.catalogItem__img ]
-                      []
-                  ]
-            )
-        , div 
-            [ ViewStyle.catalogItem__priceBlock ]
-            ( if item.salePrice < item.listPrice
-                then 
-                  [ div
-                      [ ViewStyle.catalogItem__wasPrice ]
-                      [ text (floatToMoney item.listPrice) ]
-                  , div
-                      [ ViewStyle.catalogItem__nowPrice ]
-                      [ text (floatToMoney item.salePrice) ]
-                  ]
-                else
-                  [ div
-                      [ ViewStyle.catalogItem__nowPrice ]
-                      [ text (floatToMoney item.salePrice) ]
-                  ]
-            )
-        , div
-            [ ViewStyle.catalogItem__ctaBlock ]
-            [ button
-                [ ViewStyle.btnCatalogItem
-                , onClick <| AppMsg (App.AddItemToCart item.id)
-                ]
-                [ text "add"
-                , i
-                    [ ViewStyle.btnCatalogItem__icon
-                    , class "material-icons"
-                    ]
-                    [ text "add_shopping_cart" ]
-                ]
+renderCatalogItem : CatalogItemSettings -> UseCase.ItemViewD -> Html Msg
+renderCatalogItem settings item =
+  let itemStyle =
+        css
+          [ backgroundColor (hex settings.theme.background)
+          , padding (px settings.spacing.s1)
+          , paddingBottom (px settings.spacing.s2)
+          , lineHeight (px settings.spacing.s2)
+          , hover [ ViewStyle.elevation6Style ]
+          , Transitions.transition
+              [ Transitions.boxShadow settings.liftAnimationDuration ]
+          ]
+
+      wrapperStyle =
+        css
+          [ backgroundColor transparent
+          , maxWidth (px (settings.maxWidth))
+          , width (pct 50)
+          , boxSizing borderBox
+          , paddingBottom (px settings.spacing.s1)
+          , paddingRight (px (0.5 * settings.spacing.s1))
+          , paddingLeft (px (0.5 * settings.spacing.s1))
+
+
+
+          -- , Media.withMedia
+          --     [ Media.only Media.screen [ Media.minWidth (px 1440) ] ]
+          --     [ paddingLeft (px 10)
+          --     , paddingRight (px 10)
+          --     ]
+          -- , Media.withMedia
+          --     [ Media.only Media.screen [ Media.minWidth (px 1180) ] ]
+          --     [ width (vw 17.2)
+          --     ]
+          -- , Media.withMedia
+          --     [ Media.only Media.screen [ Media.minWidth (px 920) ] ]
+          --     [ width (vw 20.6)
+          --     , paddingLeft (px 20)
+          --     , paddingRight (px 10)
+          --     , paddingBottom (px 20)
+          --     , marginRight (px -10)
+          --     ]
+          -- , Media.withMedia
+          --     [ Media.only Media.screen [ Media.minWidth (px 720) ] ]
+          --     [ ViewStyle.pb1Style
+          --     , paddingLeft (px 16)
+          --     , paddingRight (px 8)
+          --     , marginRight (px -8)
+          --     , width (vw 25.6)
+          --     , maxWidth (px 200)
+          --     ]
+          -- , Media.withMedia
+          --     [ Media.only Media.screen [ Media.minWidth (px 480) ] ]
+          --     [ width (vw 33.5)
+          --     ]
+          ]
+
+      discountBannerStyle =
+        css
+          [ display block
+          , textAlign center
+          , width (px 138)
+          , height (px 18)
+          , backgroundColor (hex settings.theme.primary)
+          , color (hex settings.theme.onPrimary)
+          , top (px 0)
+          , position absolute
+          , transforms
+              [ (rotate (deg -45))
+              , (translateX (px -41))
+              , (translateY (px -24))
+              ]
+          , fontWeight bold
+          , fontSize (px 12)
+          , textTransform uppercase
+          ]
+
+      imgWrapperStyle = css [ position relative, overflow hidden ]
+
+      imgStyle =
+        css
+          [ width (pct 100)
+          , display block
+          , height auto
+          ]
+
+      showImageWith_DiscountBanner =
+        [ div
+            [ discountBannerStyle ]
+            [ text <| (String.fromInt item.discountPct) ++ "% off" ]
+        , img [ src item.image, imgStyle ] []
+        ]
+
+      showImage =
+        [ img [src item.image, imgStyle] [] ]
+
+      image = 
+        if item.discountPct > 0
+          then showImageWith_DiscountBanner
+          else showImage
+
+      priceBlockStyle =
+        css
+          [ ViewStyle.pt1Style
+          , height <| px (2 * settings.spacing.s2)
+          , displayFlex
+          , flexWrap wrap
+          , alignItems flexEnd
+          ]
+
+      wasPriceStyle =
+        css
+          [ fontSize (px 14)
+          , fontWeight bold
+          , color (hex settings.theme.lightGrey)
+          , width (pct 100)
+          , textAlign center
+          , textDecoration lineThrough
+          ]
+
+      nowPriceStyle =
+        css
+          [ fontSize (px 14)
+          , fontWeight bold
+          , color (hex settings.theme.secondary)
+          , textAlign center
+          , width (pct 100)
+          , lineHeight (px settings.spacing.s2)
+          ]
+
+      showListAndSalePrice =
+        [ div [ wasPriceStyle ] [ text (floatToMoney item.listPrice) ]
+        , div [ nowPriceStyle ] [ text (floatToMoney item.salePrice) ]
+        ]
+
+      showListPrice =
+        [ div [ nowPriceStyle ] [ text (floatToMoney item.listPrice) ]
+        ]
+
+      priceBlock =
+        if item.salePrice < item.listPrice
+          then showListAndSalePrice
+          else showListPrice
+
+      ctaBlockStyle = css [ paddingTop (px settings.spacing.s2) ]
+
+      btnStyle =
+        css
+          [ ViewStyle.btnStyle
+          , ViewStyle.btnFilledSecondaryStyle
+          , borderColor (hex settings.theme.primary)
+          , color (hex settings.theme.onPrimary)
+          , ViewStyle.btnMediumStyle
+          , borderStyle none
+          , display block
+          , width (pct 100)
+          , fontSize (px 14)
+          , fontWeight bold
+          ]
+        
+      btn__iconStyle =
+        css
+          [ fontSize (px 16)
+          , display inlineBlock
+          , marginLeft (px settings.spacing.s1)
+          , verticalAlign bottom
+          ]
+
+      ctaBlock =
+        [ button
+            [ btnStyle, onClick <| AppMsg (App.AddItemToCart item.id) ]
+            [ text "add"
+            , i [ btn__iconStyle , class "material-icons" ]
+                [ text "add_shopping_cart" ]
             ]
         ]
-    ]
+
+      nameStyle =
+        css
+          [ fontSize (px 14)
+          , fontWeight bold
+          , textTransform capitalize
+          , color (hex settings.theme.secondary)
+          , paddingBottom (px settings.spacing.s1)
+          , height <| px
+              ((toFloat settings.nameLinesMax) * settings.spacing.s2)
+          , textDecoration none
+          , display block
+          ]
+
+  in
+    div
+      [ wrapperStyle ]
+      [ div
+          [ itemStyle ]
+          [ a [ href "#" , nameStyle ] [ text item.name ]
+          , div [ imgWrapperStyle ] image
+          , div [ priceBlockStyle ] priceBlock
+          , div [ ctaBlockStyle ] ctaBlock
+          ]
+      ]
 
 
 renderHeader : NavbarC -> NavdrawerC ->  Html Msg
