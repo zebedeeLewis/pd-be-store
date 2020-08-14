@@ -51,6 +51,7 @@ type Model
 
 type Msg
   = ToggleNavdrawer
+  | ToggleFullscreenCart
   | ViewCart
   | ViewCartSubTotal
   | AppMsg App.Msg
@@ -150,8 +151,9 @@ type NavdrawerC = NavdrawerC Bool (List NavItem)
 
 
 type alias CartC =
-  { toggled            : Bool
-  , entriesShown  : Bool
+  { shown              : Bool
+  , fullscreen         : Bool
+  , entriesShown       : Bool
   , spacing            : Spacing
   , theme              : Theme
   }
@@ -170,7 +172,7 @@ type alias NavItem =
 -}
 app : App.Model -> Model
 app appModel = 
-  let cartToggled = False
+  let cartShown = False
       base = 20
 
       spacing =
@@ -211,8 +213,9 @@ app appModel =
         }
 
       cartdrawer =
-        { toggled            = cartToggled
-        , entriesShown  = True
+        { shown              = cartShown
+        , fullscreen         = True
+        , entriesShown       = True
         , spacing            = spacing
         , theme              = theme
         }
@@ -230,7 +233,7 @@ app appModel =
         , cartdrawer = cartdrawer
         }
 
-      catalog = { cartToggled  = cartToggled }
+      catalog = { cartToggled  = cartShown }
 
       font =
         { family     = "Roboto, sans-serif"
@@ -271,12 +274,20 @@ update msg model =
     ViewCart ->
       case model of
         ItemBrowser settings modelView ->
-          let header = toggleCartdrawer modelView.header
+          let header = toggleCart modelView.header
               modelView_ =
                 { modelView
                 | header = header
-                , catalog =
-                    toggleCartGutter header modelView.catalog
+                }
+          in ItemBrowser settings modelView_
+
+    ToggleFullscreenCart ->
+      case model of
+        ItemBrowser settings modelView ->
+          let header = toggleFullscreenCart modelView.header
+              modelView_ =
+                { modelView
+                | header = header
                 }
           in ItemBrowser settings modelView_
 
@@ -285,7 +296,7 @@ update msg model =
         ItemBrowser settings modelView ->
           let modelView_ =
                 { modelView
-                | header = toggleCartdrawerSubTotal modelView.header
+                | header = showCartdrawerEntries modelView.header
                 }
           in ItemBrowser settings modelView_
 
@@ -316,23 +327,27 @@ toggleNavdrawer header =
   in { header | navdrawer = navdrawer }
 
 
-toggleCartdrawer : HeaderC -> HeaderC
-toggleCartdrawer header =
+toggleCart : HeaderC -> HeaderC
+toggleCart header =
   let cartdrawer_ = header.cartdrawer
-      toggled = cartdrawer_.toggled
+      shown = cartdrawer_.shown
       entriesShown = cartdrawer_.entriesShown
-      cartdrawer = { cartdrawer_ | toggled = (not toggled) }
+      cartdrawer = { cartdrawer_ | shown = (not shown) }
 
   in { header | cartdrawer = cartdrawer }
 
 
-toggleCartGutter : HeaderC -> Catalog -> Catalog
-toggleCartGutter header catalog =
-  { catalog | cartToggled = header.cartdrawer.toggled }
+toggleFullscreenCart : HeaderC -> HeaderC
+toggleFullscreenCart header =
+  let cart_ = header.cartdrawer
+      fullscreen = cart_.fullscreen
+      cart = { cart_ | fullscreen = (not fullscreen) }
+
+  in { header | cartdrawer = cart }
 
 
-toggleCartdrawerSubTotal : HeaderC -> HeaderC
-toggleCartdrawerSubTotal header =
+showCartdrawerEntries : HeaderC -> HeaderC
+showCartdrawerEntries header =
   let cartdrawer_ = header.cartdrawer
       entriesShown = cartdrawer_.entriesShown
       cartdrawer =
@@ -353,18 +368,25 @@ renderItemBrowser app_ model =
     ItemBrowser settings browserView ->
       let header = browserView.header
           catalog = browserView.catalog
+          cart = header.cartdrawer
       in
         div
           [ ViewStyle.appContainer ]
-          [ renderHeader header.navbar header.navdrawer
-          , UseCase.viewCart (cartView header.cartdrawer)
-                             (App.store app_)
-          , renderAddBanner
-          , UseCase.browseCatalog (catalogView settings catalog)
-                                  (App.store app_)
-          , showPagination settings 20 1
-          , renderFooter
-          ]
+          <| List.concat
+            [ [ renderHeader header.navbar header.navdrawer ]
+            , if cart.shown
+                then [ UseCase.viewCart
+                         (cartView settings cart)
+                         (App.store app_)
+                     ]
+                else []
+            , [ renderAddBanner ]
+            , [ UseCase.browseCatalog (catalogView settings catalog)
+                                      (App.store app_)
+              ]
+            , [ showPagination settings 20 1 ]
+            , [ renderFooter ]
+            ]
 
 
 showPagination : Settings -> Int -> Int -> Html Msg
@@ -508,18 +530,21 @@ renderAddBanner =
     []
 
 
-cartView : CartC -> UseCase.CartView (Html Msg)
-cartView cart
+cartView : Settings -> CartC -> UseCase.CartView (Html Msg)
+cartView settings
+         cart
          saleSubTotal
          taxPct
          saleTax
          saleTotal
          totalSavings
          cartEntries
-  = let toggled = cart.toggled
+  = let shown = cart.shown
+        fullscreen = cart.fullscreen
         entriesShown = cart.entriesShown
-        theme = cart.theme
-        spacing = cart.spacing
+        theme = settings.theme
+        spacing = settings.spacing
+        breakpoint = settings.breakpoint
 
         topbarStyle =
           css
@@ -545,8 +570,8 @@ cartView cart
             , paddingBottom (px spacing.s1)
             ]
 
-        topbarBtnStyle =
-          css
+        topbarBtnStyleClass =
+          batch
             [ borderStyle none
             , backgroundColor inherit
             , outlineStyle none
@@ -557,10 +582,23 @@ cartView cart
             , color (hex theme.onBackground)
             ]
 
+        topbarBtnStyle_close = css [ topbarBtnStyleClass ]
+
+        topbarBtnStyle_fullscreen =
+          css
+           [ topbarBtnStyleClass
+           , display none
+           , Media.withMedia
+               [ Media.only
+                   Media.screen
+                   [ Media.minWidth (px breakpoint.md) ]
+               ]
+               [ display inlineBlock ]
+           ]
+
         topbarIconsStyle = css [ fontSize (px 18) ]
 
         topbarRight = css [ marginLeft auto ]
-
         topbar =
           div
             [ topbarStyle ]
@@ -568,12 +606,14 @@ cartView cart
             , div
                 [ topbarRight ]
                 [ button
-                    [ topbarBtnStyle, onClick ViewCart ]
+                    [ topbarBtnStyle_fullscreen
+                    , onClick ToggleFullscreenCart
+                    ]
                     [ i [ class "material-icons", topbarIconsStyle ]
                         [ text "vertical_split" ]
                     ]
                 , button
-                    [ topbarBtnStyle, onClick ViewCart ]
+                    [ topbarBtnStyle_close, onClick ViewCart ]
                     [ i [ class "material-icons", topbarIconsStyle ]
                         [ text "close" ]
                     ]
@@ -751,6 +791,15 @@ cartView cart
         cartStyle =
           css
             [ width (pct 100)
+            , Media.withMedia
+                [ Media.only Media.screen
+                             [ Media.minWidth (px breakpoint.md) ]
+                ]
+                [ if fullscreen
+                    then width (pct 100)
+                    else width (px 320)
+                ]
+            , backgroundColor (hex theme.background)
             , paddingTop (px 48)
             , boxSizing borderBox
             , backgroundColor (hex theme.background)
