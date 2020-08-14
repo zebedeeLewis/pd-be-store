@@ -46,7 +46,7 @@ import App
 -----------------------------------------------------------------------
 
 type Model
-  = ItemBrowser ItemBrowserV
+  = ItemBrowser Settings ItemBrowserV
 
 
 type Msg
@@ -64,7 +64,7 @@ type Component
 
 type alias ItemBrowserV =
   { header : HeaderC
-  , catalog : CatalogC
+  , catalog : Catalog
   }
 
 
@@ -93,11 +93,16 @@ type alias Theme =
   }
 
 
-type alias CatalogC =
+type alias Breakpoint =
+  { sm  : Float  -- px
+  , md  : Float  -- px
+  , lg  : Float  -- px
+  , xl  : Float  -- px
+  }
+
+
+type alias Catalog =
   { cartToggled  : Bool
-  , itemSettings : CatalogItemSettings
-  , theme        : Theme
-  , spacing      : Spacing
   }
 
 
@@ -115,14 +120,19 @@ type alias Spacing =
   }
 
 
-type alias CatalogItemSettings =
-  { maxWidth               : Float      -- px
-  , nameLinesMax           : Int
-  , fontSize               : Float      -- px
-  , priceBlockHeight       : Float      -- px
-  , liftAnimationDuration  : Float      -- ms
-  , theme                  : Theme
-  , spacing                : Spacing
+type alias Settings =
+  { theme       : Theme
+  , spacing     : Spacing
+  , font        : Font
+  , breakpoint  : Breakpoint
+  }
+
+
+type alias Font =
+  { family      : String
+  , size1       : Float  -- px
+  , size2       : Float  -- px
+  , lineHeight  : Float  -- px
   }
 
 
@@ -220,24 +230,30 @@ app appModel =
         , cartdrawer = cartdrawer
         }
 
-      itemSettings =
-        { maxWidth               = 200
-        , nameLinesMax           = 3
-        , fontSize               = 14
-        , priceBlockHeight       = 32
-        , liftAnimationDuration  = 400
-        , theme                  = theme
-        , spacing                = spacing
+      catalog = { cartToggled  = cartToggled }
+
+      font =
+        { family     = "Roboto, sans-serif"
+        , size1      = 14
+        , size2      = 13
+        , lineHeight = base
         }
 
-      catalog =
-        { cartToggled  = cartToggled
-        , itemSettings = itemSettings
-        , theme        = theme
-        , spacing      = spacing
+      breakpoint =
+        { sm  = 600
+        , md  = 960
+        , lg  = 1280
+        , xl  = 1920
         }
 
-  in ItemBrowser { header = header, catalog = catalog }
+      settings =
+        { spacing     = spacing
+        , theme       = theme
+        , font        = font
+        , breakpoint  = breakpoint
+        }
+
+  in ItemBrowser settings { header = header, catalog = catalog }
 
 
 update : Msg -> Model -> Model
@@ -245,16 +261,16 @@ update msg model =
   case msg of
     ToggleNavdrawer ->
       case model of
-        ItemBrowser modelView ->
+        ItemBrowser settings modelView ->
           let modelView_ =
                 { modelView
                 | header = toggleNavdrawer modelView.header
                 }
-          in ItemBrowser modelView_
+          in ItemBrowser settings modelView_
 
     ViewCart ->
       case model of
-        ItemBrowser modelView ->
+        ItemBrowser settings modelView ->
           let header = toggleCartdrawer modelView.header
               modelView_ =
                 { modelView
@@ -262,16 +278,16 @@ update msg model =
                 , catalog =
                     toggleCartGutter header modelView.catalog
                 }
-          in ItemBrowser modelView_
+          in ItemBrowser settings modelView_
 
     ViewCartSubTotal ->
       case model of
-        ItemBrowser modelView ->
+        ItemBrowser settings modelView ->
           let modelView_ =
                 { modelView
                 | header = toggleCartdrawerSubTotal modelView.header
                 }
-          in ItemBrowser modelView_
+          in ItemBrowser settings modelView_
 
     AppMsg _ -> model
 
@@ -310,7 +326,7 @@ toggleCartdrawer header =
   in { header | cartdrawer = cartdrawer }
 
 
-toggleCartGutter : HeaderC -> CatalogC -> CatalogC
+toggleCartGutter : HeaderC -> Catalog -> Catalog
 toggleCartGutter header catalog =
   { catalog | cartToggled = header.cartdrawer.toggled }
 
@@ -334,7 +350,7 @@ floatToMoney price = "$ " ++ Round.round 2 price
 renderItemBrowser : App.Model -> Model -> Html Msg
 renderItemBrowser app_ model =
   case model of
-    ItemBrowser browserView ->
+    ItemBrowser settings browserView ->
       let header = browserView.header
           catalog = browserView.catalog
       in
@@ -344,55 +360,138 @@ renderItemBrowser app_ model =
           , UseCase.viewCart (cartView header.cartdrawer)
                              (App.store app_)
           , renderAddBanner
-          , UseCase.browseCatalog (catalogView catalog)
+          , UseCase.browseCatalog (catalogView settings catalog)
                                   (App.store app_)
-          , renderPagination
+          , showPagination settings 20 1
           , renderFooter
           ]
 
 
-renderPagination : Html Msg
-renderPagination =
-  div
-    [ ViewStyle.paginationWrapper ]
-    [ div
-        [ ViewStyle.pagination ]
-        [ button
-            [ ViewStyle.pagination__prev ]
-            [ i
-              [ ViewStyle.pagination__navIcon
-              , class "material-icons"
+showPagination : Settings -> Int -> Int -> Html Msg
+showPagination settings pageCount currentPage =
+  let spacing = settings.spacing
+      theme = settings.theme
+      font = settings.font
+      wrapperStyle =
+        css
+          [ paddingLeft (px spacing.s1)
+          , paddingRight (px spacing.s1)
+          , marginTop (px spacing.s1)
+          ]
+
+      contentStyle =
+        css
+          [ displayFlex
+          , maxWidth (px 500)
+          , ViewStyle.elevation2Style
+          , marginLeft auto
+          , marginRight auto
+          ]
+
+      btnStyleClass =
+        batch
+          [ borderStyle none
+          , outline none
+          , backgroundColor (hex theme.background)
+          , padding (px spacing.s1)
+          , color (hex theme.onBackground)
+          , height (px spacing.s4)
+          ]
+
+      prevStyle = css [ btnStyleClass ]
+
+      nextStyle =
+        css
+          [ btnStyleClass
+          , display inlineBlock
+          , marginLeft auto
+          ]
+
+      ellipsisStyleClass =
+        batch
+          [ display inlineBlock
+          , padding (px spacing.s1)
+          , paddingBottom (px spacing.s1)
+          , width (px spacing.s4)
+          , height (px spacing.s4)
+          , fontSize (px 20)
+          , backgroundColor (hex theme.background)
+          , boxSizing borderBox
+          ]
+
+      ellipsisStyle_prev =
+        css
+          [ ellipsisStyleClass
+          , marginLeft auto
+          , textAlign right
+          ]
+
+      ellipsisStyle_next =
+        css
+          [ ellipsisStyleClass
+          , marginRight auto
+          ]
+
+      pagesWrapperStyle =
+        css
+          [ displayFlex
+          , flexWrap wrap
+          , height (px spacing.s4)
+          , overflow hidden
+          , backgroundColor (hex theme.background)
+          ]
+
+      pageStyleClass =
+        batch
+          [ btnStyleClass
+          , fontSize (px 18)
+          , height (pct 100)
+          ]
+
+      pageStyle =
+        css
+          [ pageStyleClass
+          , hover
+              [ backgroundColor (hex theme.primary)
+              , opacity (num 0.4)
+              , color (hex theme.onBackground)
               ]
-              [ text "arrow_back" ]
-            ]
-        , span
-            [ ViewStyle.pagination__ellipsisPrev ]
-            [ text "..." ]
-        , div
-            [ ViewStyle.pagination__pageWrapper ]
-            (List.map
-              (\i ->
-                button
-                  (if i == 1
-                    then [ ViewStyle.pagination__currentPage ]
-                    else [ ViewStyle.pagination__page ]
-                  )
-                  [ text (String.fromInt i) ]
-              ) (List.range 1 20)
-            )
-        , span
-            [ ViewStyle.pagination__ellipsisNext ]
-            [ text "..." ]
-        , button
-            [ ViewStyle.pagination__next ]
-            [ i
-              [ ViewStyle.pagination__navIcon
-              , class "material-icons"
-              ]
-              [ text "arrow_forward" ]
-            ]
-        ]
-    ]
+          ]
+
+      pageStyle_current =
+        css
+          [ pageStyleClass
+          , backgroundColor (hsla 172 1 0.37 0.4)
+          , color (hex theme.onPrimary)
+          ]
+
+  in div
+       [ wrapperStyle ]
+       [ div
+           [ contentStyle ]
+           [ button
+               [ prevStyle ]
+               [ i [ class "material-icons" ] [ text "arrow_back" ] ]
+           , span [ ellipsisStyle_prev ] [ text "..." ]
+           , div
+               [ pagesWrapperStyle ]
+               (List.map
+                 (\i ->
+                   button
+                     [ if i == currentPage
+                        then pageStyle_current
+                        else pageStyle
+                     ]
+                     [ text (String.fromInt i) ]
+                 ) (List.range 1 pageCount)
+               )
+           , span
+               [ ellipsisStyle_next ] [ text "..." ]
+           , button
+               [ nextStyle ]
+               [ i [ class "material-icons" ] [ text "arrow_forward" ] ]
+           ]
+       ]
 
 
 renderFooter : Html Msg
@@ -422,31 +521,31 @@ cartView cart
         theme = cart.theme
         spacing = cart.spacing
 
-        topBarStyle =
+        topbarStyle =
           css
             [ displayFlex
             , alignItems center
             , textAlign right
-            , backgroundColor (hex theme.primary)
+            , backgroundColor (hex theme.background)
             , paddingLeft (px spacing.s1)
             , paddingRight (px spacing.s1)
             , boxSizing contentBox
             , height (px spacing.s6)
             , borderBottomStyle solid
-            , borderWidth (px spacing.s2)
-            , borderColor (hex theme.primaryDark)
+            , borderWidth (px spacing.s1)
+            , borderColor (hex theme.lighterGrey)
             ]
 
         titleStyle =
           css
             [ fontSize (px 18)
-            , color (hex theme.onPrimary)
+            , color (hex theme.onBackground)
             , textTransform capitalize
             , paddingTop (px spacing.s1)
             , paddingBottom (px spacing.s1)
             ]
 
-        closeBtnStyle =
+        topbarBtnStyle =
           css
             [ borderStyle none
             , backgroundColor inherit
@@ -454,21 +553,30 @@ cartView cart
             , display inlineBlock
             , cursor pointer
             , textDecoration none
-            , marginLeft auto
             , padding (px spacing.s1)
-            , color (hex theme.onPrimary)
+            , color (hex theme.onBackground)
             ]
 
-        closeIconStyle = css [ fontSize (px 18) ]
+        topbarIconsStyle = css [ fontSize (px 18) ]
 
-        topBar =
+        topbarRight = css [ marginLeft auto ]
+
+        topbar =
           div
-            [ topBarStyle ]
+            [ topbarStyle ]
             [ div [ titleStyle ] [ text "shopping Cart" ]
-            , button
-                [ closeBtnStyle, onClick ViewCart ]
-                [ i [ class "material-icons", closeIconStyle ]
-                    [ text "close" ]
+            , div
+                [ topbarRight ]
+                [ button
+                    [ topbarBtnStyle, onClick ViewCart ]
+                    [ i [ class "material-icons", topbarIconsStyle ]
+                        [ text "vertical_split" ]
+                    ]
+                , button
+                    [ topbarBtnStyle, onClick ViewCart ]
+                    [ i [ class "material-icons", topbarIconsStyle ]
+                        [ text "close" ]
+                    ]
                 ]
             ]
 
@@ -562,7 +670,7 @@ cartView cart
                 else entriesPanelStyle_Hidden
             ]
             [ div []
-                (List.map (renderCartEntry theme spacing) cartEntries)
+                (List.map (showCartEntry theme spacing) cartEntries)
             ]
 
         taxLine =
@@ -647,17 +755,16 @@ cartView cart
             , boxSizing borderBox
             , backgroundColor (hex theme.background)
             , fontSize (px 14)
+            , paddingBottom (px spacing.s4)
             ]
 
-    in div [ cartStyle ] [ topBar, content ]
+    in div [ cartStyle ] [ topbar, content ]
 
 
-renderCartEntry : Theme -> Spacing -> UseCase.EntryViewD -> Html Msg
-renderCartEntry theme spacing entry =
+showCartEntry : Theme -> Spacing -> UseCase.EntryViewD -> Html Msg
+showCartEntry theme spacing entry =
   let item = entry.item
-      image =
-        img [ src item.image, css [ width (px 80) ] ] []
-
+      image = img [ src item.image, css [ width (px 80) ] ] []
       detailsBlockStyle =
         css
           [ paddingLeft (px spacing.s1)
@@ -821,19 +928,20 @@ renderCartEntry theme spacing entry =
          ]
 
 
-catalogView : CatalogC -> List UseCase.ItemViewD -> Html Msg
-catalogView catalog data =
+catalogView : Settings -> Catalog -> List UseCase.ItemViewD -> Html Msg
+catalogView settings catalog data =
   let cartToggled = catalog.cartToggled
-      itemSettings = catalog.itemSettings
-  in
-  div
-    [ ViewStyle.catalogContainer cartToggled ]
-    (List.map (renderCatalogItem itemSettings) data)
+  in div
+       [ ViewStyle.catalogContainer cartToggled ]
+       (List.map (renderCatalogItem settings) data)
 
 
-renderCatalogItem : CatalogItemSettings -> UseCase.ItemViewD -> Html Msg
+renderCatalogItem : Settings -> UseCase.ItemViewD -> Html Msg
 renderCatalogItem settings item =
-  let itemStyle =
+  let liftAnimationDuration  = 400
+      itemMaxWidth           = 200
+      nameMaxLines           = 3
+      itemStyle =
         css
           [ backgroundColor (hex settings.theme.background)
           , padding (px settings.spacing.s1)
@@ -841,13 +949,13 @@ renderCatalogItem settings item =
           , lineHeight (px settings.spacing.s2)
           , hover [ ViewStyle.elevation6Style ]
           , Transitions.transition
-              [ Transitions.boxShadow settings.liftAnimationDuration ]
+              [ Transitions.boxShadow liftAnimationDuration ]
           ]
 
       wrapperStyle =
         css
           [ backgroundColor transparent
-          , maxWidth (px (settings.maxWidth))
+          , maxWidth (px itemMaxWidth)
           , width (pct 50)
           , boxSizing borderBox
           , paddingBottom (px settings.spacing.s1)
@@ -983,7 +1091,7 @@ renderCatalogItem settings item =
           , color (hex settings.theme.onBackground)
           , paddingBottom (px settings.spacing.s1)
           , height <| px
-              ((toFloat settings.nameLinesMax) * settings.spacing.s2)
+              ((toFloat nameMaxLines) * settings.spacing.s2)
           , textDecoration none
           , display block
           ]
