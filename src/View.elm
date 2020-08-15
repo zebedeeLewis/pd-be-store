@@ -95,10 +95,17 @@ type alias Theme =
 
 
 type alias Breakpoint =
-  { sm  : Float  -- px
-  , md  : Float  -- px
-  , lg  : Float  -- px
-  , xl  : Float  -- px
+  { sm           : Float  -- px
+  , md           : Float  -- px
+  , lg           : Float  -- px
+  , xl           : Float  -- px
+  , xxl          : Float  -- px
+  , maxWidth_xs  : Float  --px
+  , maxWidth_sm  : Float  --px
+  , maxWidth_md  : Float  --px
+  , maxWidth_lg  : Float  --px
+  , maxWidth_xl  : Float  --px
+  , maxWidth_xxl : Float  --px
   }
 
 
@@ -118,6 +125,10 @@ type alias Spacing =
   , s7       : Float
   , s8       : Float
   , s9       : Float
+  , s10      : Float
+  , s11      : Float
+  , s12      : Float
+  , s13      : Float
   }
 
 
@@ -130,7 +141,7 @@ type alias Settings =
 
 
 type alias Font =
-  { family      : String
+  { family      : List String
   , size1       : Float  -- px
   , size2       : Float  -- px
   , lineHeight  : Float  -- px
@@ -186,6 +197,10 @@ app appModel =
        , s7    = base * 3.5
        , s8    = base * 4.0
        , s9    = base * 4.5
+       , s10   = base * 5.0
+       , s11   = base * 5.5
+       , s12   = base * 6.0
+       , s13   = base * 6.5
        }
 
       theme =
@@ -236,17 +251,24 @@ app appModel =
       catalog = { cartToggled  = cartShown }
 
       font =
-        { family     = "Roboto, sans-serif"
+        { family     = ["Roboto", "sans-serif"]
         , size1      = 14
         , size2      = 13
         , lineHeight = base
         }
 
       breakpoint =
-        { sm  = 600
-        , md  = 960
-        , lg  = 1280
-        , xl  = 1920
+        { sm            = 520 -- 3
+        , md            = 600 -- 4
+        , lg            = 960 -- 5
+        , xl            = 1280 -- 7
+        , xxl           = 1920 -- 8
+        , maxWidth_xs   = 400
+        , maxWidth_sm   = 600
+        , maxWidth_md   = 800
+        , maxWidth_lg   = 1000
+        , maxWidth_xl   = 1400
+        , maxWidth_xxl  = 1400
         }
 
       settings =
@@ -369,24 +391,142 @@ renderItemBrowser app_ model =
       let header = browserView.header
           catalog = browserView.catalog
           cart = header.cartdrawer
+          splitView = cart.shown
+          font = settings.font
+          theme = settings.theme
+          spacing = settings.spacing
+          breakpoint = settings.breakpoint
+          contentStyle =
+            css
+              [ displayFlex
+              , position relative
+              , marginTop (px spacing.s6)
+              , marginBottom (px spacing.s1)
+              , maxWidth (px breakpoint.maxWidth_xs)
+              , marginLeft auto
+              , marginRight auto
+              , Media.withMedia
+                  [ Media.only
+                      Media.screen
+                      [ Media.minWidth (px breakpoint.xxl) ]
+                  ]
+                  [ maxWidth (px breakpoint.maxWidth_xxl) ]
+              , Media.withMedia
+                  [ Media.only
+                      Media.screen
+                      [ Media.minWidth (px breakpoint.xl) ]
+                  ]
+                  [ maxWidth (px breakpoint.maxWidth_xl) ]
+              , Media.withMedia
+                  [ Media.only
+                      Media.screen
+                      [ Media.minWidth (px breakpoint.lg) ]
+                  ]
+                  [ maxWidth (px breakpoint.maxWidth_lg)
+                  , paddingLeft (px spacing.s1)
+                  , paddingRight (px spacing.s1)
+                  ]
+              , Media.withMedia
+                  [ Media.only
+                      Media.screen
+                      [ Media.minWidth (px breakpoint.md) ]
+                  ]
+                  [ maxWidth (px breakpoint.maxWidth_md) ]
+              , Media.withMedia
+                  [ Media.only
+                      Media.screen
+                      [ Media.minWidth (px breakpoint.sm) ]
+                  ]
+                  [ maxWidth (px breakpoint.maxWidth_sm) ]
+              ]
+
+          mainPanelStyle =
+            css
+              [ if cart.shown
+                  then display none
+                  else display block
+              , paddingBottom (px spacing.s4)
+              , paddingRight (px (0.5 * spacing.s1))
+              , paddingLeft (px (0.5 * spacing.s1))
+              , Media.withMedia
+                  [ Media.only
+                      Media.screen
+                      [ Media.minWidth (px breakpoint.md) ]
+                  ]
+                  [ paddingRight (px spacing.s1)
+                  , paddingLeft (px spacing.s1)
+                  ]
+              , Media.withMedia
+                  [ Media.only
+                      Media.screen
+                      [ Media.minWidth (px breakpoint.lg) ]
+                  ]
+                  [ paddingBottom (px spacing.s6)
+                  , if splitView && cart.fullscreen
+                      then display none
+                      else display block
+                  ]
+              ]
+
+          sidePanelStyle =
+            css
+              [ displayFlex
+              , Media.withMedia
+                  [ Media.only
+                      Media.screen
+                      [ Media.minWidth (px breakpoint.lg) ]
+                  ]
+                  <| List.concat
+                    [ [ position static ]
+                    , if cart.fullscreen
+                        then [ width (pct 100)
+                             ]
+                        else [ width unset ]
+                    ]
+              , width (pct 100)
+              ]
+
+          content =
+            div
+              [ contentStyle ]
+              <| List.concat
+                [ [ div
+                      [ mainPanelStyle ]
+                      [ UseCase.browseCatalog
+                          (catalogView settings splitView catalog)
+                          (App.store app_)
+                      , showPagination settings 20 1
+                      ]
+                  ]
+                , if cart.shown
+                    then [ div
+                             [ sidePanelStyle ]
+                             [ UseCase.viewCart
+                                 (cartView settings cart)
+                                 (App.store app_)
+                             ]
+                         ]
+                    else []
+                ]
+
+          containerStyle =
+            css
+              [ backgroundColor (hex theme.contentBg)
+              , position relative
+              , overflowX hidden
+              , overflowY hidden
+              , minHeight (vh 100)
+              , fontSize (px font.size1)
+              , fontFamilies font.family
+              ]
+
       in
         div
-          [ ViewStyle.appContainer ]
-          <| List.concat
-            [ [ renderHeader header.navbar header.navdrawer ]
-            , if cart.shown
-                then [ UseCase.viewCart
-                         (cartView settings cart)
-                         (App.store app_)
-                     ]
-                else []
-            , [ renderAddBanner ]
-            , [ UseCase.browseCatalog (catalogView settings catalog)
-                                      (App.store app_)
-              ]
-            , [ showPagination settings 20 1 ]
-            , [ renderFooter ]
-            ]
+          [ containerStyle ]
+          [ showHeader settings header.navbar header.navdrawer
+          , content
+          , renderFooter
+          ]
 
 
 showPagination : Settings -> Int -> Int -> Html Msg
@@ -399,13 +539,14 @@ showPagination settings pageCount currentPage =
           [ paddingLeft (px spacing.s1)
           , paddingRight (px spacing.s1)
           , marginTop (px spacing.s1)
+          , ViewStyle.elevation2Style
+          , backgroundColor (hex theme.background)
           ]
 
       contentStyle =
         css
           [ displayFlex
           , maxWidth (px 500)
-          , ViewStyle.elevation2Style
           , marginLeft auto
           , marginRight auto
           ]
@@ -523,13 +664,6 @@ renderFooter =
     []
 
 
-renderAddBanner : Html Msg
-renderAddBanner =
-  div
-    [ ViewStyle.addBanner ]
-    []
-
-
 cartView : Settings -> CartC -> UseCase.CartView (Html Msg)
 cartView settings
          cart
@@ -549,16 +683,16 @@ cartView settings
         topbarStyle =
           css
             [ displayFlex
-            , alignItems center
             , textAlign right
             , backgroundColor (hex theme.background)
             , paddingLeft (px spacing.s1)
             , paddingRight (px spacing.s1)
+            , paddingTop (px spacing.s1)
             , boxSizing contentBox
-            , height (px spacing.s6)
+            , height (px spacing.s8)
             , borderBottomStyle solid
             , borderWidth (px spacing.s1)
-            , borderColor (hex theme.lighterGrey)
+            , borderColor (hex theme.contentBg)
             ]
 
         titleStyle =
@@ -591,7 +725,7 @@ cartView settings
            , Media.withMedia
                [ Media.only
                    Media.screen
-                   [ Media.minWidth (px breakpoint.md) ]
+                   [ Media.minWidth (px breakpoint.lg) ]
                ]
                [ display inlineBlock ]
            ]
@@ -610,7 +744,10 @@ cartView settings
                     , onClick ToggleFullscreenCart
                     ]
                     [ i [ class "material-icons", topbarIconsStyle ]
-                        [ text "vertical_split" ]
+                        [ if fullscreen
+                            then text "vertical_split"
+                            else text "fullscreen"
+                        ]
                     ]
                 , button
                     [ topbarBtnStyle_close, onClick ViewCart ]
@@ -790,21 +927,27 @@ cartView settings
 
         cartStyle =
           css
-            [ width (pct 100)
-            , Media.withMedia
+            [ Media.withMedia
                 [ Media.only Media.screen
-                             [ Media.minWidth (px breakpoint.md) ]
+                             [ Media.minWidth (px breakpoint.lg) ]
                 ]
                 [ if fullscreen
                     then width (pct 100)
                     else width (px 320)
                 ]
+            , width (pct 100)
             , backgroundColor (hex theme.background)
-            , paddingTop (px 48)
             , boxSizing borderBox
             , backgroundColor (hex theme.background)
             , fontSize (px 14)
             , paddingBottom (px spacing.s4)
+            , Media.withMedia
+                [ Media.only
+                    Media.screen
+                    [ Media.minWidth (px breakpoint.md) ]
+                ]
+                [ paddingBottom (px spacing.s6)
+                ]
             ]
 
     in div [ cartStyle ] [ topbar, content ]
@@ -977,19 +1120,50 @@ showCartEntry theme spacing entry =
          ]
 
 
-catalogView : Settings -> Catalog -> List UseCase.ItemViewD -> Html Msg
-catalogView settings catalog data =
+catalogView
+  : Settings
+  -> Bool
+  -> Catalog
+  -> List UseCase.ItemViewD
+  -> Html Msg
+catalogView settings splitView catalog data =
   let cartToggled = catalog.cartToggled
+      breakpoint = settings.breakpoint
+      spacing = settings.spacing
+      containerStyle =
+        css
+          [ displayFlex
+          , flexWrap wrap
+          , alignItems stretch
+          -- , paddingRight (px (0.5 * spacing.s1))
+          -- , paddingLeft (px (0.5 * spacing.s1))
+          , Media.withMedia
+              [ Media.only
+                  Media.screen
+                  [ Media.minWidth (px breakpoint.md) ]
+              ]
+              [ -- paddingRight (px spacing.s1)
+              -- , paddingLeft (px spacing.s1)
+              ]
+          , Media.withMedia
+              [ Media.only
+                  Media.screen
+                  [ Media.minWidth (px breakpoint.sm) ]
+              ]
+              [ ]
+          ]
+
   in div
-       [ ViewStyle.catalogContainer cartToggled ]
-       (List.map (renderCatalogItem settings) data)
+       [ containerStyle ]
+       (List.map (showCatalogItem settings splitView) data)
 
 
-renderCatalogItem : Settings -> UseCase.ItemViewD -> Html Msg
-renderCatalogItem settings item =
-  let liftAnimationDuration  = 400
-      itemMaxWidth           = 200
-      nameMaxLines           = 3
+showCatalogItem : Settings -> Bool -> UseCase.ItemViewD -> Html Msg
+showCatalogItem settings smallView item =
+  let liftAnimationDuration = 400
+      itemMaxWidth = 200 
+      nameMaxLines = 3
+      breakpoint = settings.breakpoint
       itemStyle =
         css
           [ backgroundColor (hex settings.theme.background)
@@ -1010,6 +1184,43 @@ renderCatalogItem settings item =
           , paddingBottom (px settings.spacing.s1)
           , paddingRight (px (0.5 * settings.spacing.s1))
           , paddingLeft (px (0.5 * settings.spacing.s1))
+          , Media.withMedia
+              [ Media.only
+                  Media.screen
+                  [ Media.minWidth (px breakpoint.xl) ]
+              ]
+              [ if smallView
+                  then width (pct 20)
+                  else width (pct 14.28)
+              ]
+          , Media.withMedia
+              [ Media.only
+                  Media.screen
+                  [ Media.minWidth (px breakpoint.lg) ]
+              ]
+              <| List.concat
+                [ if smallView
+                    then [ width (pct 25) ]
+                    else [ width (pct 20)
+                         , paddingBottom (px settings.spacing.s2)
+                         , paddingRight (px settings.spacing.s1)
+                         , paddingLeft (px settings.spacing.s1)
+                         ]
+                ]
+          , Media.withMedia
+              [ Media.only
+                  Media.screen
+                  [ Media.minWidth (px breakpoint.md) ]
+              ]
+              [ width (pct 25)
+              ]
+          , Media.withMedia
+              [ Media.only
+                  Media.screen
+                  [ Media.minWidth (px breakpoint.sm) ]
+              ]
+              [ width (pct 33.33)
+              ]
           ]
 
       discountBannerStyle =
@@ -1158,11 +1369,11 @@ renderCatalogItem settings item =
       ]
 
 
-renderHeader : NavbarC -> NavdrawerC ->  Html Msg
-renderHeader navbar navdrawer =
+showHeader : Settings -> NavbarC -> NavdrawerC ->  Html Msg
+showHeader settings navbar navdrawer =
   div
     []
-    [ renderNavbar navbar
+    [ showNavbar settings navbar
     , renderNavdrawer navdrawer
     ]
 
@@ -1219,40 +1430,85 @@ renderNavdrawer navdrawer =
       ]
 
 
-renderNavbar : NavbarC -> Html Msg
-renderNavbar navbar =
-  div
-    [ ViewStyle.navbar
-    ]
-    [ div
-        [ ViewStyle.navbarContentWrapper ]
-        [ fromUnstyled
-            (IconButton.iconButton
-              ( IconButton.config
-               |> IconButton.setOnClick ToggleNavdrawer
-               |> IconButton.setAttributes
-                    [ TopAppBar.navigationIcon
-                    ]
-              )
-              "menu")
-        , div
-            [ ViewStyle.logo
-            ]
-            [ text "Logo"
-            ]
-        , div
-            [ ViewStyle.navbarCartToggle ]
-            [ fromUnstyled
-                (IconButton.iconButton
-                  ( IconButton.config
-                   |> IconButton.setOnClick ViewCart
-                   |> IconButton.setAttributes
-                        [ TopAppBar.navigationIcon
-                        ]
-                  )
-                  "shopping_cart")
-            ]
-        ]
-    ]
+showNavbar : Settings -> NavbarC -> Html Msg
+showNavbar settings navbar =
+  let theme = settings.theme
+      breakpoint = settings.breakpoint
+      wrapperStyle =
+        css
+          [ displayFlex
+          , color (hex theme.onBackground)
+          , alignItems center
+          , maxWidth (px breakpoint.maxWidth_xs)
+          , marginLeft auto
+          , marginRight auto
+          , Media.withMedia
+              [ Media.only
+                  Media.screen
+                  [ Media.minWidth (px breakpoint.xxl) ]
+              ]
+              [ maxWidth (px breakpoint.maxWidth_xxl) ]
+          , Media.withMedia
+              [ Media.only
+                  Media.screen
+                  [ Media.minWidth (px breakpoint.xl) ]
+              ]
+              [ maxWidth (px breakpoint.maxWidth_xl) ]
+          , Media.withMedia
+              [ Media.only
+                  Media.screen
+                  [ Media.minWidth (px breakpoint.lg) ]
+              ]
+              [ maxWidth (px breakpoint.maxWidth_lg) ]
+          , Media.withMedia
+              [ Media.only
+                  Media.screen
+                  [ Media.minWidth (px breakpoint.md) ]
+              ]
+              [ paddingRight (px 10)
+              , paddingLeft (px 10)
+              , maxWidth (px breakpoint.maxWidth_md)
+              ]
+          , Media.withMedia
+              [ Media.only
+                  Media.screen
+                  [ Media.minWidth (px breakpoint.sm) ]
+              ]
+              [ maxWidth (px breakpoint.maxWidth_sm) ]
+          ]
+
+  in div
+       [ ViewStyle.navbar
+       ]
+       [ div
+           [ wrapperStyle ]
+           [ fromUnstyled
+               (IconButton.iconButton
+                 ( IconButton.config
+                  |> IconButton.setOnClick ToggleNavdrawer
+                  |> IconButton.setAttributes
+                       [ TopAppBar.navigationIcon
+                       ]
+                 )
+                 "menu")
+           , div
+               [ ViewStyle.logo
+               ]
+               [ text "Logo"
+               ]
+           , div
+               [ ViewStyle.navbarCartToggle ]
+               [ fromUnstyled
+                   (IconButton.iconButton
+                     ( IconButton.config
+                      |> IconButton.setOnClick ViewCart
+                      |> IconButton.setAttributes
+                           [ TopAppBar.navigationIcon
+                           ]
+                     )
+                     "shopping_cart")
+               ]
+           ]
+       ]
 
 

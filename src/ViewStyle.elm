@@ -106,77 +106,8 @@ space =
   }
 
 
-appContainer : Attribute msg
-appContainer =
-  css
-    [ backgroundColor theme.content_bg
-    , position relative
-    , overflowX hidden
-    , overflowY hidden
-    , minHeight (vh 100)
-    , fontSize (px defaultFontSize)
-    , fontFamilies [ "Roboto", "sans-serif" ]
-    ]
 
 
-catalogContainer : Bool -> Attribute msg
-catalogContainer cartToggled =
-  css
-    [ marginTop (px -46)
-    , displayFlex
-    , flexWrap wrap
-    , alignItems stretch
-    -- , plHalfStyle
-    , paddingLeft (px 3.5)
-    , paddingRight (px 3.5)
-    , maxWidth (px 1440)
-    , Media.withMedia
-        [ Media.only Media.screen [ Media.minWidth (px 1440) ] ]
-        -- [ paddingLeft (px 0)
-        [ marginLeft auto
-        , marginRight auto
-        ]
-    , Media.withMedia
-        [ Media.only Media.screen [ Media.minWidth (px 1180) ] ]
-        (List.append
-          [ ]
-          ( if cartToggled
-              then [ marginRight (vw 31)
-                   ]
-              else []
-          )
-        )
-          
-    , Media.withMedia
-        [ Media.only Media.screen [ Media.minWidth (px 920) ] ]
-        (List.append
-          [ ]
-          ( if cartToggled
-              then [ marginRight (vw 40)
-                   ]
-              else []
-          )
-        )
-    , Media.withMedia
-        [ Media.only Media.screen [ Media.minWidth (px 720) ] ]
-        (List.append
-          [ maxWidth (px 780)
-          , marginLeft auto
-          ]
-          ( if cartToggled
-              then [ marginRight (vw 49)
-                   ]
-              else [ marginRight auto ]
-          )
-        )
-    ]
-
-
-
-
-searchResultsContainer : Attribute msg
-searchResultsContainer =
-  css []
 
 
 navdrawerHidden : Attribute msg
@@ -671,8 +602,8 @@ entryNameLineH = 18
 footer : Attribute msg
 footer =
   css
-    [ marginTop (px 24)
-    , paddingTop (px 16)
+    [ -- marginTop (px 24)
+    paddingTop (px 16)
     , paddingBottom (px 8)
     , height (px 50)
     , borderTopStyle solid
@@ -681,7 +612,8 @@ footer =
     , backgroundColor theme.secondary_dark
     , Media.withMedia
         [ Media.only Media.screen [ Media.minWidth (px 720) ] ]
-        [ marginTop (px 62) ]
+        [ -- marginTop (px 62)
+        ]
     ]
 
 
