@@ -23,7 +23,7 @@ import Html.Styled.Attributes as Attr exposing
   (id, placeholder, value, type_, class, css, href, src, style
   , attribute, disabled
   )
-import Html.Styled.Events exposing (onClick)
+import Html.Styled.Events exposing (onClick, onInput)
 
 import Material.IconButton as IconButton
 import Material.TopAppBar as TopAppBar
@@ -53,6 +53,7 @@ type Msg
   = ToggleNavdrawer
   | ToggleFullscreenCart
   | NextPage Pagination
+  | SetPageJump Int Pagination
   | PrevPage Pagination
   | GotoPage Int Pagination
   | ViewCart
@@ -141,6 +142,7 @@ type alias Pagination =
   , pageCount       : Int
   , firstPage       : Int
   , lastPage        : Int
+  , jumpTo          : Int
   }
 
 
@@ -372,6 +374,20 @@ update msg model =
 
           in ItemBrowser settings modelView_
 
+    SetPageJump page pagination ->
+      case model of
+        ItemBrowser settings modelView ->
+          let catalog = modelView.catalog
+              pagination_ = setPageJump page pagination
+              catalog_ = 
+                { catalog | pagination = pagination_ }
+
+              modelView_ =
+                { modelView
+                | catalog = catalog_
+                }
+          in ItemBrowser settings modelView_
+
     GotoPage page pagination ->
       case model of
         ItemBrowser settings modelView ->
@@ -427,6 +443,7 @@ newPagination currentPage pageCount firstPage visibleRange =
      , pageCount    = pageCount
      , firstPage    = firstPage_
      , lastPage     = lastPage_
+     , jumpTo       = currentPage_
      }
 
 
@@ -453,15 +470,11 @@ prevPage pagination =
 
 
 gotoPage : Int -> Pagination -> Pagination
-gotoPage page pagination =
-  let currentPage = pagination.currentPage
-      pageCount = pagination.pageCount
-      page_ = if page > pageCount
-                then pageCount
-              else if page < 1
-                then 1
-              else page
-  in  { pagination | currentPage = page }
+gotoPage page pagination = { pagination | currentPage = page }
+
+
+setPageJump : Int -> Pagination -> Pagination
+setPageJump page pagination = { pagination | jumpTo = page }
 
 
 isAppMsg : Msg -> Bool
@@ -538,7 +551,7 @@ renderItemBrowser app_ model =
             css
               [ displayFlex
               , position relative
-              , marginTop (px spacing.s6)
+              , marginTop (px spacing.s5)
               , marginBottom (px spacing.s1)
               , maxWidth (px breakpoint.maxWidth_xs)
               , marginLeft auto
@@ -586,6 +599,7 @@ renderItemBrowser app_ model =
               , paddingBottom (px spacing.s4)
               , paddingRight (px (0.5 * spacing.s1))
               , paddingLeft (px (0.5 * spacing.s1))
+              , width (pct 100)
               , Media.withMedia
                   [ Media.only
                       Media.screen
@@ -630,10 +644,11 @@ renderItemBrowser app_ model =
               <| List.concat
                 [ [ div
                       [ mainPanelStyle ]
-                      [ UseCase.browseCatalog
+                      [ showFilters settings splitView
+                      , UseCase.browseCatalog
                           (catalogView settings splitView catalog)
                           (App.store app_)
-                      , showPagination settings pagination
+                      , showPagination settings splitView pagination
                       ]
                   ]
                 , if cart.shown
@@ -667,18 +682,49 @@ renderItemBrowser app_ model =
           ]
 
 
-showPagination : Settings -> Pagination -> Html Msg
-showPagination settings pagination =
+showFilters : Settings -> Bool -> Html Msg
+showFilters settings compactView =
+  let spacing = settings.spacing
+      theme = settings.theme
+      breakpoint = settings.breakpoint
+      style =
+        css
+          [ height (px spacing.s8)
+          , paddingTop (px spacing.s1)
+          , marginBottom (px spacing.s1)
+          , marginTop (px spacing.s2)
+          , marginLeft <| px (spacing.s1*0.5)
+          , marginRight <| px (spacing.s1*0.5)
+          , backgroundColor (hex theme.background)
+          , borderStyle solid
+          , borderWidth (px 1)
+          , borderColor (hex theme.lightGrey)
+          , borderRadius (px 5)
+          , Media.withMedia
+              [ Media.only
+                  Media.screen
+                  [ Media.minWidth (px breakpoint.lg) ]
+              ]
+              <| List.concat
+                   [ if compactView
+                       then []
+                       else [ marginLeft (px spacing.s1)
+                            , marginRight (px spacing.s1)
+                            ]
+                   ]
+          ]
+  in div
+       [ style ]
+       [ ]
+
+showPagination : Settings -> Bool -> Pagination -> Html Msg
+showPagination settings compactView pagination =
   let spacing = settings.spacing
       theme = settings.theme
       font = settings.font
-      paginationXs =
-        newPagination pagination.currentPage
-                      pagination.pageCount
-                      pagination.firstPage
-                      3
+      breakpoint = settings.breakpoint
 
-      page pagination_ num =
+      pageBtn pagination_ num =
         let currentPage = pagination_.currentPage
             styleClass = batch [ btnStyleClass ]
             style = css [ styleClass ]
@@ -711,23 +757,29 @@ showPagination settings pagination =
         in div
              [ style ]
              ( List.map
-                 (page pagination_)
+                 (pageBtn pagination_)
                  (List.range pagination_.firstPage pagination_.lastPage)
              )
 
       ellipsisStyleClass =
         batch
-          [ display inlineBlock
-          , paddingTop <| px (spacing.s1*0.5)
+          [ paddingTop <| px (spacing.s1*0.5)
           , paddingBottom <| px (spacing.s1*0.5)
           , paddingLeft (px 0)
           , paddingRight <| px (spacing.s1*0.5)
-          -- , width (px spacing.s4)
           , lineHeight (px font.lineHeight)
           , fontSize (px 16)
           , letterSpacing (px 2)
           , backgroundColor (hex theme.background)
           , boxSizing borderBox
+          , display none
+          , Media.withMedia
+              [ Media.only
+                  Media.screen
+                  [ Media.minWidth (px breakpoint.sm) ]
+              ]
+              [ display inlineBlock
+              ]
           ]
 
       btnStyleClass =
@@ -735,7 +787,7 @@ showPagination settings pagination =
           [ borderStyle solid
           , borderWidth (px 1)
           , borderColor (hex theme.lightGrey)
-          , borderRadius (px 4)
+          , borderRadius (px 5)
           , outline none
           , backgroundColor (hex theme.background)
           , paddingLeft (px spacing.s1)
@@ -850,18 +902,35 @@ showPagination settings pagination =
 
       wrapperStyle =
         css
-          [ padding (px spacing.s1)
+          [ paddingLeft (px spacing.s1)
+          , paddingRight (px spacing.s1)
+          , paddingTop (px spacing.s2)
+          , paddingBottom (px spacing.s2)
           , marginTop (px spacing.s1)
+          , marginLeft <| px (spacing.s1*0.5)
+          , marginRight <| px (spacing.s1*0.5)
           , backgroundColor (hex theme.background)
-          ]
+          , height (px 32)
+          , overflow hidden
+          , displayFlex
+          , outline none
+          , borderStyle solid
+          , borderWidth (px 1)
+          , borderColor (hex theme.lightGrey)
+          , borderRadius (px 5)
+          , Media.withMedia
+              [ Media.only
+                  Media.screen
+                  [ Media.minWidth (px breakpoint.lg) ]
+              ]
+              <| List.concat
+                   [ if compactView
+                       then []
+                       else [ marginLeft (px spacing.s1)
+                            , marginRight (px spacing.s1)
+                            ]
+                   ]
 
-      contentStyle =
-        css
-          [ displayFlex
-          , alignItems flexStart
-          , maxWidth (px 480)
-          , marginLeft auto
-          , marginRight auto
           ]
 
       iconStyle =
@@ -871,16 +940,215 @@ showPagination settings pagination =
           , width (px 16)
           ]
 
-  in div
-       [ wrapperStyle ]
-       [ div
-           [ contentStyle ]
-           <| List.concat
-             [ btnPrev paginationXs
-             , [ pagesWrapper paginationXs ]
-             , btnNext paginationXs
+      content breakpoint_ =
+        let pagination_ =
+              newPagination
+                pagination.currentPage
+                pagination.pageCount
+                pagination.firstPage
+                ( if breakpoint_ >= breakpoint.xl
+                    then 7
+                  else if breakpoint_ >= breakpoint.lg &&
+                          (not compactView)
+                    then 7
+                  else if breakpoint_ >= breakpoint.md
+                    then 5
+                  else if breakpoint_ >= breakpoint.sm
+                    then 3
+                  else 1
+                )
+
+            style =
+              css
+                [ displayFlex
+                , alignItems flexStart
+                ]
+
+        in div
+             [ style ]
+             <| List.concat
+               [ btnPrev pagination_
+               , [ pagesWrapper pagination_ ]
+               , btnNext pagination_
+               ]
+
+      gotoBlock =
+        let style =
+              css
+                [ displayFlex
+                , color (hex theme.onBackground)
+                , fontWeight bold
+                , marginLeft (px spacing.s1)
+                ]
+
+            textStyle =
+              css
+                [ lineHeight (px font.lineHeight)
+                , paddingTop <| px (spacing.s1*0.5)
+                , paddingBottom <| px (spacing.s1*0.5)
+                ]
+
+            textStyle_page =
+              css
+                [ display none
+                , Media.withMedia
+                    [ Media.only
+                        Media.screen
+                        [ Media.minWidth (px breakpoint.lg) ]
+                    ]
+                    [ display inline ]
+                ]
+
+            inputStyle =
+              css
+                [ width (px 40)
+                , paddingTop <| px (spacing.s1*0.5)
+                , paddingBottom <| px (spacing.s1*0.5)
+                , paddingLeft (px spacing.s1)
+                , paddingRight (px spacing.s1)
+                , lineHeight (px font.lineHeight)
+                , marginRight (px 10)
+                , marginLeft (px 10)
+                , borderStyle solid
+                , borderWidth (px 1)
+                , borderColor (hex theme.lightGrey)
+                ]
+
+            btnStyle =
+              css
+                [ btnStyleClass
+                ]
+
+        in div
+             [ style ]
+             [ span
+                 [ textStyle ]
+                 [ text "Go to"
+                 , span
+                     [ textStyle_page ]
+                     [ text " Page" ]
+                 ]
+             , input
+                 [ inputStyle
+                 , onInput
+                     (\strPage ->
+                       case String.toInt strPage of
+                         Nothing ->
+                           SetPageJump pagination.currentPage pagination
+                         Just jumpTo ->
+                           SetPageJump jumpTo pagination
+                     )
+                 ]
+                 []
+             , button
+                 [ btnStyle
+                 , onClick <| GotoPage pagination.jumpTo pagination
+                 ]
+                 [ text "Go" ]
              ]
-       ]
+        
+      contentBlock =
+        let style =
+              css
+                [ marginLeft auto ]
+
+            xsContentStyle =
+              css
+                [ display block
+                , marginBottom (px spacing.s3)
+                , marginLeft auto
+                ]
+
+            xsContent =
+              div
+                [ xsContentStyle ]
+                [ content 0 ]
+
+            smContentStyle =
+              css
+                [ display none
+                , marginBottom (px spacing.s3)
+                , marginLeft auto
+                , Media.withMedia
+                    [ Media.only
+                        Media.screen
+                        [ Media.minWidth (px breakpoint.sm) ]
+                    ]
+                    [ display block ]
+                ]
+
+            smContent =
+              div
+                [ smContentStyle ]
+                [ content breakpoint.sm ]
+
+            mdContentStyle =
+              css
+                [ display none
+                , marginBottom (px spacing.s3)
+                , marginLeft auto
+                , Media.withMedia
+                    [ Media.only
+                        Media.screen
+                        [ Media.minWidth (px breakpoint.md) ]
+                    ]
+                    [ display block ]
+                ]
+
+            mdContent =
+              div
+                [ mdContentStyle ]
+                [ content breakpoint.md ]
+
+            lgContentStyle =
+              css
+                [ display none
+                , marginBottom (px spacing.s3)
+                , marginLeft auto
+                , Media.withMedia
+                    [ Media.only
+                        Media.screen
+                        [ Media.minWidth (px breakpoint.lg) ]
+                    ]
+                    [ display block ]
+                ]
+
+            lgContent =
+              div
+                [ lgContentStyle ]
+                [ content breakpoint.lg ]
+
+            xlContentStyle =
+              css
+                [ display none
+                , marginBottom (px spacing.s3)
+                , marginLeft auto
+                , Media.withMedia
+                    [ Media.only
+                        Media.screen
+                        [ Media.minWidth (px breakpoint.xl) ]
+                    ]
+                    [ display block ]
+                ]
+
+            xlContent =
+              div
+                [ xlContentStyle ]
+                [ content breakpoint.xl ]
+
+        in div
+           [ style ]
+           [ xlContent
+           , lgContent
+           , mdContent
+           , smContent
+           , xsContent
+           ]
+
+  in div [ wrapperStyle ]
+         [ contentBlock
+         , gotoBlock
+         ]
 
 
 renderFooter : Html Msg
@@ -916,9 +1184,11 @@ cartView settings
             , paddingTop (px spacing.s1)
             , boxSizing contentBox
             , height (px spacing.s8)
-            , borderBottomStyle solid
-            , borderWidth (px spacing.s1)
-            , borderColor (hex theme.contentBg)
+            , marginBottom (px spacing.s1)
+            , borderStyle solid
+            , borderWidth (px 1)
+            , borderColor (hex theme.lightGrey)
+            , borderRadius (px 5)
             ]
 
         titleStyle =
@@ -1134,10 +1404,16 @@ cartView settings
           css
             [ width (pct 100)
             , overflowY auto
+            , backgroundColor (hex theme.background)
             , paddingTop (px spacing.s3)
+            , paddingBottom (px spacing.s3)
             , paddingLeft (px spacing.s1)
             , paddingRight (px spacing.s1)
             , boxSizing borderBox
+            , borderStyle solid
+            , borderWidth (px 1)
+            , borderColor (hex theme.lightGrey)
+            , borderRadius (px 5)
             ]
 
         content =
@@ -1162,11 +1438,10 @@ cartView settings
                     else width (px 320)
                 ]
             , width (pct 100)
-            , backgroundColor (hex theme.background)
             , boxSizing borderBox
-            , backgroundColor (hex theme.background)
             , fontSize (px 14)
             , paddingBottom (px spacing.s4)
+            , marginTop (px spacing.s2)
             , Media.withMedia
                 [ Media.only
                     Media.screen
@@ -1221,15 +1496,15 @@ showCartEntry theme spacing entry =
       qtyBtnDecStyle =
         css
           [ qtyBtnStyleClass
-          , borderTopLeftRadius (px 4)
-          , borderBottomLeftRadius (px 4)
+          , borderTopLeftRadius (px 5)
+          , borderBottomLeftRadius (px 5)
           ]
 
       qtyBtnIncStyle =
         css
           [ qtyBtnStyleClass
-          , borderTopRightRadius (px 4)
-          , borderBottomRightRadius (px 4)
+          , borderTopRightRadius (px 5)
+          , borderBottomRightRadius (px 5)
           ]
 
       qtyValStyle =
@@ -1361,6 +1636,7 @@ catalogView settings splitView catalog data =
           [ displayFlex
           , flexWrap wrap
           , alignItems stretch
+          , minHeight (vh 100)
           , Media.withMedia
               [ Media.only
                   Media.screen
@@ -1388,13 +1664,19 @@ showCatalogItem settings smallView item =
       itemMaxWidth = 200 
       nameMaxLines = 3
       breakpoint = settings.breakpoint
+      theme = settings.theme
+      spacing = settings.spacing
       itemStyle =
         css
-          [ backgroundColor (hex settings.theme.background)
-          , padding (px settings.spacing.s1)
-          , paddingBottom (px settings.spacing.s2)
-          , lineHeight (px settings.spacing.s2)
+          [ backgroundColor (hex theme.background)
+          , padding (px spacing.s1)
+          , paddingBottom (px spacing.s2)
+          , lineHeight (px spacing.s2)
           , hover [ ViewStyle.elevation6Style ]
+          , borderStyle solid
+          , borderWidth (px 1)
+          , borderColor (hex theme.lightGrey)
+          , borderRadius (px 5)
           , Transitions.transition
               [ Transitions.boxShadow liftAnimationDuration ]
           ]
@@ -1405,9 +1687,9 @@ showCatalogItem settings smallView item =
           , maxWidth (px itemMaxWidth)
           , width (pct 50)
           , boxSizing borderBox
-          , paddingBottom (px settings.spacing.s1)
-          , paddingRight (px (0.5 * settings.spacing.s1))
-          , paddingLeft (px (0.5 * settings.spacing.s1))
+          , paddingBottom (px spacing.s1)
+          , paddingRight (px (0.5 * spacing.s1))
+          , paddingLeft (px (0.5 * spacing.s1))
           , Media.withMedia
               [ Media.only
                   Media.screen
@@ -1423,12 +1705,12 @@ showCatalogItem settings smallView item =
                   [ Media.minWidth (px breakpoint.lg) ]
               ]
               <| List.concat
-                [ if smallView
+                [ [ paddingBottom (px spacing.s3) ]
+                , if smallView
                     then [ width (pct 25) ]
                     else [ width (pct 20)
-                         , paddingBottom (px settings.spacing.s2)
-                         , paddingRight (px settings.spacing.s1)
-                         , paddingLeft (px settings.spacing.s1)
+                         , paddingRight (px spacing.s1)
+                         , paddingLeft (px spacing.s1)
                          ]
                 ]
           , Media.withMedia
@@ -1453,8 +1735,8 @@ showCatalogItem settings smallView item =
           , textAlign center
           , width (px 138)
           , height (px 18)
-          , backgroundColor (hex settings.theme.primary)
-          , color (hex settings.theme.onPrimary)
+          , backgroundColor (hex theme.primary)
+          , color (hex theme.onPrimary)
           , top (px 0)
           , position absolute
           , transforms
@@ -1483,8 +1765,7 @@ showCatalogItem settings smallView item =
         , img [ src item.image, imgStyle ] []
         ]
 
-      showImage =
-        [ img [src item.image, imgStyle] [] ]
+      showImage = [ img [src item.image, imgStyle] [] ]
 
       image = 
         if item.discountPct > 0
@@ -1494,7 +1775,7 @@ showCatalogItem settings smallView item =
       priceBlockStyle =
         css
           [ ViewStyle.pt1Style
-          , height <| px (2 * settings.spacing.s2)
+          , height <| px (2 * spacing.s2)
           , displayFlex
           , flexWrap wrap
           , alignItems flexEnd
@@ -1504,7 +1785,7 @@ showCatalogItem settings smallView item =
         css
           [ fontSize (px 14)
           , fontWeight bold
-          , color (hex settings.theme.lightGrey)
+          , color (hex theme.lightGrey)
           , width (pct 100)
           , textAlign center
           , textDecoration lineThrough
@@ -1514,10 +1795,10 @@ showCatalogItem settings smallView item =
         css
           [ fontSize (px 14)
           , fontWeight bold
-          , color (hex settings.theme.onBackground)
+          , color (hex theme.onBackground)
           , textAlign center
           , width (pct 100)
-          , lineHeight (px settings.spacing.s2)
+          , lineHeight (px spacing.s2)
           ]
 
       showListAndSalePrice =
@@ -1534,27 +1815,43 @@ showCatalogItem settings smallView item =
           then showListAndSalePrice
           else showListPrice
 
-      ctaBlockStyle = css [ paddingTop (px settings.spacing.s2) ]
+      ctaBlockStyle = css [ paddingTop (px spacing.s2) ]
 
       btnStyle =
         css
           [ ViewStyle.btnStyle
           , ViewStyle.btnFilledSecondaryStyle
-          , borderColor (hex settings.theme.primary)
-          , color (hex settings.theme.onPrimary)
+          , ViewStyle.elevation2Style
+          , active
+              [ ViewStyle.elevation4Style ]
+          , borderColor (hex theme.primary)
+          , color (hex theme.onPrimary)
           , ViewStyle.btnMediumStyle
           , borderStyle none
           , display block
           , width (pct 100)
           , fontSize (px 14)
           , fontWeight bold
+          , Transitions.transition
+              [ Transitions.boxShadow 50 ]
+          , Media.withMedia
+              [ Media.only
+                  Media.screen
+                  [ Media.minWidth (px breakpoint.lg) ]
+              ]
+              [ ViewStyle.elevation2Style
+              , hover
+                  [ ViewStyle.elevation4Style ]
+              , active
+                  [ ViewStyle.elevation2Style ]
+              ]
           ]
         
       btn__iconStyle =
         css
           [ fontSize (px 16)
           , display inlineBlock
-          , marginLeft (px settings.spacing.s1)
+          , marginLeft (px spacing.s1)
           , verticalAlign bottom
           ]
 
@@ -1575,7 +1872,7 @@ showCatalogItem settings smallView item =
           , color (hex settings.theme.onBackground)
           , paddingBottom (px settings.spacing.s1)
           , height <| px
-              ((toFloat nameMaxLines) * settings.spacing.s2)
+              ((toFloat nameMaxLines) * spacing.s2)
           , textDecoration none
           , display block
           ]

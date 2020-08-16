@@ -106,10 +106,6 @@ space =
   }
 
 
-
-
-
-
 navdrawerHidden : Attribute msg
 navdrawerHidden =
   let delay = drawerContentAnimationDuration
@@ -280,21 +276,6 @@ navbar =
     ]
 
 
-navbarContentWrapper : Attribute msg
-navbarContentWrapper =
-  css
-    [ displayFlex
-    , color theme.primary
-    , alignItems center
-    , maxWidth (px 1440)
-    , marginLeft auto
-    , marginRight auto
-    , Media.withMedia
-        [ Media.only Media.screen [ Media.minWidth (px 920) ] ]
-        [ paddingRight (px 10)
-        , paddingLeft (px 10)
-        ]
-    ]
 
 
 logo : Attribute msg
@@ -593,6 +574,7 @@ btnStyle =
     , textTransform uppercase
     , textDecoration none
     , cursor pointer
+    , borderRadius (px 4)
     ]
 
 
