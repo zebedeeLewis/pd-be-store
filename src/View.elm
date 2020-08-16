@@ -19,9 +19,9 @@ import Html.Styled exposing
   ( Html , br , h1 , h2, input, a, button, span, ul, li, div, text
   , fromUnstyled, toUnstyled, img, i
   )
-import Html.Styled.Attributes exposing
+import Html.Styled.Attributes as Attr exposing
   (id, placeholder, value, type_, class, css, href, src, style
-  , attribute
+  , attribute, disabled
   )
 import Html.Styled.Events exposing (onClick)
 
@@ -52,6 +52,9 @@ type Model
 type Msg
   = ToggleNavdrawer
   | ToggleFullscreenCart
+  | NextPage Pagination
+  | PrevPage Pagination
+  | GotoPage Int Pagination
   | ViewCart
   | ViewCartSubTotal
   | AppMsg App.Msg
@@ -111,6 +114,7 @@ type alias Breakpoint =
 
 type alias Catalog =
   { cartToggled  : Bool
+  , pagination   : Pagination
   }
 
 
@@ -129,6 +133,14 @@ type alias Spacing =
   , s11      : Float
   , s12      : Float
   , s13      : Float
+  }
+
+
+type alias Pagination =
+  { currentPage     : Int
+  , pageCount       : Int
+  , firstPage       : Int
+  , lastPage        : Int
   }
 
 
@@ -186,7 +198,7 @@ app appModel =
   let cartShown = False
       base = 20
 
-      spacing =
+      spacing  =
        { base  = base
        , s1    = base * 0.5
        , s2    = base * 1.0
@@ -203,7 +215,7 @@ app appModel =
        , s13   = base * 6.5
        }
 
-      theme =
+      theme              =
         { primary        = "00bfa5"
         , primaryLight   = "5df2d6"
         , primaryDark    = "008e76"
@@ -227,7 +239,7 @@ app appModel =
         , lightGreen     = "76ff03"
         }
 
-      cartdrawer =
+      cartdrawer             =
         { shown              = cartShown
         , fullscreen         = True
         , entriesShown       = True
@@ -235,34 +247,43 @@ app appModel =
         , theme              = theme
         }
 
-      header =
-        { navdrawer =
+      header         =
+        { navdrawer  =
             NavdrawerC
               False
-              [ { label = "test1"
-                , value = "test"
+              [ { label  = "test1"
+                , value  = "test"
                 , active = False
                 }
               ]
-        , navbar = NavbarC
+        , navbar     = NavbarC
         , cartdrawer = cartdrawer
         }
 
-      catalog = { cartToggled  = cartShown }
+      pageCount = 20
+      pagination = newPagination 1
+                                 pageCount
+                                 1
+                                 pageCount
 
-      font =
+      catalog          =
+        { cartToggled  = cartShown
+        , pagination   = pagination
+        }
+
+      font           =
         { family     = ["Roboto", "sans-serif"]
         , size1      = 14
         , size2      = 13
         , lineHeight = base
         }
 
-      breakpoint =
-        { sm            = 520 -- 3
-        , md            = 600 -- 4
-        , lg            = 960 -- 5
-        , xl            = 1280 -- 7
-        , xxl           = 1920 -- 8
+      breakpoint        =
+        { sm            = 520
+        , md            = 600
+        , lg            = 960
+        , xl            = 1280
+        , xxl           = 1920
         , maxWidth_xs   = 400
         , maxWidth_sm   = 600
         , maxWidth_md   = 800
@@ -271,7 +292,7 @@ app appModel =
         , maxWidth_xxl  = 1400
         }
 
-      settings =
+      settings        =
         { spacing     = spacing
         , theme       = theme
         , font        = font
@@ -322,9 +343,125 @@ update msg model =
                 }
           in ItemBrowser settings modelView_
 
+    NextPage pagination ->
+      case model of
+        ItemBrowser settings modelView ->
+          let catalog = modelView.catalog
+              pagination_ = nextPage pagination
+              catalog_ = 
+                { catalog | pagination = pagination_ }
+
+              modelView_ =
+                { modelView
+                | catalog = catalog_
+                }
+          in ItemBrowser settings modelView_
+
+    PrevPage pagination ->
+      case model of
+        ItemBrowser settings modelView ->
+          let catalog = modelView.catalog
+              pagination_ = prevPage pagination
+              catalog_ = 
+                { catalog | pagination = pagination_ }
+
+              modelView_ =
+                { modelView
+                | catalog = catalog_
+                }
+
+          in ItemBrowser settings modelView_
+
+    GotoPage page pagination ->
+      case model of
+        ItemBrowser settings modelView ->
+          let catalog = modelView.catalog
+              pagination_ = gotoPage page pagination
+              catalog_ = 
+                { catalog | pagination = pagination_ }
+
+              modelView_ =
+                { modelView
+                | catalog = catalog_
+                }
+
+          in ItemBrowser settings modelView_
+
     AppMsg _ -> model
 
     NoOp -> model
+
+
+newPagination : Int -> Int -> Int -> Int -> Pagination
+newPagination currentPage pageCount firstPage visibleRange =
+  let visibleRange_ = if visibleRange > pageCount
+                        then pageCount
+                        else visibleRange
+
+      currentPage_ = if currentPage > pageCount
+                       then pageCount
+                     else if currentPage < 1
+                       then 1
+                     else currentPage
+
+      adjustRange (first, last) =
+        if (first <= currentPage_ &&
+            last >= currentPage_ &&
+            last <= pageCount)
+          then (first, last)
+        else if first > currentPage
+          then adjustRange ( currentPage
+                           , currentPage + visibleRange_ - 1
+                           )
+        else if last < currentPage
+          then adjustRange ( currentPage
+                           , currentPage + visibleRange_ - 1
+                           )
+        else adjustRange (pageCount - visibleRange_ + 1, pageCount)
+
+      lastPage = firstPage + visibleRange_ - 1
+
+      (firstPage_, lastPage_) = adjustRange (firstPage, lastPage)
+
+  in { currentPage  = currentPage_
+     , pageCount    = pageCount
+     , firstPage    = firstPage_
+     , lastPage     = lastPage_
+     }
+
+
+nextPage : Pagination -> Pagination
+nextPage pagination =
+  let firstPage = pagination.firstPage
+      lastPage = pagination.lastPage
+      visibleRange = lastPage - firstPage + 1
+  in  newPagination (pagination.currentPage + 1)
+                    pagination.pageCount
+                    firstPage
+                    visibleRange
+
+
+prevPage : Pagination -> Pagination
+prevPage pagination =
+  let firstPage = pagination.firstPage
+      lastPage = pagination.lastPage
+      visibleRange = lastPage - firstPage + 1
+  in  newPagination (pagination.currentPage - 1)
+                    pagination.pageCount
+                    firstPage
+                    visibleRange
+
+
+gotoPage : Int -> Pagination -> Pagination
+gotoPage page pagination =
+  let currentPage = pagination.currentPage
+      pageCount = pagination.pageCount
+      page_ = if page > pageCount
+                then pageCount
+              else if page < 1
+                then 1
+              else page
+  in  { pagination | currentPage = page }
 
 
 isAppMsg : Msg -> Bool
@@ -390,6 +527,7 @@ renderItemBrowser app_ model =
     ItemBrowser settings browserView ->
       let header = browserView.header
           catalog = browserView.catalog
+          pagination = catalog.pagination
           cart = header.cartdrawer
           splitView = cart.shown
           font = settings.font
@@ -495,7 +633,7 @@ renderItemBrowser app_ model =
                       [ UseCase.browseCatalog
                           (catalogView settings splitView catalog)
                           (App.store app_)
-                      , showPagination settings 20 1
+                      , showPagination settings pagination
                       ]
                   ]
                 , if cart.shown
@@ -529,131 +667,219 @@ renderItemBrowser app_ model =
           ]
 
 
-showPagination : Settings -> Int -> Int -> Html Msg
-showPagination settings pageCount currentPage =
+showPagination : Settings -> Pagination -> Html Msg
+showPagination settings pagination =
   let spacing = settings.spacing
       theme = settings.theme
       font = settings.font
+      paginationXs =
+        newPagination pagination.currentPage
+                      pagination.pageCount
+                      pagination.firstPage
+                      3
+
+      page pagination_ num =
+        let currentPage = pagination_.currentPage
+            styleClass = batch [ btnStyleClass ]
+            style = css [ styleClass ]
+            style_current =
+              css
+                [ styleClass
+                , borderStyle none
+                , color (hex theme.primary)
+                ]
+
+        in button
+             [ if num == currentPage
+                then style_current
+                else style
+             , onClick (GotoPage num pagination_)
+             ]
+             [ text (String.fromInt num) ]
+
+      pagesWrapper pagination_ =
+        let style =
+              css
+                [ displayFlex
+                , flexWrap wrap
+                , justifyContent center
+                , height <| px (spacing.s3+2)  -- add 2 to account for
+                                               -- button borders.
+                , overflow hidden
+                , backgroundColor (hex theme.background)
+                ]
+        in div
+             [ style ]
+             ( List.map
+                 (page pagination_)
+                 (List.range pagination_.firstPage pagination_.lastPage)
+             )
+
+      ellipsisStyleClass =
+        batch
+          [ display inlineBlock
+          , paddingTop <| px (spacing.s1*0.5)
+          , paddingBottom <| px (spacing.s1*0.5)
+          , paddingLeft (px 0)
+          , paddingRight <| px (spacing.s1*0.5)
+          -- , width (px spacing.s4)
+          , lineHeight (px font.lineHeight)
+          , fontSize (px 16)
+          , letterSpacing (px 2)
+          , backgroundColor (hex theme.background)
+          , boxSizing borderBox
+          ]
+
+      btnStyleClass =
+        batch
+          [ borderStyle solid
+          , borderWidth (px 1)
+          , borderColor (hex theme.lightGrey)
+          , borderRadius (px 4)
+          , outline none
+          , backgroundColor (hex theme.background)
+          , paddingLeft (px spacing.s1)
+          , paddingRight (px spacing.s1)
+          , paddingTop <| px (0.5*spacing.s1)
+          , paddingBottom <| px (0.5*spacing.s1)
+          , marginRight (px spacing.s1)
+          , color (hex theme.onBackground)
+          , fontSize (px 14)
+          , fontWeight bold
+          , lineHeight (px font.lineHeight)
+          , cursor pointer
+          , hover
+              [ backgroundColor (hex theme.primary)
+              , opacity (num 0.4)
+              , color (hex theme.onPrimary)
+              ]
+          , Css.disabled
+              [ opacity (num 0.3)
+              , backgroundColor (hex theme.background)
+              , color (hex theme.onBackground)
+              , cursor notAllowed
+              ]
+          ]
+
+      btnPrev pagination_ =
+        let currentPage = pagination_.currentPage
+            style = css [ btnStyleClass ]
+            ellipsisStyle =
+              css
+                [ ellipsisStyleClass
+                , marginLeft auto
+                , textAlign right
+                ]
+
+            btnDisabled =
+              button
+                [ style
+                , Attr.disabled True
+                ]
+                [ i [ iconStyle
+                    , class "material-icons"
+                    ]
+                    [ text "arrow_back" ]
+                ]
+              
+            btnEnabled =
+              button
+                [ style
+                , onClick (PrevPage pagination_)
+                ]
+                [ i [ iconStyle
+                    , class "material-icons"
+                    ]
+                    [ text "arrow_back" ]
+                ]
+
+        in if currentPage <= 1
+             then [ btnDisabled
+                  , span [ ellipsisStyle ] [ text "" ]
+                  ]
+             else [ btnEnabled
+                  , span [ ellipsisStyle ] [ text "..." ]
+                  ]
+
+      btnNext pagination_ =
+        let currentPage = pagination_.currentPage
+            pageCount = pagination_.pageCount
+
+            style =
+              css
+                [ btnStyleClass
+                , display inlineBlock
+                , marginLeft auto
+                ]
+
+            ellipsisStyle =
+              css
+                [ ellipsisStyleClass
+                , marginRight auto
+                ]
+
+            btnDisabled =
+              button
+                [ style
+                , Attr.disabled True
+                ]
+                [ i [ iconStyle
+                    , class "material-icons"
+                    ]
+                    [ text "arrow_forwards" ]
+                ]
+              
+            btnEnabled =
+              button
+                [ style
+                , onClick (NextPage pagination_)
+                ]
+                [ i [ iconStyle
+                    , class "material-icons"
+                    ]
+                    [ text "arrow_forwards" ]
+                ]
+
+        in if currentPage >= pageCount
+             then [ span [ ellipsisStyle ] [ text "" ]
+                  , btnDisabled
+                  ]
+             else [ span [ ellipsisStyle ] [ text "..." ]
+                  , btnEnabled
+                  ]
+
       wrapperStyle =
         css
-          [ paddingLeft (px spacing.s1)
-          , paddingRight (px spacing.s1)
+          [ padding (px spacing.s1)
           , marginTop (px spacing.s1)
-          , ViewStyle.elevation2Style
           , backgroundColor (hex theme.background)
           ]
 
       contentStyle =
         css
           [ displayFlex
-          , maxWidth (px 500)
+          , alignItems flexStart
+          , maxWidth (px 480)
           , marginLeft auto
           , marginRight auto
           ]
 
-      btnStyleClass =
-        batch
-          [ borderStyle none
-          , outline none
-          , backgroundColor (hex theme.background)
-          , padding (px spacing.s1)
-          , color (hex theme.onBackground)
-          , height (px spacing.s4)
-          ]
-
-      prevStyle = css [ btnStyleClass ]
-
-      nextStyle =
+      iconStyle =
         css
-          [ btnStyleClass
-          , display inlineBlock
-          , marginLeft auto
-          ]
-
-      ellipsisStyleClass =
-        batch
-          [ display inlineBlock
-          , padding (px spacing.s1)
-          , paddingBottom (px spacing.s1)
-          , width (px spacing.s4)
-          , height (px spacing.s4)
-          , fontSize (px 20)
-          , backgroundColor (hex theme.background)
-          , boxSizing borderBox
-          ]
-
-      ellipsisStyle_prev =
-        css
-          [ ellipsisStyleClass
-          , marginLeft auto
-          , textAlign right
-          ]
-
-      ellipsisStyle_next =
-        css
-          [ ellipsisStyleClass
-          , marginRight auto
-          ]
-
-      pagesWrapperStyle =
-        css
-          [ displayFlex
-          , flexWrap wrap
-          , height (px spacing.s4)
-          , overflow hidden
-          , backgroundColor (hex theme.background)
-          ]
-
-      pageStyleClass =
-        batch
-          [ btnStyleClass
-          , fontSize (px 18)
-          , height (pct 100)
-          ]
-
-      pageStyle =
-        css
-          [ pageStyleClass
-          , hover
-              [ backgroundColor (hex theme.primary)
-              , opacity (num 0.4)
-              , color (hex theme.onBackground)
-              ]
-          ]
-
-      pageStyle_current =
-        css
-          [ pageStyleClass
-          , backgroundColor (hsla 172 1 0.37 0.4)
-          , color (hex theme.onPrimary)
+          [ fontSize (px 16)
+          , lineHeight (px font.lineHeight)
+          , width (px 16)
           ]
 
   in div
        [ wrapperStyle ]
        [ div
            [ contentStyle ]
-           [ button
-               [ prevStyle ]
-               [ i [ class "material-icons" ] [ text "arrow_back" ] ]
-           , span [ ellipsisStyle_prev ] [ text "..." ]
-           , div
-               [ pagesWrapperStyle ]
-               (List.map
-                 (\i ->
-                   button
-                     [ if i == currentPage
-                        then pageStyle_current
-                        else pageStyle
-                     ]
-                     [ text (String.fromInt i) ]
-                 ) (List.range 1 pageCount)
-               )
-           , span
-               [ ellipsisStyle_next ] [ text "..." ]
-           , button
-               [ nextStyle ]
-               [ i [ class "material-icons" ] [ text "arrow_forward" ] ]
-           ]
+           <| List.concat
+             [ btnPrev paginationXs
+             , [ pagesWrapper paginationXs ]
+             , btnNext paginationXs
+             ]
        ]
 
 
@@ -1135,8 +1361,6 @@ catalogView settings splitView catalog data =
           [ displayFlex
           , flexWrap wrap
           , alignItems stretch
-          -- , paddingRight (px (0.5 * spacing.s1))
-          -- , paddingLeft (px (0.5 * spacing.s1))
           , Media.withMedia
               [ Media.only
                   Media.screen
