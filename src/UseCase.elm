@@ -1,10 +1,4 @@
 module UseCase exposing
- -- Test Exports, uncomment the exposing block below for
- -- testing.
- -- (..)
-
- -- Production Exports, uncomment the exposing block below for
- -- production and comment out the "Test Exports" above.
   ( Store
   , CartView
   , ItemViewD
@@ -24,8 +18,7 @@ import Round
 import Item
 import ShoppingList
 
-import DummyItem
-import DummyShoppingList
+import SRandom
 
 
 
@@ -208,8 +201,8 @@ itemToViewD item =
 
 dummyStore : Int -> Store
 dummyStore seed =
-  Store (DummyItem.randomFloat2 12 15 seed)
-        (DummyShoppingList.randomList seed)
-        (DummyItem.randomSet seed)
+  Store (SRandom.randomFloat2 12 15 seed)
+        (ShoppingList.randomList seed)
+        (Item.randomSet seed)
 
 

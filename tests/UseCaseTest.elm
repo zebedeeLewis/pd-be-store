@@ -19,8 +19,8 @@ it = test
 -- SAMPLE DATA
 -------------------------------------------------------------------------
 
-itemBriefData : Item.BriefDataR
-itemBriefData =
+itemSummaryData : Item.SummaryDataR
+itemSummaryData =
   { name            = "chicken legs"
   , id              = "CHKCCS1233"
   , imageThumbnail  = "https://www.example.com/chicken.jpg"
@@ -53,12 +53,11 @@ itemBriefData =
   }
 
 
-itemBrief : Item.Model
-itemBrief =
-  case Item.newBrief itemBriefData of
-    Err _ -> Item.blankBrief
+itemSummary : Item.Model
+itemSummary =
+  case Item.newSummary itemSummaryData of
+    Err _ -> Item.blankSummary
     Ok brief -> brief
-
 
 
 -------------------------------------------------------------------------

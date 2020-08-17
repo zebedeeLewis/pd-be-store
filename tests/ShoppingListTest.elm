@@ -23,8 +23,8 @@ it = test
 
 emptyList = ShoppingList.empty 12
 
-itemBriefData : Item.BriefDataR
-itemBriefData =
+itemSummaryData : Item.SummaryDataR
+itemSummaryData =
   { name            = "chicken legs"
   , id              = "CHKCCS1233"
   , imageThumbnail  = "https://www.example.com/chicken.jpg"
@@ -56,11 +56,11 @@ itemBriefData =
                            }
   }
 
-itemBrief : Item.Model
-itemBrief =
-  case Item.newBrief itemBriefData of
-    Ok itemBrief_ -> itemBrief_
-    Err _ -> Item.blankBrief
+itemSummary : Item.Model
+itemSummary =
+  case Item.newSummary itemSummaryData of
+    Ok itemSummary_ -> itemSummary_
+    Err _ -> Item.blankSummary
 
 
 
@@ -80,17 +80,17 @@ addItem =
     [ it "creates new entry if item is not found in the shopping list."
       <| \_->
            Expect.equal
-             (ShoppingList.add itemBrief emptyList)
-             (ShoppingList.fromListOfItems 12 [itemBrief])
+             (ShoppingList.add itemSummary emptyList)
+             (ShoppingList.fromListOfItems 12 [itemSummary])
 
     , it ("increments the quantity of the entry for each " ++
           "subsequent entry of the same item.")
       <| \_->
            Expect.equal
-             (ShoppingList.add itemBrief
-             << ShoppingList.add itemBrief
-             << ShoppingList.add itemBrief <| emptyList)
-             (ShoppingList.fromListOfItems 12 <|List.repeat 3 itemBrief)
+             (ShoppingList.add itemSummary
+             << ShoppingList.add itemSummary
+             << ShoppingList.add itemSummary <| emptyList)
+             (ShoppingList.fromListOfItems 12 <|List.repeat 3 itemSummary)
     ]
 
 
@@ -100,9 +100,9 @@ removeItem =
           "the entrys quantity value is 1.")
       (\_->
         Expect.equal
-          (ShoppingList.remove (Item.id itemBrief)
+          (ShoppingList.remove (Item.id itemSummary)
              <| ShoppingList.fromListOfItems 12
-                  (List.repeat 1 itemBrief))
+                  (List.repeat 1 itemSummary))
           (ShoppingList.empty 12)
       )
 
@@ -110,10 +110,10 @@ removeItem =
           "id by 1 if the its quantity value is greater than 1.")
       (\_->
         Expect.equal
-          (ShoppingList.remove (Item.id itemBrief)
+          (ShoppingList.remove (Item.id itemSummary)
              <| ShoppingList.fromListOfItems 12
-                  (List.repeat 5 itemBrief))
-          (ShoppingList.fromListOfItems 12 (List.repeat 4 itemBrief))
+                  (List.repeat 5 itemSummary))
+          (ShoppingList.fromListOfItems 12 (List.repeat 4 itemSummary))
       )
     ]
 

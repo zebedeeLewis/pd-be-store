@@ -1,11 +1,4 @@
 module ShoppingList exposing
- -- Test Exports, uncomment the exposing block below for
- -- testing.
- 
--- (..)
-
--- Production Exports, uncomment the exposing block below for
--- production and comment out the "Test Exports" above.
   ( Model
   , Entry
   , newEntry
@@ -18,13 +11,17 @@ module ShoppingList exposing
   , qty
   , empty
   , maybeEntry
+  , randomList
+  , randomEntry
   )
 
 
 import Round
+import Random
+import SRandom
+import UUID
 
 import Item
-
 
 
 -----------------------------------------------------------------------
@@ -56,7 +53,7 @@ examples:
     ...
     }
 
-  item = Item.newBrief briefData
+  item = Item.newSummary briefData
 
   --            QTY  Item
   entry = Entry 5    item
@@ -224,5 +221,24 @@ item (Entry _ item_) = item_
 
 qty : Entry -> Int
 qty (Entry qty_  _) = qty_
+
+
+-- Dummy Data
+
+randomEntry : Int -> Entry
+randomEntry seed =
+  let qty_ = SRandom.randomInt 0 6 seed
+      item_ = Item.randomItemSummary seed
+  in newEntry qty_ item_
+
+
+randomList : Int -> Model
+randomList seed =
+  let list = empty 12
+  in List.foldl
+      (\i list_ ->
+        let item_ = item (randomEntry <| seed+i)
+        in add item_ list_
+      ) list (List.range 1 20)
 
 
