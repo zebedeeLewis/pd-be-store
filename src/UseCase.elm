@@ -16,10 +16,10 @@ module UseCase exposing
 import Round
 
 import Item
+import Catalog
 import ShoppingList
 
 import SRandom
-
 
 
 -----------------------------------------------------------------------
@@ -33,8 +33,8 @@ import SRandom
 -----------------------------------------------------------------------
 
 
---                 GST     ShoppingCart         Store Catalog
-type Store = Store Float   ShoppingList.Model   Item.Set
+-- type Store = Store Float   ShoppingList.Model   Item.Set
+type Store = Store Float ShoppingList.Model (Catalog.Model)
 
 
 type Error = ItemNotInCatalog String Store
@@ -87,7 +87,7 @@ type alias ItemViewD =
 startShopping : Float -> Store
 startShopping gst =
   let cart = ShoppingList.empty gst 
-      catalog = Item.emptySet
+      catalog = Catalog.new 20 1 []
   in Store gst cart catalog
 
 
@@ -95,7 +95,7 @@ getCartFrom : Store -> ShoppingList.Model
 getCartFrom (Store _ cart _) = cart
 
 
-getCatalogFrom : Store -> Item.Set
+getCatalogFrom : Store -> Catalog.Model
 getCatalogFrom (Store _ _ catalog) = catalog
 
 
@@ -106,7 +106,7 @@ getGstFrom (Store gst _ _) = gst
 browseCatalog : CatalogView view -> Store -> view
 browseCatalog catalogView store =
   let catalog = getCatalogFrom store
-      loi = Item.listFromSet catalog
+      loi = Catalog.items catalog
       viewData = List.map itemToViewD loi
   in catalogView viewData
 
@@ -122,7 +122,7 @@ addItemToCart : String -> Store -> Result Error Store
 addItemToCart itemId store =
   let cart = getCartFrom store
       catalog = getCatalogFrom store
-      maybeItem = Item.querySetFor itemId catalog
+      maybeItem = Catalog.item itemId catalog
   in
    case maybeItem of
      Nothing -> Err (ItemNotInCatalog itemId store)
@@ -203,6 +203,6 @@ dummyStore : Int -> Store
 dummyStore seed =
   Store (SRandom.randomFloat2 12 15 seed)
         (ShoppingList.randomList seed)
-        (Item.randomSet seed)
+        (Catalog.random seed)
 
 

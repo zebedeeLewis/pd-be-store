@@ -2,20 +2,14 @@ module Item exposing
   ( Model
   , SummaryDataR
   , DiscountDataR
-  , Set
   , Size
   , Measure
   , Availability
   , ValidationErr(..)
-  , listFromSet
   , newSummary
   , priceToPair
-  , querySetFor
   , priceToString
   , blankSummary
-  , emptySet
-  , addToSet
-  , setToData
   , equal
   , id
   , sizeToString
@@ -27,10 +21,8 @@ module Item exposing
   , salePrice
   , brand
   , toData
-  , dataListToSet
   , availabilityToStr
   , discountPct
-  , randomSet
   , randomItemSummary
   , randomItemSummaryData
   , randomId
@@ -86,11 +78,6 @@ blankSummaryR =
 
 blankSummary : Model
 blankSummary = Summary blankSummaryR
-
-
-emptySet : Set
-emptySet = Set [] []
-
 
 
 -----------------------------------------------------------------------
@@ -303,18 +290,6 @@ type alias DiscountR =
   , value            : Int
   , items            : List String
   }
-
-
-{-| Represents a collection of Item. A set can have one or more filters
-applied to it.
--}
-type Set = Set (List Filter) (List Model)
-
-
-{-| represents a filter to be applied to an item set
--}
---                        value
-type Filter = BrandFilter String
 
 
 {-| represents the availability of inventory items of a given type.
@@ -920,13 +895,6 @@ strToMaybeGrad strGrad =
               _    -> Nothing
 
 
-{-| produce a List of SummaryDataR
--}
-setToData : Set -> List SummaryDataR
-setToData (Set _ items) =
-  List.map (\item -> toData item) items
-
-
 {-| produce True if the id of both Items are the same
 -}
 equal : Model -> Model -> Bool
@@ -981,10 +949,6 @@ listPrice item =
     Summary record -> record.listPrice
 
 
-listFromSet : Set -> List Model
-listFromSet (Set _ items) = items
-
-
 {-| produce the discount sales price of the given item
 -}
 salePrice : Model -> Float
@@ -1021,37 +985,6 @@ discountPct item =
         Nothing -> 0
         Just (Discount discount) ->
           discount.value
-
-
-{-| add an item to the set
--}
-addToSet : Model -> Set -> Set
-addToSet item (Set filters items) =
-  Set filters (item::items)
-
-
-{-| produce a new set from a list list of Item Data
--}
-dataListToSet : List SummaryDataR -> Set
-dataListToSet lod =
-  Set [] <| List.filterMap (\data-> Result.toMaybe (newSummary data)) lod
-
-
-querySetFor : String -> Set -> Maybe Model
-querySetFor itemId (Set _ loi) =
-  let query itemId_ loi_ =
-        let maybeSubj = List.head loi_
-        in
-          case maybeSubj of
-            Nothing -> Nothing
-            Just subj ->
-              if (id subj) == itemId_
-                then Just subj
-                else query itemId_ (List.drop 1 loi_)
-
-  in query itemId loi
-
-
 
 
 -- DUMMY DATA
@@ -1264,14 +1197,4 @@ randomItemSummary seed =
   case newSummary (randomItemSummaryData seed) of
     Err _ -> blankSummary
     Ok brief -> brief
-
-
-randomSet : Int -> Set
-randomSet seed =
-  let data = List.map
-               (\i ->
-                 let seed_ = seed+i
-                 in randomItemSummaryData seed_
-               ) <| List.range 1 30
-  in dataListToSet data
 
