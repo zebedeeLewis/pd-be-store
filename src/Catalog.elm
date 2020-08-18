@@ -1,13 +1,15 @@
 module Catalog exposing
   ( Model
   , Msg
-  , new
-  , pages
-  , gotoNextPage
-  , setNextPage
+  , Error(..)
+  , View
+  , generate_new_page
+  , produce_pages_count
+  , goto_next_page
+  , set_next_page_number_to
   , update
-  , items
-  , item
+  , produce_page_items
+  , produce_item_with_id
   , random
   )
 
@@ -21,26 +23,40 @@ import SRandom
 
 {-| represents a collection of items to be displayed to a user. A
 Catalog simulates a set of pages and items in the pages.
+
+example: 
+  currentPageNumber = 1
+  totalPages = 20
+  nextPage = currentPageNumber + 1
+  items = [ <item1>, <item2>, <item3> ... ]
+  newCatalog = Page currentPageNumber totalPages nextPage items
 -}
-type Model = Catalog Pagination (List Item.Model)
-
-
-{-| represents the pages in a Catalog.
-
-**page:** page number of the page the user is viewing.
-**pages:** total number of pages.
-**
--}
-type alias Pagination =
-  { page         : Int
-  , pages        : Int
-  , nextPage     : Int
-  }
+type Model = Page Int Int Int (List Item.Model)
 
 
 type Msg
   = SetNextPage Int
   | GotoNextPage
+
+
+{-| Interface defines a function used to display a catalog.
+arguments are as follows:
+
+**page:** current page number
+**pages:** total number of pages
+**items:** list of items on the page
+
+example:
+  viewCatalog : Catalog.View
+  viewCatalog page pages items =
+    div
+      []
+      [...]
+-}
+type alias View view = Int -> Int -> (List Item.Model) -> view
+
+
+type Error = ItemNotInCatalog String
 
 
 -----------------------------------------------------------------------
@@ -50,33 +66,28 @@ type Msg
 update : Msg -> Model -> Model
 update msg catalog =
   case msg of
-    SetNextPage page_ -> setNextPage page_ catalog
-    GotoNextPage -> gotoNextPage catalog
+    SetNextPage page_ -> set_next_page_number_to page_ catalog
+    GotoNextPage -> goto_next_page catalog
 
 
-{-| Get the number of pages in the Catalog.
--}
-pages : Model -> Int
-pages (Catalog pagination_ _) = pagination_.pages
+produce_pages_count : Model -> Int
+produce_pages_count (Page _ pages_ _ _) = pages_
 
 
-{-| Get the pagination element from the Catalog.
--}
-pagination : Model -> Pagination
-pagination (Catalog pagination_ _) = pagination_
+produce_page_items : Model -> List Item.Model
+produce_page_items (Page _ _ _ items_) = items_
 
 
-{-| Get the list of items from the Catalog. This list represents
-whats in the current page.
--}
-items : Model -> List Item.Model
-items (Catalog _ items_) = items_
+produce_current_page_number : Model -> Int
+produce_current_page_number (Page pageNumber _ _ items_) = pageNumber
 
 
-{-| Get a single item from the list with the given Id
--}
-item : String -> Model -> Maybe Item.Model
-item id catalog =
+produce_next_page_number : Model -> Int
+produce_next_page_number (Page _ _ pageNumber _) = pageNumber
+
+
+produce_item_with_id : String -> Model -> Maybe Item.Model
+produce_item_with_id id catalog =
   let items_ loi =
         let head = List.head loi
         in case head of
@@ -85,42 +96,43 @@ item id catalog =
                if (item_ |> Item.id) == id
                  then Just item_
                  else items_ (List.drop 1 loi)
-  in items_ (catalog |> items)
+  in items_ (catalog |> produce_page_items)
 
 
-
-{-| Set the page to be viewed on the next page jump.
--}
-setNextPage : Int -> Model -> Model
-setNextPage page_ catalog =
-  let pages_ = catalog |> pages
-      pagination_ = catalog |> pagination
-      loi = catalog |> items
-      nextPage_ = if page_ > pages_ then pages_ else page_
-  in Catalog { pagination_ | nextPage = nextPage_ } loi
-
-
-{-| Jump to the next page.
--}
-gotoNextPage : Model -> Model
-gotoNextPage (Catalog pagination_ loi) =
-  Catalog { pagination_ | page = pagination_.nextPage } loi
+set_next_page_number_to : Int -> Model -> Model
+set_next_page_number_to nextPageNumber page =
+  let pagesCount = page |> produce_pages_count
+      items = page |> produce_page_items
+      currentPageNumber = page |> produce_current_page_number
+      nextPageNumber_ = 
+        if nextPageNumber > pagesCount
+          then pagesCount
+          else nextPageNumber
+  in Page currentPageNumber pagesCount nextPageNumber_ items
 
 
-{-| create a new catalog with the given information.
--}
-new : Int -> Int -> List Item.Model -> Model
-new pages_ currentPage loi =
-  let currentPage_ = if currentPage > pages_
-                       then pages_
-                       else currentPage
-      pagination_ = 
-        { page         = currentPage_
-        , pages        = pages_
-        , nextPage     = currentPage_
-        }
-  in Catalog pagination_ loi
+goto_next_page : Model -> Model
+goto_next_page page =
+  let pagesCount = page |> produce_pages_count
+      items = page |> produce_page_items
+      currentPageNumber = page |> produce_next_page_number
+  in Page currentPageNumber pagesCount currentPageNumber items
 
+
+generate_new_page : Int -> Int -> List Item.Model -> Model
+generate_new_page currentPageNumber pagesCount items =
+  let currentPage_ = if currentPageNumber > pagesCount
+                       then pagesCount
+                       else currentPageNumber
+  in Page currentPageNumber pagesCount currentPageNumber items
+
+
+show_page_using_view : View view -> Model -> view
+show_page_using_view view page =
+  let pagesCount = page |> produce_pages_count
+      items = page |> produce_page_items
+      currentPageNumber = page |> produce_next_page_number
+  in view currentPageNumber pagesCount items
 
 
 -- Dummy Data
@@ -130,9 +142,9 @@ random seed =
   let loi = List.map
               (\i ->
                 let seed_ = seed+i
-                in Item.randomItemSummary seed_
+                in Item.produce_random_summary seed_
               ) <| List.range 1 30
-      page_ = SRandom.randomInt 1 20 seed
-  in new 20 page_ loi
+      pageNumber = SRandom.randomInt 1 20 seed
+  in generate_new_page 20 pageNumber loi
 
 

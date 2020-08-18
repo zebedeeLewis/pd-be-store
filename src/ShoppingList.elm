@@ -228,7 +228,7 @@ qty (Entry qty_  _) = qty_
 randomEntry : Int -> Entry
 randomEntry seed =
   let qty_ = SRandom.randomInt 0 6 seed
-      item_ = Item.randomItemSummary seed
+      item_ = Item.produce_random_summary seed
   in newEntry qty_ item_
 
 

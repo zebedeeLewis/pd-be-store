@@ -3,7 +3,6 @@ module UseCase exposing
   , CartView
   , ItemViewD
   , EntryViewD
-  , Error(..)
   , startShopping
   , removeItemFromCart
   , addItemToCart
@@ -32,24 +31,41 @@ import SRandom
 -- DATA DEFINITIONS
 -----------------------------------------------------------------------
 
+{-| represents a single shopping activity.
 
--- type Store = Store Float   ShoppingList.Model   Item.Set
+example:
+  --           GST(%) Shopping Cart        Catalog
+  shop = Store 12.5   ShoppingList.Model   (Catalog.Model)
+-}
 type Store = Store Float ShoppingList.Model (Catalog.Model)
 
 
-type Error = ItemNotInCatalog String Store
+{-| Interface defines a function used to display the contents of a
+shopping list. The arguments are as follows:
 
+**subtotal:** sum of all items in cart after applying discounts
+but before applying tax.
+**taxPct:** gst percentage
+**tax:** value of gst applied
+**total:** total cost of items in cart after applying discounts
+and taxes.
+**savints:** total saved on discounts.
+**entries:** list of items in the cart.
 
-{-| Interface defines a function used to display a view of the contents
-of a shopping list.
+example:
+  viewCart : UseCase.cartView
+  viewCart subtotal tax taxVal total savings entries =
+    div
+      []
+      [...]
 -}
 type alias CartView view
-  =  Float                 -- cartSaleSubTotal
-  -> Float                 -- cartTaxPct
-  -> Float                 -- cartTaxVal
-  -> Float                 -- cartSaleTotal
-  -> Float                 -- cartTotalSavings
-  -> (List EntryViewD)     -- cartEntries
+  =  Float                 -- subtotal
+  -> Float                 -- taxPct
+  -> Float                 -- tax
+  -> Float                 -- total
+  -> Float                 -- savings
+  -> (List EntryViewD)     -- entries
   -> view
 
 
@@ -87,7 +103,7 @@ type alias ItemViewD =
 startShopping : Float -> Store
 startShopping gst =
   let cart = ShoppingList.empty gst 
-      catalog = Catalog.new 20 1 []
+      catalog = Catalog.generate_new_page 1 20 []
   in Store gst cart catalog
 
 
@@ -106,7 +122,7 @@ getGstFrom (Store gst _ _) = gst
 browseCatalog : CatalogView view -> Store -> view
 browseCatalog catalogView store =
   let catalog = getCatalogFrom store
-      loi = Catalog.items catalog
+      loi = Catalog.produce_page_items catalog
       viewData = List.map itemToViewD loi
   in catalogView viewData
 
@@ -118,18 +134,18 @@ removeItemFromCart itemId store =
   in Store (getGstFrom store) (ShoppingList.remove itemId cart) catalog
 
 
-addItemToCart : String -> Store -> Result Error Store
+addItemToCart : String -> Store -> Result Catalog.Error Store
 addItemToCart itemId store =
   let cart = getCartFrom store
-      catalog = getCatalogFrom store
-      maybeItem = Catalog.item itemId catalog
+      maybeItem =
+        getCatalogFrom store |> Catalog.produce_item_with_id itemId
   in
    case maybeItem of
-     Nothing -> Err (ItemNotInCatalog itemId store)
+     Nothing -> Err (Catalog.ItemNotInCatalog itemId)
      Just item ->
        Ok <| Store (getGstFrom store)
                    (ShoppingList.add item cart)
-                   catalog
+                   (getCatalogFrom store)
 
 
 viewCart : CartView view -> Store -> view
@@ -193,7 +209,7 @@ itemToViewD item =
   , image        = Item.image item
   , listPrice    = Item.listPrice item 
   , salePrice    = Item.salePrice item
-  , discountPct  = Item.discountPct item
+  , discountPct  = Item.produce_discount_percentage item
   }
 
 

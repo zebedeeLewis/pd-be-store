@@ -7,10 +7,7 @@ module Item exposing
   , Availability
   , ValidationErr(..)
   , newSummary
-  , priceToPair
-  , priceToString
   , blankSummary
-  , equal
   , id
   , sizeToString
   , name
@@ -19,23 +16,10 @@ module Item exposing
   , variant
   , listPrice
   , salePrice
+  , produce_discount_percentage
   , brand
   , toData
-  , availabilityToStr
-  , discountPct
-  , randomItemSummary
-  , randomItemSummaryData
-  , randomId
-  , randomTag
-  , randomStrSize
-  , randomStrAvailability
-  , randomVariant
-  , randomBrand
-  , randomImageUrl
-  , randomItemName
-  -- , randomDiscount
-  -- , randomSize
-  -- , randomAvailability
+  , produce_random_summary
   )
 
 import Time
@@ -105,8 +89,7 @@ departments.
 department sub-category the item should be in. This serves to further
 sub-devide individual departments.
 
-**searchTags:** A collection of tags, these are tags used to aid in
-searching for this item.
+**searchTags:** these are tags used to aid in searching for this item.
 
 example:
 
@@ -168,6 +151,7 @@ type alias SummaryR =
 type Model = Summary SummaryR
 
 
+
 {-| Represents the information necessary to build a new SummaryR. All
 fields hold simple string data or "subrecords" of string data.
 
@@ -223,6 +207,7 @@ type alias SummaryDataR =
   }
 
 
+
 {-| If a user of this module attempts to create a new item with
 invalid data, that will result in an ValidationErr. The first
 field of ValidationErr is the id of the data item used in the
@@ -253,6 +238,7 @@ type ValidationErr
 type Discount = Discount DiscountR
 
 
+
 {-| Represents the information necessary to build a new
 Discount. All fields hold simple string data or "subrecords".
 
@@ -264,6 +250,7 @@ type alias DiscountDataR =
   , value            : String
   , items            : List String
   }
+
 
 
 {-| Represents a discount that is automatically applied to a select
@@ -292,6 +279,7 @@ type alias DiscountR =
   }
 
 
+
 {-| represents the availability of inventory items of a given type.
 
 **IN_STOCK**   - represents a type of item that is currently in stock.
@@ -318,6 +306,7 @@ type Availability
   | OUT_STOCK
 
 
+
 {-| represents the basic unit of measurement for length, volume and
 weight.
 
@@ -337,6 +326,7 @@ type Measure
   | MM
   | CC
   | MG
+
 
 
 {-| represents the size of an item, this can be an exact measurement
@@ -366,11 +356,13 @@ type Size
   | M
 
 
+
 type Tag
   = DepartmentTag TagR
   | CategoryTag TagR
   | SubCategoryTag TagR
   | SearchTag TagR
+
 
 
 {-| represents a single tag used to categorize a group of items.
@@ -389,81 +381,10 @@ type alias TagR =
   }
 
 
-{- TODO: This should be moved to a module dedicated to Users.  -}
-type UserDiscount = UserDiscount UserDiscountR
-
-
-{-| Represents a discount that the user has the option to apply. Once
-applied the discount will take effect on a select set of items.
-
-Has the exact set of fields as Discount along with the following
-additional field:
-
-**expirationTime:** the current time passes this expiration time, then
-the discount is no longer valid.
-
-**startingBalance:** user discounts cannot be applied beyond a certain
-dollar amount. This represents the balance to that dollar cap before
-the discount is applied.
-
-**finalBalance:** represents the balance to the dollar cap after the
-discount is applied.
-
-examples:
-
-  -- the startingBalance and finalBalance values are the same for
-  -- unapplied discounts.
-  userDiscount =
-    { discount_code    = "DSC123"
-    , name             = "marketing discount"
-    , value            = 10
-    , iems             = ["CHKCCS1233"]
-    , expirationTime   = Time.millisToPosix 1596261755
-    , startingBalance  = 58.6
-    , finalBalance     = 58.6
-    }
-
-  -- the startingBalance is more than the finalBalance for applied
-  -- discounts.
-  appliedUserDiscount =
-    { discount_code    = "DSC123"
-    , name             = "marketing discount"
-    , value            = 10
-    , iems             = ["CHKCCS1233"]
-    , expirationTime   = Time.millisToPosix 1596261755
-    , startingBalance  = 58.6
-    , finalBalance     = 23.6
-    }
-
-TODO: This should be moved to a module dedicated to Users.
--}
-type alias UserDiscountR =
-  { discount_code    : String
-  , name             : String
-  , value            : Float
-  , items            : List String
-  , expirationTime   : Time.Posix
-  , startingBalance  : Float
-  , finalBalance     : Float
-  }
-
-
 
 -----------------------------------------------------------------------
 -- FUNCTION DEFINITIONS
 -----------------------------------------------------------------------
-
-{-|
-  produce a list of all Entity with the given tagName.
-  TODO!!!
--}
-filterBy
-  : TagR
-  -> List SummaryR
-  -> List SummaryR
-filterBy department items =
-  items
-
 
 {-| produce the string representation of an Size
 Assumptions: we assume that the size is already rounded correct to
@@ -485,6 +406,7 @@ sizeToString size_ =
     M  -> "M"
 
 
+
 getTagR : Tag -> TagR
 getTagR tag =
   case tag of
@@ -492,6 +414,7 @@ getTagR tag =
     CategoryTag tag_ -> tag_
     SubCategoryTag tag_ -> tag_
     SearchTag tag_ -> tag_
+
 
 
 {-| produce a new Discount from the given tuple
@@ -513,6 +436,7 @@ newDiscount  code name_ value items =
            , value         = value
            , items         = items
            }
+
 
 
 {-| Validate the given input data and produce a new Item
@@ -656,6 +580,7 @@ newSummary itemData =
         in Ok <| Summary val_
 
 
+
 {-| produce a new SummaryDataR from the given Item
 -}
 toData : Model -> SummaryDataR
@@ -678,6 +603,7 @@ toData item =
     }
 
 
+
 {-| convert an Availability to a string
 -}
 availabilityToStr : Availability -> String
@@ -686,6 +612,7 @@ availabilityToStr availability =
     IN_STOCK    ->  "in_stock"    
     OUT_STOCK   ->  "out_stock"   
     ORDER_ONLY  ->  "order_only"  
+
 
 
 {-| produce the data record from the given tag.
@@ -697,6 +624,7 @@ tagToData tag =
     (CategoryTag data)     -> data
     (SubCategoryTag data)  -> data
     (SearchTag data)       -> data
+
 
 
 {-| produce the data record from the given discount
@@ -713,15 +641,6 @@ discountToData maybeDiscount =
            }
 
 
-{-| produce the string representation of the given price
--}
-priceToString : Float -> String
-priceToString price_ =
-  let (dollars, cents) = priceToPair price_
-      strDollars = String.fromInt dollars
-      strCents = String.fromInt cents
-  in strDollars ++ "." ++ strCents
-
 
 {-| ensure the id given to an item is not null (empty string).
 On failure produce NullId.
@@ -734,6 +653,7 @@ validateId itemId initialItem =
   if String.length itemId  <= 0
     then Err <| NullId
     else Ok { initialItem | id = itemId }
+
 
 
 {-| Take a string representation of a float and try to convert it
@@ -756,19 +676,6 @@ validatePrice itemId strPrice initialItem =
         Ok { initialItem | listPrice = Round.roundNum 2 fPrice }
 
 
-{-| produce a new pair from the given price where the first element is
-the dollar component and the second element is the cent.
-
-example:
-
- priceToPair <| 8.99 == (8, 99)
--}
-priceToPair : Float -> (Int, Int)
-priceToPair fPrice =
-  let dollars = floor fPrice
-      cents = floor <| (fPrice - (toFloat dollars)) * 100.0
-  in (dollars, cents)
-
 
 {-| Take a string representation of a size and convert it to an actual
 Size. On success, produce the given SummaryR with the "size"
@@ -786,6 +693,7 @@ validateSize itemId strSize initialItem =
     Just size_ -> Ok { initialItem | size = size_ }
 
 
+
 {-| Take a string representation of an Availability and try to convert
 it to an actual Availability value. On success, produce the given
 SummaryR with the "availability" field set to the results of
@@ -801,6 +709,7 @@ validateAvailability itemId strAvailability initialItem =
     Nothing -> Err <| InvalidAvailability itemId strAvailability
     Just availability ->
       Ok { initialItem | availability = availability }
+
 
 
 {-| Take a simple representation of an Discount (i.e. all fields
@@ -834,6 +743,7 @@ validateDiscount itemId maybeDiscountData initialItem =
                }
 
 
+
 {-| convert a string to Maybe Availability
 -}
 strToMaybeAvailability : String -> Maybe Availability
@@ -843,6 +753,7 @@ strToMaybeAvailability strAvailability =
     "out_stock"   -> Just OUT_STOCK
     "order_only"  -> Just ORDER_ONLY
     _             -> Nothing
+
 
 
 {-| convert a string to Maybe size
@@ -863,6 +774,7 @@ strToMaybeSize strSize =
     "medium"        -> Just M
     "m"             -> Just M
     strGrad         -> strToMaybeGrad strGrad
+
 
 
 {-| convert a string to a Grad x Measure or Nothing.
@@ -895,11 +807,6 @@ strToMaybeGrad strGrad =
               _    -> Nothing
 
 
-{-| produce True if the id of both Items are the same
--}
-equal : Model -> Model -> Bool
-equal item1 item2 = (id item1) == (id item2)
-
 
 {-| produce the id of the given item
 -}
@@ -907,6 +814,7 @@ id : Model -> String
 id item =
   case item of
     Summary record -> record.id
+
 
 
 {-| produce the item name
@@ -917,10 +825,12 @@ name item =
     Summary record -> record.name
 
 
+
 brand : Model -> String
 brand item =
   case item of
     Summary record -> record.brand
+
 
 
 variant : Model -> String
@@ -929,10 +839,12 @@ variant item =
     Summary record -> record.variant
 
 
+
 size : Model -> Size
 size item =
   case item of
     Summary record -> record.size
+
 
 
 image : Model -> String
@@ -941,12 +853,14 @@ image item =
     Summary record -> record.imageThumbnail
 
 
+
 {-| produce the list price of the given item
 -}
 listPrice : Model -> Float
 listPrice item =
   case item of
     Summary record -> record.listPrice
+
 
 
 {-| produce the discount sales price of the given item
@@ -964,6 +878,7 @@ salePrice item =
             applyDiscount listPrice_ discount
 
 
+
 {-| apply the discount to the price and produce the results.
 -}
 applyDiscount : Float -> Discount -> Float
@@ -975,10 +890,9 @@ applyDiscount listPrice_ discount =
   in Round.roundNum 2 (listPrice_ - discountVal)
 
 
-{-| produce the percentage of the given discount
--}
-discountPct : Model -> Int
-discountPct item =
+
+produce_discount_percentage : Model -> Int
+produce_discount_percentage item =
   case item of
     Summary record ->
       case record.discount of
@@ -987,10 +901,11 @@ discountPct item =
           discount.value
 
 
+
 -- DUMMY DATA
 
-randomItemName : Int -> String
-randomItemName seed =
+produce_random_name : Int -> String
+produce_random_name seed =
   let mapper x =
         case x of
           0 -> "chicken legs"
@@ -1007,8 +922,9 @@ randomItemName seed =
   in Random.step generator (Random.initialSeed seed) |> Tuple.first
 
 
-randomImageUrl : Int -> String
-randomImageUrl seed =
+
+produce_random_image_url : Int -> String
+produce_random_image_url seed =
   let mapper x =
         case x of
           0 -> "https://i5.walmartimages.com/asr/dd8a264c-63d9-4b63-9aa2-abfc5dfda42b.c3c8009c232e2ad162c7d59d040e93c1.jpeg?odnWidth=282&odnHeight=282&odnBg=ffffff"
@@ -1025,8 +941,9 @@ randomImageUrl seed =
   in Random.step generator (Random.initialSeed seed) |> Tuple.first
 
 
-randomBrand : Int ->  String
-randomBrand seed =
+
+produce_random_brand : Int ->  String
+produce_random_brand seed =
   let mapper x =
         case x of
           0 -> "quality chicken"
@@ -1043,8 +960,9 @@ randomBrand seed =
   in Random.step generator (Random.initialSeed seed) |> Tuple.first
 
 
-randomVariant : Int -> String
-randomVariant seed =
+
+produce_random_variant : Int -> String
+produce_random_variant seed =
   let mapper x =
         case x of
           0 -> "bag"
@@ -1055,8 +973,9 @@ randomVariant seed =
   in Random.step generator (Random.initialSeed seed) |> Tuple.first
 
 
-randomAvailability : Int -> Availability
-randomAvailability seed =
+
+produce_random_availability : Int -> Availability
+produce_random_availability seed =
   let mapper x =
         case x of
           1 -> IN_STOCK
@@ -1066,8 +985,9 @@ randomAvailability seed =
   in Random.step generator (Random.initialSeed seed) |> Tuple.first
 
 
-randomStrAvailability : Int -> String
-randomStrAvailability seed =
+
+produce_random_availability_string : Int -> String
+produce_random_availability_string seed =
   let mapper x =
         case x of
           1 -> "IN_STOCK"
@@ -1077,8 +997,9 @@ randomStrAvailability seed =
   in Random.step generator (Random.initialSeed seed) |> Tuple.first
 
 
-randomSize : Int -> Size
-randomSize seed =
+
+produce_random_size : Int -> Size
+produce_random_size seed =
   let
     mapper constructor value measure  =
       let x = (constructor, value, measure)
@@ -1103,8 +1024,9 @@ randomSize seed =
   in Random.step generator (Random.initialSeed seed) |> Tuple.first
 
 
-randomStrSize : Int -> String
-randomStrSize seed =
+
+produce_random_size_string : Int -> String
+produce_random_size_string seed =
   let
     mapper constructor value measure  =
       let x = (constructor, value, measure)
@@ -1129,42 +1051,38 @@ randomStrSize seed =
   in Random.step generator (Random.initialSeed seed) |> Tuple.first
 
 
-randomTag : Int -> { id : String, name : String}
-randomTag seed =
-  { id   = randomId seed
-  , name = randomVariant seed
-  }
 
-
-randomId : Int -> String
-randomId seed =
+produce_random_id : Int -> String
+produce_random_id seed =
   Random.step UUID.generator (Random.initialSeed seed)
     |> Tuple.first
     |> UUID.toString
 
 
-randomDiscount : Int -> DiscountDataR
-randomDiscount seed =
-  { discount_code    = randomId seed
-  , name             = randomVariant seed
+
+produce_random_discount : Int -> DiscountDataR
+produce_random_discount seed =
+  { discount_code    = produce_random_id seed
+  , name             = produce_random_variant seed
   , value            = String.fromInt (SRandom.randomInt 1 25 seed)
   , items            = List.map
                          (\i ->
                            let seed_ = seed+i
-                           in randomId seed_
+                           in produce_random_id seed_
                          ) <| List.range 0 8
   }
 
 
-randomItemSummaryData : Int -> SummaryDataR
-randomItemSummaryData seed =
-  { name            = randomItemName seed
-  , id              = randomId seed
-  , imageThumbnail  = randomImageUrl seed
-  , brand           = randomBrand seed
-  , variant         = randomVariant seed
+
+produce_random_summary_data : Int -> SummaryDataR
+produce_random_summary_data seed =
+  { name            = produce_random_name seed
+  , id              = produce_random_id seed
+  , imageThumbnail  = produce_random_image_url seed
+  , brand           = produce_random_brand seed
+  , variant         = produce_random_variant seed
   , listPrice       = Round.round 2 (SRandom.randomFloat seed)
-  , size            = randomStrSize seed
+  , size            = produce_random_size_string seed
   , departmentTags  = [
                           { id = "UID789"
                           , name = "deptTag"
@@ -1185,16 +1103,17 @@ randomItemSummaryData seed =
                           , name = "searchTag"
                           }
                       ]
-  , availability    = randomStrAvailability seed
+  , availability    = produce_random_availability_string seed
   , discount        = if SRandom.randomInt 0 1 seed == 1
-                        then Just (randomDiscount seed)
+                        then Just (produce_random_discount seed)
                         else Nothing
   }
 
 
-randomItemSummary : Int -> Model
-randomItemSummary seed =
-  case newSummary (randomItemSummaryData seed) of
+
+produce_random_summary : Int -> Model
+produce_random_summary seed =
+  case newSummary (produce_random_summary_data seed) of
     Err _ -> blankSummary
     Ok brief -> brief
 

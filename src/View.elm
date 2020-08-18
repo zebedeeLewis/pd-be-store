@@ -46,7 +46,7 @@ import App
 -----------------------------------------------------------------------
 
 type Model
-  = ItemBrowser Settings ItemBrowserV
+  = ItemBrowser Config ItemBrowserV
 
 
 type Msg
@@ -68,7 +68,7 @@ type Component
 
 
 type alias ItemBrowserV =
-  { header : HeaderC
+  { header  : HeaderC
   , catalog : Catalog
   }
 
@@ -146,7 +146,7 @@ type alias Pagination =
   }
 
 
-type alias Settings =
+type alias Config =
   { theme       : Theme
   , spacing     : Spacing
   , font        : Font
@@ -192,6 +192,294 @@ type alias NavItem =
 -----------------------------------------------------------------------
 -- FUNCTION DEFINITIONS
 -----------------------------------------------------------------------
+
+{-| set up view configuration and produce a function that implements
+UseCase.ItemViewD.
+-}
+itemView : Config -> Bool -> UseCase.ItemViewD -> Html Msg
+itemView config compact item =
+  let breakpoint = config.breakpoint
+      theme = config.theme
+      spacing = config.spacing
+      font = config.font
+
+      itemOuterStyle =
+        let  itemMaxWidth = 200 
+        in css
+             [ backgroundColor transparent
+             , maxWidth (px itemMaxWidth)
+             , width (pct 50)
+             , boxSizing borderBox
+             , paddingBottom (px spacing.s1)
+             , paddingRight (px (0.5 * spacing.s1))
+             , paddingLeft (px (0.5 * spacing.s1))
+             , Media.withMedia
+                 [ Media.only
+                     Media.screen
+                     [ Media.minWidth (px breakpoint.xl) ]
+                 ]
+                 [ if compact
+                     then width (pct 20)
+                     else width (pct 14.28)
+                 ]
+             , Media.withMedia
+                 [ Media.only
+                     Media.screen
+                     [ Media.minWidth (px breakpoint.lg) ]
+                 ]
+                 <| List.concat
+                   [ [ paddingBottom (px spacing.s3) ]
+                   , if compact
+                       then [ width (pct 25) ]
+                       else [ width (pct 20)
+                            , paddingRight (px spacing.s1)
+                            , paddingLeft (px spacing.s1)
+                            ]
+                   ]
+             , Media.withMedia
+                 [ Media.only
+                     Media.screen
+                     [ Media.minWidth (px breakpoint.md) ]
+                 ]
+                 [ width (pct 25)
+                 ]
+             , Media.withMedia
+                 [ Media.only
+                     Media.screen
+                     [ Media.minWidth (px breakpoint.sm) ]
+                 ]
+                 [ width (pct 33.33)
+                 ]
+             ]
+
+      itemInnerStyle =
+        let liftAnimationDuration = 400
+        in css
+              [ backgroundColor (hex theme.background)
+              , padding (px spacing.s1)
+              , paddingBottom (px spacing.s2)
+              , lineHeight (px spacing.s2)
+              , hover [ ViewStyle.elevation6Style ]
+              , borderStyle solid
+              , borderWidth (px 1)
+              , borderColor (hex theme.lightGrey)
+              , borderRadius (px 5)
+              , color (hex theme.onBackground)
+              , Transitions.transition
+                  [ Transitions.boxShadow liftAnimationDuration ]
+              ]
+
+      imageBlock = 
+        let imgWrapperStyle =
+              css [ position relative, overflow hidden ]
+
+            discountBannerStyle =
+              css
+                [ display block
+                , textAlign center
+                , width (px 138)
+                , height (px 18)
+                , backgroundColor (hex theme.primary)
+                , color (hex theme.onPrimary)
+                , top (px 0)
+                , position absolute
+                , transforms
+                    [ (rotate (deg -45))
+                    , (translateX (px -41))
+                    , (translateY (px -24))
+                    ]
+                , fontWeight bold
+                , fontSize (px 12)
+                , textTransform uppercase
+                ]
+
+            imgStyle =
+              css
+                [ width (pct 100)
+                , display block
+                , height auto
+                ]
+
+            imgWith_DiscountBanner =
+              [ div
+                  [ discountBannerStyle ]
+                  [ text
+                      <| (String.fromInt item.discountPct) ++ "% off"
+                  ]
+              , img [ src item.image, imgStyle ] []
+              ]
+
+            justImg = [ img [src item.image, imgStyle] [] ]
+
+        in div
+             [ imgWrapperStyle ]
+             ( if item.discountPct > 0
+                 then imgWith_DiscountBanner
+                 else justImg
+             )
+
+      priceBlock =
+        let priceBlockStyle =
+              css
+                [ paddingTop (px spacing.s1)
+                , height <| px (2 * spacing.s2)
+                , displayFlex
+                , flexWrap wrap
+                , alignItems center
+                , justifyContent flexEnd
+                , flexDirection column
+                , fontWeight bold
+                ]
+            listPriceStyle =
+              css
+                [ color (hex theme.lightGrey)
+                , textDecoration lineThrough
+                ]
+
+            listAndSalePrice =
+              [ div
+                  [ listPriceStyle ]
+                  [ text (floatToMoney item.listPrice) ]
+              , div [] [ text (floatToMoney item.salePrice) ]
+              ]
+
+            justListPrice =
+              [ div [ ] [ text (floatToMoney item.listPrice) ] ]
+
+        in div
+             [ priceBlockStyle ]
+             ( if item.salePrice < item.listPrice
+                 then listAndSalePrice
+                 else justListPrice )
+
+      ctaBlock =
+        let ctaBlockStyle = css [ paddingTop (px spacing.s2) ]
+            btnStyle =
+              css
+                [ ViewStyle.btnStyle
+                , ViewStyle.btnFilledSecondaryStyle
+                , ViewStyle.elevation2Style
+                , active
+                    [ ViewStyle.elevation4Style ]
+                , ViewStyle.btnMediumStyle
+                , borderStyle none
+                , width (pct 100)
+                , fontSize (px 14)
+                , Transitions.transition
+                    [ Transitions.boxShadow 50 ]
+                , Media.withMedia
+                    [ Media.only
+                        Media.screen
+                        [ Media.minWidth (px breakpoint.lg) ]
+                    ]
+                    [ ViewStyle.elevation2Style
+                    , hover
+                        [ ViewStyle.elevation4Style ]
+                    , active
+                        [ ViewStyle.elevation2Style ]
+                    ]
+                ]
+
+            btnIconStyle =
+              css
+                [ fontSize (px 16)
+                , verticalAlign bottom
+                ]
+
+        in div
+             [ ctaBlockStyle ]
+             [ button
+                 [ btnStyle
+                 , onClick <| AppMsg (App.AddItemToCart item.id)
+                 ]
+                 [ text "add "
+                 , i [ btnIconStyle , class "material-icons" ]
+                     [ text "add_shopping_cart" ]
+                 ]
+             ]
+
+      nameBlock =
+        let nameMaxLines = 3
+            nameStyle =
+              css
+                [ fontSize (px 14)
+                , fontWeight bold
+                , textTransform capitalize
+                , color (hex config.theme.onBackground)
+                , paddingBottom (px config.spacing.s1)
+                , height <| px
+                    ((toFloat nameMaxLines) * spacing.s2)
+                , textDecoration none
+                , display block
+                ]
+        in a [ href "#" , nameStyle ]
+             [ text item.name ]
+  in
+    div
+      [ itemOuterStyle ]
+      [ div
+          [ itemInnerStyle ]
+          [ nameBlock
+          , imageBlock
+          , priceBlock
+          , ctaBlock
+          ]
+      ]
+
+
+catalogView
+  : Config
+  -> Bool
+  -> Catalog
+  -> List UseCase.ItemViewD
+  -> Html Msg
+catalogView config splitView catalog data =
+  div
+    [ css
+        [ displayFlex
+        , flexWrap wrap
+        , alignItems stretch
+        , minHeight (vh 100)
+        ]
+    ]
+    (List.map (itemView config splitView) data)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 {-| produce a view for the given app
 -}
@@ -294,14 +582,14 @@ app appModel =
         , maxWidth_xxl  = 1400
         }
 
-      settings        =
+      config        =
         { spacing     = spacing
         , theme       = theme
         , font        = font
         , breakpoint  = breakpoint
         }
 
-  in ItemBrowser settings { header = header, catalog = catalog }
+  in ItemBrowser config { header = header, catalog = catalog }
 
 
 update : Msg -> Model -> Model
@@ -309,45 +597,45 @@ update msg model =
   case msg of
     ToggleNavdrawer ->
       case model of
-        ItemBrowser settings modelView ->
+        ItemBrowser config modelView ->
           let modelView_ =
                 { modelView
                 | header = toggleNavdrawer modelView.header
                 }
-          in ItemBrowser settings modelView_
+          in ItemBrowser config modelView_
 
     ViewCart ->
       case model of
-        ItemBrowser settings modelView ->
+        ItemBrowser config modelView ->
           let header = toggleCart modelView.header
               modelView_ =
                 { modelView
                 | header = header
                 }
-          in ItemBrowser settings modelView_
+          in ItemBrowser config modelView_
 
     ToggleFullscreenCart ->
       case model of
-        ItemBrowser settings modelView ->
+        ItemBrowser config modelView ->
           let header = toggleFullscreenCart modelView.header
               modelView_ =
                 { modelView
                 | header = header
                 }
-          in ItemBrowser settings modelView_
+          in ItemBrowser config modelView_
 
     ViewCartSubTotal ->
       case model of
-        ItemBrowser settings modelView ->
+        ItemBrowser config modelView ->
           let modelView_ =
                 { modelView
                 | header = showCartdrawerEntries modelView.header
                 }
-          in ItemBrowser settings modelView_
+          in ItemBrowser config modelView_
 
     NextPage pagination ->
       case model of
-        ItemBrowser settings modelView ->
+        ItemBrowser config modelView ->
           let catalog = modelView.catalog
               pagination_ = nextPage pagination
               catalog_ = 
@@ -357,11 +645,11 @@ update msg model =
                 { modelView
                 | catalog = catalog_
                 }
-          in ItemBrowser settings modelView_
+          in ItemBrowser config modelView_
 
     PrevPage pagination ->
       case model of
-        ItemBrowser settings modelView ->
+        ItemBrowser config modelView ->
           let catalog = modelView.catalog
               pagination_ = prevPage pagination
               catalog_ = 
@@ -372,11 +660,11 @@ update msg model =
                 | catalog = catalog_
                 }
 
-          in ItemBrowser settings modelView_
+          in ItemBrowser config modelView_
 
     SetPageJump page pagination ->
       case model of
-        ItemBrowser settings modelView ->
+        ItemBrowser config modelView ->
           let catalog = modelView.catalog
               pagination_ = setPageJump page pagination
               catalog_ = 
@@ -386,11 +674,11 @@ update msg model =
                 { modelView
                 | catalog = catalog_
                 }
-          in ItemBrowser settings modelView_
+          in ItemBrowser config modelView_
 
     GotoPage page pagination ->
       case model of
-        ItemBrowser settings modelView ->
+        ItemBrowser config modelView ->
           let catalog = modelView.catalog
               pagination_ = gotoPage page pagination
               catalog_ = 
@@ -401,7 +689,7 @@ update msg model =
                 | catalog = catalog_
                 }
 
-          in ItemBrowser settings modelView_
+          in ItemBrowser config modelView_
 
     AppMsg _ -> model
 
@@ -537,16 +825,16 @@ floatToMoney price = "$ " ++ Round.round 2 price
 renderItemBrowser : App.Model -> Model -> Html Msg
 renderItemBrowser app_ model =
   case model of
-    ItemBrowser settings browserView ->
+    ItemBrowser config browserView ->
       let header = browserView.header
           catalog = browserView.catalog
           pagination = catalog.pagination
           cart = header.cartdrawer
           splitView = cart.shown
-          font = settings.font
-          theme = settings.theme
-          spacing = settings.spacing
-          breakpoint = settings.breakpoint
+          font = config.font
+          theme = config.theme
+          spacing = config.spacing
+          breakpoint = config.breakpoint
           contentStyle =
             css
               [ displayFlex
@@ -644,18 +932,18 @@ renderItemBrowser app_ model =
               <| List.concat
                 [ [ div
                       [ mainPanelStyle ]
-                      [ showFilters settings splitView
+                      [ showFilters config splitView
                       , UseCase.browseCatalog
-                          (catalogView settings splitView catalog)
+                          (catalogView config splitView catalog)
                           (App.store app_)
-                      , showPagination settings splitView pagination
+                      , showPagination config splitView pagination
                       ]
                   ]
                 , if cart.shown
                     then [ div
                              [ sidePanelStyle ]
                              [ UseCase.viewCart
-                                 (cartView settings cart)
+                                 (cartView config cart)
                                  (App.store app_)
                              ]
                          ]
@@ -676,17 +964,17 @@ renderItemBrowser app_ model =
       in
         div
           [ containerStyle ]
-          [ showHeader settings header.navbar header.navdrawer
+          [ showHeader config header.navbar header.navdrawer
           , content
           , renderFooter
           ]
 
 
-showFilters : Settings -> Bool -> Html Msg
-showFilters settings compactView =
-  let spacing = settings.spacing
-      theme = settings.theme
-      breakpoint = settings.breakpoint
+showFilters : Config -> Bool -> Html Msg
+showFilters config compactView =
+  let spacing = config.spacing
+      theme = config.theme
+      breakpoint = config.breakpoint
       style =
         css
           [ height (px spacing.s8)
@@ -717,12 +1005,12 @@ showFilters settings compactView =
        [ style ]
        [ ]
 
-showPagination : Settings -> Bool -> Pagination -> Html Msg
-showPagination settings compactView pagination =
-  let spacing = settings.spacing
-      theme = settings.theme
-      font = settings.font
-      breakpoint = settings.breakpoint
+showPagination : Config -> Bool -> Pagination -> Html Msg
+showPagination config compactView pagination =
+  let spacing = config.spacing
+      theme = config.theme
+      font = config.font
+      breakpoint = config.breakpoint
 
       pageBtn pagination_ num =
         let currentPage = pagination_.currentPage
@@ -1158,8 +1446,8 @@ renderFooter =
     []
 
 
-cartView : Settings -> CartC -> UseCase.CartView (Html Msg)
-cartView settings
+cartView : Config -> CartC -> UseCase.CartView (Html Msg)
+cartView config
          cart
          saleSubTotal
          taxPct
@@ -1170,9 +1458,9 @@ cartView settings
   = let shown = cart.shown
         fullscreen = cart.fullscreen
         entriesShown = cart.entriesShown
-        theme = settings.theme
-        spacing = settings.spacing
-        breakpoint = settings.breakpoint
+        theme = config.theme
+        spacing = config.spacing
+        breakpoint = config.breakpoint
 
         topbarStyle =
           css
@@ -1621,280 +1909,12 @@ showCartEntry theme spacing entry =
          ]
 
 
-catalogView
-  : Settings
-  -> Bool
-  -> Catalog
-  -> List UseCase.ItemViewD
-  -> Html Msg
-catalogView settings splitView catalog data =
-  let cartToggled = catalog.cartToggled
-      breakpoint = settings.breakpoint
-      spacing = settings.spacing
-      containerStyle =
-        css
-          [ displayFlex
-          , flexWrap wrap
-          , alignItems stretch
-          , minHeight (vh 100)
-          , Media.withMedia
-              [ Media.only
-                  Media.screen
-                  [ Media.minWidth (px breakpoint.md) ]
-              ]
-              [ -- paddingRight (px spacing.s1)
-              -- , paddingLeft (px spacing.s1)
-              ]
-          , Media.withMedia
-              [ Media.only
-                  Media.screen
-                  [ Media.minWidth (px breakpoint.sm) ]
-              ]
-              [ ]
-          ]
 
-  in div
-       [ containerStyle ]
-       (List.map (showCatalogItem settings splitView) data)
-
-
-showCatalogItem : Settings -> Bool -> UseCase.ItemViewD -> Html Msg
-showCatalogItem settings smallView item =
-  let liftAnimationDuration = 400
-      itemMaxWidth = 200 
-      nameMaxLines = 3
-      breakpoint = settings.breakpoint
-      theme = settings.theme
-      spacing = settings.spacing
-      itemStyle =
-        css
-          [ backgroundColor (hex theme.background)
-          , padding (px spacing.s1)
-          , paddingBottom (px spacing.s2)
-          , lineHeight (px spacing.s2)
-          , hover [ ViewStyle.elevation6Style ]
-          , borderStyle solid
-          , borderWidth (px 1)
-          , borderColor (hex theme.lightGrey)
-          , borderRadius (px 5)
-          , Transitions.transition
-              [ Transitions.boxShadow liftAnimationDuration ]
-          ]
-
-      wrapperStyle =
-        css
-          [ backgroundColor transparent
-          , maxWidth (px itemMaxWidth)
-          , width (pct 50)
-          , boxSizing borderBox
-          , paddingBottom (px spacing.s1)
-          , paddingRight (px (0.5 * spacing.s1))
-          , paddingLeft (px (0.5 * spacing.s1))
-          , Media.withMedia
-              [ Media.only
-                  Media.screen
-                  [ Media.minWidth (px breakpoint.xl) ]
-              ]
-              [ if smallView
-                  then width (pct 20)
-                  else width (pct 14.28)
-              ]
-          , Media.withMedia
-              [ Media.only
-                  Media.screen
-                  [ Media.minWidth (px breakpoint.lg) ]
-              ]
-              <| List.concat
-                [ [ paddingBottom (px spacing.s3) ]
-                , if smallView
-                    then [ width (pct 25) ]
-                    else [ width (pct 20)
-                         , paddingRight (px spacing.s1)
-                         , paddingLeft (px spacing.s1)
-                         ]
-                ]
-          , Media.withMedia
-              [ Media.only
-                  Media.screen
-                  [ Media.minWidth (px breakpoint.md) ]
-              ]
-              [ width (pct 25)
-              ]
-          , Media.withMedia
-              [ Media.only
-                  Media.screen
-                  [ Media.minWidth (px breakpoint.sm) ]
-              ]
-              [ width (pct 33.33)
-              ]
-          ]
-
-      discountBannerStyle =
-        css
-          [ display block
-          , textAlign center
-          , width (px 138)
-          , height (px 18)
-          , backgroundColor (hex theme.primary)
-          , color (hex theme.onPrimary)
-          , top (px 0)
-          , position absolute
-          , transforms
-              [ (rotate (deg -45))
-              , (translateX (px -41))
-              , (translateY (px -24))
-              ]
-          , fontWeight bold
-          , fontSize (px 12)
-          , textTransform uppercase
-          ]
-
-      imgWrapperStyle = css [ position relative, overflow hidden ]
-
-      imgStyle =
-        css
-          [ width (pct 100)
-          , display block
-          , height auto
-          ]
-
-      showImageWith_DiscountBanner =
-        [ div
-            [ discountBannerStyle ]
-            [ text <| (String.fromInt item.discountPct) ++ "% off" ]
-        , img [ src item.image, imgStyle ] []
-        ]
-
-      showImage = [ img [src item.image, imgStyle] [] ]
-
-      image = 
-        if item.discountPct > 0
-          then showImageWith_DiscountBanner
-          else showImage
-
-      priceBlockStyle =
-        css
-          [ ViewStyle.pt1Style
-          , height <| px (2 * spacing.s2)
-          , displayFlex
-          , flexWrap wrap
-          , alignItems flexEnd
-          ]
-
-      wasPriceStyle =
-        css
-          [ fontSize (px 14)
-          , fontWeight bold
-          , color (hex theme.lightGrey)
-          , width (pct 100)
-          , textAlign center
-          , textDecoration lineThrough
-          ]
-
-      nowPriceStyle =
-        css
-          [ fontSize (px 14)
-          , fontWeight bold
-          , color (hex theme.onBackground)
-          , textAlign center
-          , width (pct 100)
-          , lineHeight (px spacing.s2)
-          ]
-
-      showListAndSalePrice =
-        [ div [ wasPriceStyle ] [ text (floatToMoney item.listPrice) ]
-        , div [ nowPriceStyle ] [ text (floatToMoney item.salePrice) ]
-        ]
-
-      showListPrice =
-        [ div [ nowPriceStyle ] [ text (floatToMoney item.listPrice) ]
-        ]
-
-      priceBlock =
-        if item.salePrice < item.listPrice
-          then showListAndSalePrice
-          else showListPrice
-
-      ctaBlockStyle = css [ paddingTop (px spacing.s2) ]
-
-      btnStyle =
-        css
-          [ ViewStyle.btnStyle
-          , ViewStyle.btnFilledSecondaryStyle
-          , ViewStyle.elevation2Style
-          , active
-              [ ViewStyle.elevation4Style ]
-          , borderColor (hex theme.primary)
-          , color (hex theme.onPrimary)
-          , ViewStyle.btnMediumStyle
-          , borderStyle none
-          , display block
-          , width (pct 100)
-          , fontSize (px 14)
-          , fontWeight bold
-          , Transitions.transition
-              [ Transitions.boxShadow 50 ]
-          , Media.withMedia
-              [ Media.only
-                  Media.screen
-                  [ Media.minWidth (px breakpoint.lg) ]
-              ]
-              [ ViewStyle.elevation2Style
-              , hover
-                  [ ViewStyle.elevation4Style ]
-              , active
-                  [ ViewStyle.elevation2Style ]
-              ]
-          ]
-        
-      btn__iconStyle =
-        css
-          [ fontSize (px 16)
-          , display inlineBlock
-          , marginLeft (px spacing.s1)
-          , verticalAlign bottom
-          ]
-
-      ctaBlock =
-        [ button
-            [ btnStyle, onClick <| AppMsg (App.AddItemToCart item.id) ]
-            [ text "add"
-            , i [ btn__iconStyle , class "material-icons" ]
-                [ text "add_shopping_cart" ]
-            ]
-        ]
-
-      nameStyle =
-        css
-          [ fontSize (px 14)
-          , fontWeight bold
-          , textTransform capitalize
-          , color (hex settings.theme.onBackground)
-          , paddingBottom (px settings.spacing.s1)
-          , height <| px
-              ((toFloat nameMaxLines) * spacing.s2)
-          , textDecoration none
-          , display block
-          ]
-
-  in
-    div
-      [ wrapperStyle ]
-      [ div
-          [ itemStyle ]
-          [ a [ href "#" , nameStyle ] [ text item.name ]
-          , div [ imgWrapperStyle ] image
-          , div [ priceBlockStyle ] priceBlock
-          , div [ ctaBlockStyle ] ctaBlock
-          ]
-      ]
-
-
-showHeader : Settings -> NavbarC -> NavdrawerC ->  Html Msg
-showHeader settings navbar navdrawer =
+showHeader : Config -> NavbarC -> NavdrawerC ->  Html Msg
+showHeader config navbar navdrawer =
   div
     []
-    [ showNavbar settings navbar
+    [ showNavbar config navbar
     , renderNavdrawer navdrawer
     ]
 
@@ -1951,10 +1971,10 @@ renderNavdrawer navdrawer =
       ]
 
 
-showNavbar : Settings -> NavbarC -> Html Msg
-showNavbar settings navbar =
-  let theme = settings.theme
-      breakpoint = settings.breakpoint
+showNavbar : Config -> NavbarC -> Html Msg
+showNavbar config navbar =
+  let theme = config.theme
+      breakpoint = config.breakpoint
       wrapperStyle =
         css
           [ displayFlex
