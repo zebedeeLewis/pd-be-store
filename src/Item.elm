@@ -1,24 +1,24 @@
 module Item exposing
   ( Model
-  , SummaryDataR
-  , DiscountDataR
+  , Data
+  , DiscountData
   , Size
   , Measure
   , Availability
   , ValidationErr(..)
-  , newSummary
+  , produce_new_summary_from_data
   , blankSummary
-  , id
-  , sizeToString
-  , name
-  , image
-  , size
-  , variant
-  , listPrice
-  , salePrice
+  , produce_id
+  , produce_size_as_string
+  , produce_name
+  , produce_thumbnail_url
+  , produce_size
+  , produce_variant
+  , produce_list_price
+  , produce_sale_price
   , produce_discount_percentage
-  , brand
-  , toData
+  , produce_brand
+  , convert_to_data
   , produce_random_summary
   )
 
@@ -42,8 +42,8 @@ centimetre = 10        -- mm
 metre = 1000           -- mm
 
 
-blankSummaryR : SummaryR
-blankSummaryR =
+blankSummaryRecord : SummaryRecord
+blankSummaryRecord =
   { name            = ""
   , id              = "0"
   , imageThumbnail  = ""
@@ -61,7 +61,7 @@ blankSummaryR =
 
 
 blankSummary : Model
-blankSummary = Summary blankSummaryR
+blankSummary = Summary blankSummaryRecord
 
 
 -----------------------------------------------------------------------
@@ -93,7 +93,7 @@ sub-devide individual departments.
 
 example:
 
-  record : Item.SummaryR
+  record : Item.SummaryRecord
   record =
     { name            = "chicken legs"
     , id              = "CHKCCS1233"
@@ -131,7 +131,9 @@ example:
                           }
     }
 -}
-type alias SummaryR =
+type Model = Summary SummaryRecord
+
+type alias SummaryRecord =
   { name            : String
   , id              : String
   , imageThumbnail  : String
@@ -148,14 +150,11 @@ type alias SummaryR =
   }
 
 
-type Model = Summary SummaryR
 
-
-
-{-| Represents the information necessary to build a new SummaryR. All
+{-| Represents the information necessary to build a new SummaryRecord. All
 fields hold simple string data or "subrecords" of string data.
 
-All fields match one to one with the fields in SummaryR.
+All fields match one to one with the fields in SummaryRecord.
 
 example:
   data =
@@ -190,7 +189,7 @@ example:
                         }
     }
 -}
-type alias SummaryDataR =
+type alias Data =
   { name            : String
   , id              : String
   , imageThumbnail  : String
@@ -203,7 +202,7 @@ type alias SummaryDataR =
   , subCategoryTags : List { id : String, name : String }
   , searchTags      : List { id : String, name : String }
   , availability    : String
-  , discount        : Maybe DiscountDataR
+  , discount        : Maybe DiscountData
   }
 
 
@@ -244,7 +243,7 @@ Discount. All fields hold simple string data or "subrecords".
 
 All fields match one to one with the fields in DiscountR.
 -}
-type alias DiscountDataR =
+type alias DiscountData =
   { discount_code    : String
   , name             : String
   , value            : String
@@ -386,13 +385,9 @@ type alias TagR =
 -- FUNCTION DEFINITIONS
 -----------------------------------------------------------------------
 
-{-| produce the string representation of an Size
-Assumptions: we assume that the size is already rounded correct to
-3 decimal places.
--}
-sizeToString : Size -> String
-sizeToString size_ =
-  case size_ of
+produce_size_as_string: Model -> String
+produce_size_as_string item =
+  case item |> produce_size of
     Grad value measure ->
       case measure of
         ML -> (String.fromFloat value) ++ " ml" 
@@ -404,38 +399,6 @@ sizeToString size_ =
     SM -> "SM"
     XS -> "XS"
     M  -> "M"
-
-
-
-getTagR : Tag -> TagR
-getTagR tag =
-  case tag of
-    DepartmentTag tag_ -> tag_
-    CategoryTag tag_ -> tag_
-    SubCategoryTag tag_ -> tag_
-    SearchTag tag_ -> tag_
-
-
-
-{-| produce a new Discount from the given tuple
-
-example:
-
-  discount = 
-    ewDiscount "UXDS9y3" "seafood giveaway" 15.0 ["CHKCCS1233"]
--}
-newDiscount
-  : String
-  -> String
-  -> Int
-  -> List String
-  -> Discount
-newDiscount  code name_ value items =
-  Discount { discount_code = code
-           , name          = name_
-           , value         = value
-           , items         = items
-           }
 
 
 
@@ -477,7 +440,7 @@ example:
                         }
     }
 
-  new itemData ==
+  produce_new_summary_from_data itemData ==
     Summary
       { name            = "chicken legs"
       , id              = "CHKCCS1233"
@@ -511,244 +474,185 @@ example:
                             }
       }
 -}
-newSummary
-  : SummaryDataR
-  -> Result ValidationErr Model
-newSummary itemData =
-  let
-    setCatTags = (\(v, d)->
-                   let categories = List.map CategoryTag d.categoryTags
-                   in ({ v | categoryTags = categories }, d))
-
-    setDeptTags = (\(v, d) ->
-                    let depts = List.map DepartmentTag d.departmentTags
-                    in ({ v | departmentTags = depts }, d))
-
-    setSubCatTags = (\(v, d) ->
-                      let subCats = List.map SubCategoryTag
-                                             d.subCategoryTags
-                      in ({ v | subCategoryTags = subCats }, d))
-
-    setSearchTags = (\(v, d) ->
-                      let search = List.map SearchTag d.searchTags
-                      in ({ v | searchTags = search }, d))
-
-    setName = (\(v, d) ->
-                let name_ = d.name
-                in ({ v | name = name_ }, d))
-
-    setBrand = (\(v, d) ->
-                 let brand_ = d.brand
-                 in ({ v | brand = brand_ }, d))
-
-    setVariant = (\(v, d) ->
-                   let variant_ = d.variant
-                   in ({ v | variant = variant_ }, d))
-
-    setImageThumbnail = (\(v, d) ->
-                          let imageThumbnail = d.imageThumbnail
-                          in
-                            ( { v | imageThumbnail = imageThumbnail }
-                            , d
-                            ))
-
-    result =
-      validateId itemData.id blankSummaryR
-        |> Result.andThen
-             (validatePrice itemData.id itemData.listPrice)
-        |> Result.andThen
-             (validateSize itemData.id itemData.size)
-        |> Result.andThen
-             (validateAvailability itemData.id itemData.availability)
-        |> Result.andThen
-             (validateDiscount itemData.id itemData.discount)
-  in
-    case result of
-      Err err -> Err err
-      Ok val -> 
-        let
-          (val_, _) =
-            setCatTags
-            << setDeptTags
-            << setSubCatTags
-            << setSearchTags
-            << setName
-            << setImageThumbnail
-            << setBrand
-            << setVariant
-                 <| (val, itemData)
-        in Ok <| Summary val_
+produce_new_summary_from_data : Data -> Result ValidationErr Model
+produce_new_summary_from_data data =
+  case validate_summary_data data of
+    Err err -> Err err
+    Ok validData -> 
+      Ok
+        <| Summary
+             { name            = validData.name
+             , id              = validData.id
+             , imageThumbnail  = validData.imageThumbnail
+             , brand           = validData.brand
+             , variant         = validData.variant
+             , listPrice       = validData.listPrice
+                                   |> String.toFloat
+                                   |> Maybe.withDefault 0
+             , size            = maybe_produce_size_from_string
+                                   validData.size
+                                   |> Maybe.withDefault LG
+             , departmentTags  = List.map
+                                   DepartmentTag
+                                   validData.departmentTags
+             , categoryTags    = List.map
+                                   CategoryTag
+                                   validData.departmentTags
+             , subCategoryTags = List.map
+                                   SubCategoryTag
+                                   validData.departmentTags
+             , searchTags      = List.map
+                                   SearchTag
+                                   validData.departmentTags
+             , availability    = maybe_produce_availability_from_string
+                                   validData.availability
+                                   |> Maybe.withDefault OUT_STOCK
+             , discount        = maybe_produce_discount_from_data
+                                   validData.discount
+             }
 
 
 
-{-| produce a new SummaryDataR from the given Item
--}
-toData : Model -> SummaryDataR
-toData item =
+convert_to_data : Model -> Data
+convert_to_data item =
   let (Summary record) = item
   in
-    { name            = record.name
-    , id              = record.id
-    , imageThumbnail  = record.imageThumbnail
-    , brand           = record.brand
-    , variant         = record.variant
-    , listPrice       = String.fromFloat record.listPrice
-    , size            = sizeToString record.size
-    , departmentTags  = List.map tagToData record.departmentTags
-    , categoryTags    = List.map tagToData record.categoryTags
-    , subCategoryTags = List.map tagToData record.subCategoryTags
-    , searchTags      = List.map tagToData record.searchTags
-    , availability    = availabilityToStr record.availability
-    , discount        = discountToData record.discount
+    { name            = item |> produce_name
+    , id              = item |> produce_id
+    , imageThumbnail  = item |> produce_thumbnail_url
+    , brand           = item |> produce_brand
+    , variant         = item |> produce_variant
+    , listPrice       = item |> produce_list_price >> String.fromFloat
+    , size            = item |> produce_size_as_string
+    , departmentTags  = map_tags_to_data record.departmentTags
+    , categoryTags    = map_tags_to_data record.categoryTags
+    , subCategoryTags = map_tags_to_data record.subCategoryTags
+    , searchTags      = map_tags_to_data record.searchTags
+    , availability    = item |> produce_availability_as_string
+    , discount        = item |> maybe_produce_discount_data
     }
 
 
 
-{-| convert an Availability to a string
--}
-availabilityToStr : Availability -> String
-availabilityToStr availability =
-  case availability of
+produce_availability_as_string : Model -> String
+produce_availability_as_string item =
+  case item |> produce_availability of
     IN_STOCK    ->  "in_stock"    
     OUT_STOCK   ->  "out_stock"   
     ORDER_ONLY  ->  "order_only"  
 
 
 
-{-| produce the data record from the given tag.
--}
-tagToData : Tag -> TagR
-tagToData tag =
-  case tag of
-    (DepartmentTag data)   -> data
-    (CategoryTag data)     -> data
-    (SubCategoryTag data)  -> data
-    (SearchTag data)       -> data
+map_tags_to_data : List Tag -> List TagR
+map_tags_to_data tags =
+  let tag_to_data tag = 
+        case tag of
+          (DepartmentTag data)   -> data
+          (CategoryTag data)     -> data
+          (SubCategoryTag data)  -> data
+          (SearchTag data)       -> data
+  in List.map tag_to_data tags
 
 
 
-{-| produce the data record from the given discount
--}
-discountToData : Maybe Discount -> Maybe DiscountDataR
-discountToData maybeDiscount =
-  case maybeDiscount of
+maybe_produce_discount_data : Model -> Maybe DiscountData
+maybe_produce_discount_data item =
+  let maybeDiscount = item |> maybe_produce_discount
+  in case maybeDiscount of
+       Nothing -> Nothing
+       Just (Discount discountR) -> 
+         Just { discount_code = discountR.discount_code
+              , name = discountR.name
+              , value = String.fromInt discountR.value
+              , items = discountR.items
+              }
+
+
+
+maybe_produce_discount_from_data : Maybe DiscountData -> Maybe Discount
+maybe_produce_discount_from_data maybeData =
+  case maybeData of
     Nothing -> Nothing
-    Just (Discount discountR) -> 
-      Just { discount_code = discountR.discount_code
-           , name = discountR.name
-           , value = String.fromInt discountR.value
-           , items = discountR.items
-           }
+    Just data ->
+      Just <| Discount { discount_code = .discount_code data
+                       , name          = .name data
+                       , value         = .value data
+                                           |> String.toInt
+                                           |> Maybe.withDefault 0
+                       , items         = .items data
+                       }
+
+
+validate_summary_data : Data -> Result ValidationErr Data
+validate_summary_data data =
+    data
+      |> validate_data_id
+      |> Result.andThen validate_price_data
+      |> Result.andThen validate_size_data
+      |> Result.andThen validate_availability_data
+      |> Result.andThen validate_discount_percentage_data
 
 
 
-{-| ensure the id given to an item is not null (empty string).
-On failure produce NullId.
--}
-validateId
-  : String
-  -> SummaryR
-  -> Result ValidationErr SummaryR
-validateId itemId initialItem =
-  if String.length itemId  <= 0
+validate_data_id : Data -> Result ValidationErr Data
+validate_data_id data =
+  if (data.id |> String.length) <= 0
     then Err <| NullId
-    else Ok { initialItem | id = itemId }
+    else Ok data
 
 
 
-{-| Take a string representation of a float and try to convert it
-to an actual float value. On success, produce the given
-SummaryR with the "price" field set to the results of the
-convertion. On Failure produce an ValidationErr.
--}
-validatePrice
-  : String
-  -> String
-  -> SummaryR
-  -> Result ValidationErr SummaryR
-validatePrice itemId strPrice initialItem = 
-  case String.toFloat strPrice of
-    Nothing -> Err <| NaNPrice itemId strPrice
-    Just fPrice ->
-      if fPrice < 0
-        then Err <| NegativePrice itemId strPrice
-      else
-        Ok { initialItem | listPrice = Round.roundNum 2 fPrice }
+validate_price_data : Data -> Result ValidationErr Data
+validate_price_data data = 
+  case .listPrice data |> String.toFloat of
+    Nothing -> Err <| NaNPrice data.id (.listPrice data)
+    Just listPriceAsFloat ->
+      if listPriceAsFloat < 0
+        then Err <| NegativePrice data.id (.listPrice data)
+        else Ok data
 
 
 
-{-| Take a string representation of a size and convert it to an actual
-Size. On success, produce the given SummaryR with the "size"
-field set to the results of the convertion. On failure, produce an
-ValidatinErr.
--}
-validateSize
-  : String
-  -> String
-  -> SummaryR
-  -> Result ValidationErr SummaryR
-validateSize itemId strSize initialItem =
-  case strToMaybeSize strSize of
-    Nothing -> Err <| InvalidSize itemId strSize
-    Just size_ -> Ok { initialItem | size = size_ }
+validate_size_data : Data -> Result ValidationErr Data
+validate_size_data data =
+  let maybeSize = maybe_produce_size_from_string (.size data)
+  in case maybeSize  of
+       Nothing -> Err <| InvalidSize data.id (.size data)
+       Just _ -> Ok data
 
 
 
-{-| Take a string representation of an Availability and try to convert
-it to an actual Availability value. On success, produce the given
-SummaryR with the "availability" field set to the results of
-the convertion. On failure produce an ValidationErr.
--}
-validateAvailability
-  : String
-  -> String
-  -> SummaryR
-  -> Result ValidationErr SummaryR
-validateAvailability itemId strAvailability initialItem = 
-  case strToMaybeAvailability strAvailability of
-    Nothing -> Err <| InvalidAvailability itemId strAvailability
-    Just availability ->
-      Ok { initialItem | availability = availability }
+validate_availability_data : Data -> Result ValidationErr Data
+validate_availability_data data = 
+  let maybeAvailability =
+        maybe_produce_availability_from_string (.availability data)
+  in case maybeAvailability of
+       Nothing ->
+         Err <| InvalidAvailability data.id (.availability data)
+       Just availability ->
+         Ok data
 
 
 
-{-| Take a simple representation of an Discount (i.e. all fields
-are string values), and try to convert it to an actual ItemData value.
-On success, produce the given SummaryR with the "discount"
-field set to the results of the convertion. On failure produce an
-ValidationErr.
--}
-validateDiscount
-  : String
-  -> Maybe DiscountDataR
-  -> SummaryR
-  -> Result ValidationErr SummaryR
-validateDiscount itemId maybeDiscountData initialItem = 
-  case maybeDiscountData of
-    Nothing -> Ok { initialItem | discount = Nothing }
-
-    Just discountData ->
-      let maybeValue = String.toInt discountData.value
-      in
-        case maybeValue of
-          Nothing    ->
-            Err <| InvalidDiscount itemId discountData.value "value"
-          Just value ->
-            Ok { initialItem
-               | discount =
-                   Just <| newDiscount discountData.discount_code
-                                       discountData.name
-                                       value
-                                       discountData.items
-               }
+validate_discount_percentage_data : Data -> Result ValidationErr Data
+validate_discount_percentage_data data = 
+  let maybeDiscountData = .discount data
+  in case maybeDiscountData of
+       Nothing -> Ok data
+       Just discountData ->
+         let maybeDiscountPercentage =
+               discountData.value |> String.toInt
+             invalidDiscountPercentage =
+               InvalidDiscount data.id discountData.value "value"
+         in case maybeDiscountPercentage of
+              Nothing -> Err invalidDiscountPercentage
+              Just discountPercentage -> Ok data
 
 
 
-{-| convert a string to Maybe Availability
--}
-strToMaybeAvailability : String -> Maybe Availability
-strToMaybeAvailability strAvailability =
-  case String.toLower (String.trim strAvailability) of
+maybe_produce_availability_from_string : String -> Maybe Availability
+maybe_produce_availability_from_string strAvailability =
+  case strAvailability |> String.toLower >> String.trim of
     "in_stock"    -> Just IN_STOCK
     "out_stock"   -> Just OUT_STOCK
     "order_only"  -> Just ORDER_ONLY
@@ -756,10 +660,8 @@ strToMaybeAvailability strAvailability =
 
 
 
-{-| convert a string to Maybe size
--}
-strToMaybeSize : String -> Maybe Size
-strToMaybeSize strSize =
+maybe_produce_size_from_string : String -> Maybe Size
+maybe_produce_size_from_string strSize =
   case String.trim <| String.toLower strSize of 
     "large"         -> Just LG
     "lg"            -> Just LG
@@ -773,14 +675,14 @@ strToMaybeSize strSize =
     "sm"            -> Just SM
     "medium"        -> Just M
     "m"             -> Just M
-    strGrad         -> strToMaybeGrad strGrad
+    strGrad         -> strGrad |> maybe_produce_graduation_from_string
 
 
 
 {-| convert a string to a Grad x Measure or Nothing.
 -}
-strToMaybeGrad : String -> Maybe Size
-strToMaybeGrad strGrad =
+maybe_produce_graduation_from_string : String -> Maybe Size
+maybe_produce_graduation_from_string strGrad =
   let
     gradFields = String.words strGrad
     maybeMeasure = List.head <| List.drop 1 gradFields
@@ -808,97 +710,66 @@ strToMaybeGrad strGrad =
 
 
 
-{-| produce the id of the given item
--}
-id : Model -> String
-id item =
-  case item of
-    Summary record -> record.id
+produce_id : Model -> String
+produce_id (Summary item) = item.id
 
 
 
-{-| produce the item name
--}
-name : Model -> String
-name item =
-  case item of
-    Summary record -> record.name
+produce_name : Model -> String
+produce_name (Summary item) = item.name
 
 
 
-brand : Model -> String
-brand item =
-  case item of
-    Summary record -> record.brand
+produce_brand : Model -> String
+produce_brand (Summary item) = item.brand
 
 
 
-variant : Model -> String
-variant item =
-  case item of
-    Summary record -> record.variant
+produce_variant : Model -> String
+produce_variant (Summary item) =  item.variant
 
 
 
-size : Model -> Size
-size item =
-  case item of
-    Summary record -> record.size
+produce_availability : Model -> Availability
+produce_availability (Summary item) = item.availability
 
 
 
-image : Model -> String
-image item =
-  case item of
-    Summary record -> record.imageThumbnail
+produce_size : Model -> Size
+produce_size (Summary item) = item.size
 
 
 
-{-| produce the list price of the given item
--}
-listPrice : Model -> Float
-listPrice item =
-  case item of
-    Summary record -> record.listPrice
+produce_thumbnail_url : Model -> String
+produce_thumbnail_url (Summary item) = item.imageThumbnail
 
 
 
-{-| produce the discount sales price of the given item
--}
-salePrice : Model -> Float
-salePrice item =
-  case item of
-    Summary record ->
-      let listPrice_ = record.listPrice 
-          maybeDiscount = record.discount
-      in
-        case maybeDiscount of
-          Nothing -> listPrice_
-          Just discount ->
-            applyDiscount listPrice_ discount
+produce_list_price : Model -> Float
+produce_list_price (Summary item) = item.listPrice
 
 
 
-{-| apply the discount to the price and produce the results.
--}
-applyDiscount : Float -> Discount -> Float
-applyDiscount listPrice_ discount =
-  let (Discount record) = discount
-      discountPct_ = record.value
-      discountVal =
-        listPrice_ * ((toFloat discountPct_)/100)
-  in Round.roundNum 2 (listPrice_ - discountVal)
+produce_sale_price : Model -> Float
+produce_sale_price item =
+  let discountPercentage =
+        item |> produce_discount_percentage >> toFloat
+      listPrice = item |> produce_list_price
+  in Round.roundNum 2 (listPrice * (discountPercentage/100))
+
+
+
+maybe_produce_discount : Model -> Maybe Discount 
+maybe_produce_discount (Summary item) = item.discount
 
 
 
 produce_discount_percentage : Model -> Int
 produce_discount_percentage item =
-  case item of
-    Summary record ->
-      case record.discount of
-        Nothing -> 0
-        Just (Discount discount) ->
-          discount.value
+  case item |> maybe_produce_discount of
+    Nothing -> 0
+    Just (Discount discount) ->
+      discount.value
 
 
 
@@ -923,8 +794,8 @@ produce_random_name seed =
 
 
 
-produce_random_image_url : Int -> String
-produce_random_image_url seed =
+produce_random_thumbnail_url : Int -> String
+produce_random_thumbnail_url seed =
   let mapper x =
         case x of
           0 -> "https://i5.walmartimages.com/asr/dd8a264c-63d9-4b63-9aa2-abfc5dfda42b.c3c8009c232e2ad162c7d59d040e93c1.jpeg?odnWidth=282&odnHeight=282&odnBg=ffffff"
@@ -1060,7 +931,7 @@ produce_random_id seed =
 
 
 
-produce_random_discount : Int -> DiscountDataR
+produce_random_discount : Int -> DiscountData
 produce_random_discount seed =
   { discount_code    = produce_random_id seed
   , name             = produce_random_variant seed
@@ -1074,11 +945,11 @@ produce_random_discount seed =
 
 
 
-produce_random_summary_data : Int -> SummaryDataR
-produce_random_summary_data seed =
+produce_random_data : Int -> Data
+produce_random_data seed =
   { name            = produce_random_name seed
   , id              = produce_random_id seed
-  , imageThumbnail  = produce_random_image_url seed
+  , imageThumbnail  = produce_random_thumbnail_url seed
   , brand           = produce_random_brand seed
   , variant         = produce_random_variant seed
   , listPrice       = Round.round 2 (SRandom.randomFloat seed)
@@ -1113,7 +984,7 @@ produce_random_summary_data seed =
 
 produce_random_summary : Int -> Model
 produce_random_summary seed =
-  case newSummary (produce_random_summary_data seed) of
+  case produce_new_summary_from_data (produce_random_data seed) of
     Err _ -> blankSummary
     Ok brief -> brief
 

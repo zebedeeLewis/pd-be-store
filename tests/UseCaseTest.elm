@@ -19,7 +19,7 @@ it = test
 -- SAMPLE DATA
 -------------------------------------------------------------------------
 
-itemSummaryData : Item.SummaryDataR
+itemSummaryData : Item.Data
 itemSummaryData =
   { name            = "chicken legs"
   , id              = "CHKCCS1233"
@@ -55,7 +55,7 @@ itemSummaryData =
 
 itemSummary : Item.Model
 itemSummary =
-  case Item.newSummary itemSummaryData of
+  case Item.produce_new_summary_from_data itemSummaryData of
     Err _ -> Item.blankSummary
     Ok brief -> brief
 

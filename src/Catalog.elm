@@ -88,15 +88,15 @@ produce_next_page_number (Page _ _ pageNumber _) = pageNumber
 
 produce_item_with_id : String -> Model -> Maybe Item.Model
 produce_item_with_id id catalog =
-  let items_ loi =
-        let head = List.head loi
+  let produce_item_with_id_ items =
+        let head = List.head items
         in case head of
              Nothing -> Nothing
              Just item_ ->
-               if (item_ |> Item.id) == id
+               if (item_ |> Item.produce_id) == id
                  then Just item_
-                 else items_ (List.drop 1 loi)
-  in items_ (catalog |> produce_page_items)
+                 else produce_item_with_id_ (List.drop 1 items)
+  in produce_item_with_id_ (catalog |> produce_page_items)
 
 
 set_next_page_number_to : Int -> Model -> Model

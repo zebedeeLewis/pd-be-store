@@ -23,7 +23,7 @@ it = test
 
 emptyList = ShoppingList.empty 12
 
-itemSummaryData : Item.SummaryDataR
+itemSummaryData : Item.Data
 itemSummaryData =
   { name            = "chicken legs"
   , id              = "CHKCCS1233"
@@ -58,7 +58,7 @@ itemSummaryData =
 
 itemSummary : Item.Model
 itemSummary =
-  case Item.newSummary itemSummaryData of
+  case Item.produce_new_summary_from_data itemSummaryData of
     Ok itemSummary_ -> itemSummary_
     Err _ -> Item.blankSummary
 
@@ -100,7 +100,7 @@ removeItem =
           "the entrys quantity value is 1.")
       (\_->
         Expect.equal
-          (ShoppingList.remove (Item.id itemSummary)
+          (ShoppingList.remove (itemSummary |> Item.produce_id)
              <| ShoppingList.fromListOfItems 12
                   (List.repeat 1 itemSummary))
           (ShoppingList.empty 12)
@@ -110,7 +110,7 @@ removeItem =
           "id by 1 if the its quantity value is greater than 1.")
       (\_->
         Expect.equal
-          (ShoppingList.remove (Item.id itemSummary)
+          (ShoppingList.remove (itemSummary |> Item.produce_id)
              <| ShoppingList.fromListOfItems 12
                   (List.repeat 5 itemSummary))
           (ShoppingList.fromListOfItems 12 (List.repeat 4 itemSummary))

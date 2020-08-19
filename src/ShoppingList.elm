@@ -138,14 +138,14 @@ remove itemId list =
       ShoppingList (tax list)
         <| List.filter
              (\entry_ ->
-               not ((Item.id <| item entry_) == itemId_)
+               not (( entry_ |> item >> Item.produce_id ) == itemId_)
              ) (entries list)
 
     dec itemId_ =
       ShoppingList (tax list)
         <| List.map
           (\entry_ ->
-            if (Item.id <| item entry_) == itemId_ 
+            if (entry_ |> item >> Item.produce_id) == itemId_ 
               then Entry ((qty entry_) - 1) (item entry_)
               else Entry (qty entry_) (item entry_)
           ) (entries list)
@@ -154,8 +154,8 @@ remove itemId list =
       Nothing -> list
       Just entry_ ->
         if (qty entry_) > 1
-          then dec (Item.id <| item entry_)
-          else remove_ (Item.id <| item entry_)
+          then dec (entry_ |> item |> Item.produce_id)
+          else remove_ (entry_ |> item |> Item.produce_id)
 
 
 {-| produce a new ShoppingList with a new entry for the given item
@@ -163,7 +163,7 @@ remove itemId list =
 add : Item.Model -> Model -> Model
 add item_ list =
   let
-    itemId = Item.id item_
+    itemId = item_ |> Item.produce_id
     add_ =
       ShoppingList (tax list) <| (singletonEntry item_)::(entries list)
 
@@ -171,7 +171,7 @@ add item_ list =
       ShoppingList (tax list)
         <| List.map
           (\entry_ ->
-            if (Item.id <| item entry_) == itemId
+            if (entry_ |> item >> Item.produce_id) == itemId
               then Entry ((qty entry_) + 1) (item entry_)
               else Entry (qty entry_) (item entry_)
           ) (entries list)
@@ -193,7 +193,7 @@ maybeEntry itemId list =
       case List.head entries_ of
         Nothing -> Nothing
         Just entry_ -> 
-          if (Item.id <| item entry_) == itemId
+          if (entry_ |> item >> Item.produce_id ) == itemId
             then Just entry_
             else maybeEntry_ <| List.drop 1 entries_
   in maybeEntry_ (entries list)

@@ -162,10 +162,10 @@ viewCart cartView store =
                  in acc + subtotal_
                ) 0 (ShoppingList.entries cart)
 
-      saleSubTotal = subtotal Item.salePrice
+      saleSubTotal = 1000.00 -- subtotal Item.salePrice
       saleTax = Round.roundNum 2 (saleSubTotal * taxPct/100)
       saleTotal = saleSubTotal + saleTax
-      listSubTotal = subtotal Item.listPrice
+      listSubTotal = 2000.00 -- subtotal Item.listPrice
       listTax = Round.roundNum 2 (listSubTotal * taxPct/100)
       listTotal = listSubTotal + listTax
       totalSavings = listTotal - saleTotal
@@ -188,9 +188,9 @@ entryToViewD entry =
   let item = ShoppingList.item entry
       qty = ShoppingList.qty entry
       listTotal = Round.roundNum 2
-                    <| (toFloat qty) * (Item.listPrice item)
+                    <| (toFloat qty) * (item |> Item.produce_list_price)
       saleTotal = Round.roundNum 2
-                    <| (toFloat qty) * (Item.salePrice item)
+                    <| (toFloat qty) * (item |> Item.produce_sale_price)
   in
     { qty        = qty
     , listTotal  = listTotal
@@ -201,14 +201,14 @@ entryToViewD entry =
 
 itemToViewD : Item.Model -> ItemViewD
 itemToViewD item =
-  { id           = Item.id item
-  , name         = Item.name item
-  , brand        = Item.brand item 
-  , variant      = Item.variant item
-  , size         = Item.sizeToString <| Item.size item
-  , image        = Item.image item
-  , listPrice    = Item.listPrice item 
-  , salePrice    = Item.salePrice item
+  { id           = item |> Item.produce_id
+  , name         = item |> Item.produce_name
+  , brand        = item |> Item.produce_brand
+  , variant      = item |> Item.produce_variant
+  , size         = item |> Item.produce_size_as_string
+  , image        = item |> Item.produce_thumbnail_url
+  , listPrice    = item |> Item.produce_list_price
+  , salePrice    = item |> Item.produce_sale_price
   , discountPct  = Item.produce_discount_percentage item
   }
 
