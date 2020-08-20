@@ -100,7 +100,7 @@ removeItem =
           "the entrys quantity value is 1.")
       (\_->
         Expect.equal
-          (ShoppingList.remove (itemSummary |> Item.produce_id)
+          (ShoppingList.remove (Item.produce_id_of itemSummary)
              <| ShoppingList.fromListOfItems 12
                   (List.repeat 1 itemSummary))
           (ShoppingList.empty 12)
@@ -110,7 +110,7 @@ removeItem =
           "id by 1 if the its quantity value is greater than 1.")
       (\_->
         Expect.equal
-          (ShoppingList.remove (itemSummary |> Item.produce_id)
+          (ShoppingList.remove (Item.produce_id_of itemSummary)
              <| ShoppingList.fromListOfItems 12
                   (List.repeat 5 itemSummary))
           (ShoppingList.fromListOfItems 12 (List.repeat 4 itemSummary))

@@ -2,22 +2,19 @@ module Item exposing
   ( Model
   , Data
   , DiscountData
-  , Size
-  , Measure
   , Availability
   , ValidationErr(..)
   , produce_new_summary_from_data
   , blankSummary
-  , produce_id
-  , produce_size_as_string
-  , produce_name
+  , produce_id_of
+  , produce_name_of
   , produce_thumbnail_url
-  , produce_size
-  , produce_variant
+  , produce_size_of
+  , produce_variant_of
   , produce_list_price
   , produce_sale_price
   , produce_discount_percentage
-  , produce_brand
+  , produce_brand_of
   , convert_to_data
   , produce_random_summary
   )
@@ -27,20 +24,12 @@ import Round
 import Random
 import SRandom
 import UUID
+import Size
 
 
 -----------------------------------------------------------------------
 -- CONSTANT DEFINITIONS
 -----------------------------------------------------------------------
-
-litre = 1000           -- ml
-gallon = 4547          -- ml
-cubicMetre = 1000000   -- cubic cm
-gram = 1000            -- mg
-kilogram = 1000000     -- mg
-centimetre = 10        -- mm
-metre = 1000           -- mm
-
 
 blankSummaryRecord : SummaryRecord
 blankSummaryRecord =
@@ -50,7 +39,7 @@ blankSummaryRecord =
   , brand           = ""
   , variant         = ""
   , listPrice       = 0.0
-  , size            = LG
+  , size            = Size.produce_large
   , departmentTags  = []
   , categoryTags    = []
   , subCategoryTags = []
@@ -101,7 +90,7 @@ example:
     , brand           = "caribbean chicken"
     , variant         = "bag"
     , listPrice       = 15.93
-    , size            = Grad 1000.5 MG
+    , size            = Size.produce_ml_interpretation_of_float 1000.5
     , departmentTags  = [ DepartmentTag
                             { id = "UID789"
                             , name = "deptTag"
@@ -140,7 +129,7 @@ type alias SummaryRecord =
   , brand           : String
   , variant         : String
   , listPrice       : Float
-  , size            : Size
+  , size            : Size.Model
   , departmentTags  : List Tag
   , categoryTags    : List Tag
   , subCategoryTags : List Tag
@@ -217,8 +206,6 @@ holding the errant data.
 example:
   priceErr = NaNPrice "ID123" "$124"
 
-  sizeErr = InvalidSize "ID123" "invalid size"
-
   avErr = InvalidAvailability "ID123" "out of stock"
 
   --                            item id  value  field
@@ -228,10 +215,10 @@ example:
 type ValidationErr
   = NaNPrice             String String
   | NegativePrice        String String
-  | InvalidSize          String String
   | InvalidAvailability  String String
   | InvalidDiscount      String String String
   | NullId
+  | SizeError            Size.Error
 
 
 type Discount = Discount DiscountR
@@ -306,56 +293,6 @@ type Availability
 
 
 
-{-| represents the basic unit of measurement for length, volume and
-weight.
-
-example:
-
-  measure1 : Measure
-  measure1 = ML
-  
-  measure2 : Measure
-  measure2 = MM
-  
-  measure3 : Measure
-  measure3 = MG
--}
-type Measure
-  = ML
-  | MM
-  | CC
-  | MG
-
-
-
-{-| represents the size of an item, this can be an exact measurement
-or an generic estimate such as large, extra-large etc.
-
-Grad value measure
-  value   - measurement value
-  measure - the unit of measurement
-
-examples:
-
-  size1 : Size
-  size1 = LG
-  
-  size2 : Size
-  size2 = XL
-  
-  size3 : Size
-  size3 = Grad 2.5 ML
--}
-type Size
-  = Grad Float Measure
-  | LG
-  | XL
-  | SM
-  | XS
-  | M
-
-
-
 type Tag
   = DepartmentTag TagR
   | CategoryTag TagR
@@ -384,23 +321,6 @@ type alias TagR =
 -----------------------------------------------------------------------
 -- FUNCTION DEFINITIONS
 -----------------------------------------------------------------------
-
-produce_size_as_string: Model -> String
-produce_size_as_string item =
-  case item |> produce_size of
-    Grad value measure ->
-      case measure of
-        ML -> (String.fromFloat value) ++ " ml" 
-        CC -> (String.fromFloat value) ++ " cc"
-        MG -> (String.fromFloat value) ++ " mg"
-        MM -> (String.fromFloat value) ++ " mm"
-    LG -> "LG"
-    XL -> "XL"
-    SM -> "SM"
-    XS -> "XS"
-    M  -> "M"
-
-
 
 {-| Validate the given input data and produce a new Item
 from the given data record or ValidationErr if any of the data
@@ -448,7 +368,7 @@ example:
       , brand           = "caribbean chicken"
       , variant         = "bag"
       , price           = 15.93
-      , size            = Grad 1000.5 MG
+      , size            = Size.produce_mg_interpretation_of_float 1000.5
       , departmentTags  = [ DepartmentTag { id = "UID789"
                                           , name = "deptTag"
                                           }
@@ -489,9 +409,10 @@ produce_new_summary_from_data data =
              , listPrice       = validData.listPrice
                                    |> String.toFloat
                                    |> Maybe.withDefault 0
-             , size            = maybe_produce_size_from_string
-                                   validData.size
-                                   |> Maybe.withDefault LG
+             , size            =
+               Size.attempt_size_interpretation_of_string
+                 validData.size
+                 |> Result.withDefault Size.produce_large
              , departmentTags  = List.map
                                    DepartmentTag
                                    validData.departmentTags
@@ -517,13 +438,14 @@ convert_to_data : Model -> Data
 convert_to_data item =
   let (Summary record) = item
   in
-    { name            = item |> produce_name
-    , id              = item |> produce_id
+    { name            = item |> produce_name_of
+    , id              = item |> produce_id_of
     , imageThumbnail  = item |> produce_thumbnail_url
-    , brand           = item |> produce_brand
-    , variant         = item |> produce_variant
+    , brand           = item |> produce_brand_of
+    , variant         = item |> produce_variant_of
     , listPrice       = item |> produce_list_price >> String.fromFloat
-    , size            = item |> produce_size_as_string
+    , size            =
+      Size.produce_string_representation_of (item |> size)
     , departmentTags  = map_tags_to_data record.departmentTags
     , categoryTags    = map_tags_to_data record.categoryTags
     , subCategoryTags = map_tags_to_data record.subCategoryTags
@@ -615,10 +537,11 @@ validate_price_data data =
 
 validate_size_data : Data -> Result ValidationErr Data
 validate_size_data data =
-  let maybeSize = maybe_produce_size_from_string (.size data)
-  in case maybeSize  of
-       Nothing -> Err <| InvalidSize data.id (.size data)
-       Just _ -> Ok data
+  let possibleSize =
+        Size.attempt_size_interpretation_of_string (.size data)
+  in case possibleSize  of
+       Err error -> Err <| SizeError error
+       Ok _ -> Ok data
 
 
 
@@ -660,73 +583,23 @@ maybe_produce_availability_from_string strAvailability =
 
 
 
-maybe_produce_size_from_string : String -> Maybe Size
-maybe_produce_size_from_string strSize =
-  case String.trim <| String.toLower strSize of 
-    "large"         -> Just LG
-    "lg"            -> Just LG
-    "xl"            -> Just XL
-    "extra large"   -> Just XL
-    "extra-large"   -> Just XL
-    "xs"            -> Just XS
-    "extra small"   -> Just XS
-    "extra-small"   -> Just XS
-    "small"         -> Just SM
-    "sm"            -> Just SM
-    "medium"        -> Just M
-    "m"             -> Just M
-    strGrad         -> strGrad |> maybe_produce_graduation_from_string
+produce_id_of : Model -> String
+produce_id_of (Summary item) = item.id
 
 
 
-{-| convert a string to a Grad x Measure or Nothing.
--}
-maybe_produce_graduation_from_string : String -> Maybe Size
-maybe_produce_graduation_from_string strGrad =
-  let
-    gradFields = String.words strGrad
-    maybeMeasure = List.head <| List.drop 1 gradFields
-    maybeVal =
-      case  List.head gradFields of
-        Nothing -> Nothing
-        Just strVal ->
-          case String.toFloat strVal of
-            Nothing -> Nothing
-            Just fVal -> Just (Round.roundNum 3 fVal)
-
-  in
-    case maybeVal of
-      Nothing -> Nothing
-      Just val ->
-        case maybeMeasure of
-          Nothing -> Nothing
-          Just measure ->
-            case String.toLower measure of
-              "ml" -> Just <| Grad val ML
-              "mm" -> Just <| Grad val MM
-              "cc" -> Just <| Grad val CC
-              "mg" -> Just <| Grad val MG
-              _    -> Nothing
+produce_name_of : Model -> String
+produce_name_of (Summary item) = item.name
 
 
 
-produce_id : Model -> String
-produce_id (Summary item) = item.id
+produce_brand_of : Model -> String
+produce_brand_of (Summary item) = item.brand
 
 
 
-produce_name : Model -> String
-produce_name (Summary item) = item.name
-
-
-
-produce_brand : Model -> String
-produce_brand (Summary item) = item.brand
-
-
-
-produce_variant : Model -> String
-produce_variant (Summary item) =  item.variant
+produce_variant_of : Model -> String
+produce_variant_of (Summary item) =  item.variant
 
 
 
@@ -735,8 +608,9 @@ produce_availability (Summary item) = item.availability
 
 
 
-produce_size : Model -> Size
-produce_size (Summary item) = item.size
+produce_size_of : Model -> Size.Model
+produce_size_of (Summary item) = item.size
+size = produce_size_of
 
 
 
@@ -869,60 +743,6 @@ produce_random_availability_string seed =
 
 
 
-produce_random_size : Int -> Size
-produce_random_size seed =
-  let
-    mapper constructor value measure  =
-      let x = (constructor, value, measure)
-      in
-        case x of
-          (1, value_, measure_) ->
-            case measure of
-              1 -> Grad value ML
-              2 -> Grad value MM
-              3 -> Grad value CC
-              _ -> Grad value MG
-          (2, _, _) -> LG
-          (3, _, _) -> XL
-          (4, _, _) -> SM
-          (5, _, _) -> XS
-          (_, _, _) -> M
-    generator = Random.map3
-                  mapper
-                  (Random.int 1 6)
-                  (Random.float 0 200)
-                  (Random.int 1 4)
-  in Random.step generator (Random.initialSeed seed) |> Tuple.first
-
-
-
-produce_random_size_string : Int -> String
-produce_random_size_string seed =
-  let
-    mapper constructor value measure  =
-      let x = (constructor, value, measure)
-      in
-        case x of
-          (1, value_, measure_) ->
-            case measure of
-              1 -> String.join " " [(String.fromFloat value), "ml"]
-              2 -> String.join " " [(String.fromFloat value), "mm"]
-              3 -> String.join " " [(String.fromFloat value), "cc"]
-              _ -> String.join " " [(String.fromFloat value), "mg"]
-          (2, _, _) -> "LG"
-          (3, _, _) -> "XL"
-          (4, _, _) -> "SM"
-          (5, _, _) -> "XS"
-          (_, _, _) -> "M"
-    generator = Random.map3
-                  mapper
-                  (Random.int 1 6)
-                  (Random.float 1 20000)
-                  (Random.int 1 4)
-  in Random.step generator (Random.initialSeed seed) |> Tuple.first
-
-
-
 produce_random_id : Int -> String
 produce_random_id seed =
   Random.step UUID.generator (Random.initialSeed seed)
@@ -953,7 +773,7 @@ produce_random_data seed =
   , brand           = produce_random_brand seed
   , variant         = produce_random_variant seed
   , listPrice       = Round.round 2 (SRandom.randomFloat seed)
-  , size            = produce_random_size_string seed
+  , size            = Size.produce_random_size_string seed
   , departmentTags  = [
                           { id = "UID789"
                           , name = "deptTag"

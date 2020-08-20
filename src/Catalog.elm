@@ -93,7 +93,7 @@ produce_item_with_id id catalog =
         in case head of
              Nothing -> Nothing
              Just item_ ->
-               if (item_ |> Item.produce_id) == id
+               if (Item.produce_id_of item_) == id
                  then Just item_
                  else produce_item_with_id_ (List.drop 1 items)
   in produce_item_with_id_ (catalog |> produce_page_items)

@@ -15,6 +15,7 @@ module UseCase exposing
 import Round
 
 import Item
+import Size
 import Catalog
 import ShoppingList
 
@@ -201,16 +202,17 @@ entryToViewD entry =
 
 itemToViewD : Item.Model -> ItemViewD
 itemToViewD item =
-  { id           = item |> Item.produce_id
-  , name         = item |> Item.produce_name
-  , brand        = item |> Item.produce_brand
-  , variant      = item |> Item.produce_variant
-  , size         = item |> Item.produce_size_as_string
-  , image        = item |> Item.produce_thumbnail_url
-  , listPrice    = item |> Item.produce_list_price
-  , salePrice    = item |> Item.produce_sale_price
-  , discountPct  = Item.produce_discount_percentage item
-  }
+  let itemSize = Item.produce_size_of item
+  in { id           = Item.produce_id_of item
+     , name         = Item.produce_name_of item
+     , brand        = Item.produce_brand_of item
+     , variant      = Item.produce_variant_of item
+     , size         = Size.produce_string_representation_of itemSize
+     , image        = item |> Item.produce_thumbnail_url
+     , listPrice    = item |> Item.produce_list_price
+     , salePrice    = item |> Item.produce_sale_price
+     , discountPct  = Item.produce_discount_percentage item
+     }
 
 
 -- DUMMY DATA FOR TESTING
