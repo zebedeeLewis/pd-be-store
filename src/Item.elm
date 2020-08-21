@@ -1,19 +1,18 @@
 module Item exposing
   ( Model
   , Data
-  , DiscountData
   , Availability
   , ValidationErr(..)
   , produce_new_summary_from_data
   , blankSummary
   , produce_id_of
   , produce_name_of
-  , produce_thumbnail_url
+  , produce_thumbnail_url_of
   , produce_size_of
   , produce_variant_of
-  , produce_list_price
-  , produce_sale_price
-  , produce_discount_percentage
+  , produce_list_price_of
+  , produce_sale_price_of
+  , produce_discount_percentage_on
   , produce_brand_of
   , convert_to_data
   , produce_random_summary
@@ -25,6 +24,7 @@ import Random
 import SRandom
 import UUID
 import Size
+import Discount
 
 
 -----------------------------------------------------------------------
@@ -79,46 +79,6 @@ department sub-category the item should be in. This serves to further
 sub-devide individual departments.
 
 **searchTags:** these are tags used to aid in searching for this item.
-
-example:
-
-  record : Item.SummaryRecord
-  record =
-    { name            = "chicken legs"
-    , id              = "CHKCCS1233"
-    , imageThumbnail  = "https://www.example.com/chicken.jpg"
-    , brand           = "caribbean chicken"
-    , variant         = "bag"
-    , listPrice       = 15.93
-    , size            = Size.produce_ml_interpretation_of_float 1000.5
-    , departmentTags  = [ DepartmentTag
-                            { id = "UID789"
-                            , name = "deptTag"
-                            }
-                        ]
-    , categoryTags    = [ CategoryTag
-                            { id = "UID456"
-                            , name = "catTag"
-                            }
-                        ]
-    , subCategoryTags = [ SubCategoryTag
-                            { id   = "UID4123"
-                            , name = "subCatTag"
-                            }
-                        ]
-    , searchTags      = [ SearchTag
-                            { id   = "UID333"
-                            , name = "searchTag"
-                            }
-                        ]
-    , availability    = IN_STOCK
-    , discount        = Just <| Discount
-                          { discount_code = "UXDS9y3"
-                          , name          = "seafood giveaway"
-                          , value         = 15.0
-                          , items         = ["CHKCCS1233"]
-                          }
-    }
 -}
 type Model = Summary SummaryRecord
 
@@ -135,7 +95,7 @@ type alias SummaryRecord =
   , subCategoryTags : List Tag
   , searchTags      : List Tag
   , availability    : Availability
-  , discount        : Maybe Discount
+  , discount        : Maybe Discount.Model
   }
 
 
@@ -144,39 +104,6 @@ type alias SummaryRecord =
 fields hold simple string data or "subrecords" of string data.
 
 All fields match one to one with the fields in SummaryRecord.
-
-example:
-  data =
-    { name            = "chicken legs"
-    , id              = "CHKCCS1233"
-    , imageThumbnail  = "https://www.example.com/chicken.jpg"
-    , brand           = "caribbean chicken"
-    , variant         = "bag"
-    , listPrice       = "15.93"
-    , size            = "1000.5 mg"
-    , departmentTags  = [ { id = "UID789"
-                          , name = "deptTag"
-                          }
-                        ]
-    , categoryTags    = [ { id = "UID456"
-                          , name = "catTag"
-                          }
-                        ]
-    , subCategoryTags = [ { id   = "UID4123"
-                          , name = "subCatTag"
-                          }
-                        ]
-    , searchTags      = [ { id   = "UID333"
-                          , name = "searchTag"
-                          }
-                        ]
-    , availability    = "in_stock"
-    , discount        = { discount_code = "UXDS9y3"
-                        , name          = "seafood giveaway"
-                        , value         = "15"
-                        , items         = ["CHKCCS1233"]
-                        }
-    }
 -}
 type alias Data =
   { name            : String
@@ -191,7 +118,7 @@ type alias Data =
   , subCategoryTags : List { id : String, name : String }
   , searchTags      : List { id : String, name : String }
   , availability    : String
-  , discount        : Maybe DiscountData
+  , discount        : Maybe Discount.Data
   }
 
 
@@ -216,53 +143,9 @@ type ValidationErr
   = NaNPrice             String String
   | NegativePrice        String String
   | InvalidAvailability  String String
-  | InvalidDiscount      String String String
   | NullId
+  | DiscountError        Discount.Error
   | SizeError            Size.Error
-
-
-type Discount = Discount DiscountR
-
-
-
-{-| Represents the information necessary to build a new
-Discount. All fields hold simple string data or "subrecords".
-
-All fields match one to one with the fields in DiscountR.
--}
-type alias DiscountData =
-  { discount_code    : String
-  , name             : String
-  , value            : String
-  , items            : List String
-  }
-
-
-
-{-| Represents a discount that is automatically applied to a select
-item.
-
-**discount_code:** unique identifier for the given discount
-**name:** user friendly name for the discount
-**value:** percent value of the discount.
-**items:** the ids for the items this discount applies to.
-
-example:
-
-itemDiscount : Discount
-itemDiscount =
-  { discount_code = "UXDS9y3"
-  , name          = "seafood giveaway"
-  , value         = 15
-  , iems          = ["CHKCCS1233"]
-  }
--}
-type alias DiscountR =
-  { discount_code    : String
-  , name             : String
-  , value            : Int
-  , items            : List String
-  }
 
 
 
@@ -326,139 +209,80 @@ type alias TagR =
 from the given data record or ValidationErr if any of the data
 is invalid.
 
-example:
-
-  itemData =
-    { name            = "chicken legs"
-    , id              = "CHKCCS1233"
-    , imageThumbnail  = "https://www.example.com/chicken.jpg"
-    , brand           = "caribbean chicken"
-    , variant         = "bag"
-    , price           = "15.93"
-    , size            = "1000.5 mg"
-    , departmentTags  = [ { id = "UID789"
-                          , name = "deptTag"
-                          }
-                        ]
-    , categoryTags    = [ { id = "UID456"
-                          , name = "catTag"
-                          }
-                        ]
-    , subCategoryTags = [ { id   = "UID4123"
-                          , name = "subCatTag"
-                          }
-                        ]
-    , searchTags      = [ { id   = "UID333"
-                          , name = "searchTag"
-                          }
-                        ]
-    , availability    = "in_stock"
-    , discount        = { discount_code = "UXDS9y3"
-                        , name          = "seafood giveaway"
-                        , value         = "15"
-                        , iems          = ["CHKCCS1233"]
-                        }
-    }
-
-  produce_new_summary_from_data itemData ==
-    Summary
-      { name            = "chicken legs"
-      , id              = "CHKCCS1233"
-      , imageThumbnail  = "https://www.example.com/chicken.jpg"
-      , brand           = "caribbean chicken"
-      , variant         = "bag"
-      , price           = 15.93
-      , size            = Size.produce_mg_interpretation_of_float 1000.5
-      , departmentTags  = [ DepartmentTag { id = "UID789"
-                                          , name = "deptTag"
-                                          }
-                          ]
-      , categoryTags    = [ CategoryTag { id = "UID456"
-                                        , name = "catTag"
-                                        }
-                          ]
-      , subCategoryTags = [ SubCategoryTag { id   = "UID4123"
-                                           , name = "subCatTag"
-                                           }
-                          ]
-      , searchTags      = [ SearchTag { id   = "UID333"
-                                      , name = "searchTag"
-                                      }
-                          ]
-      , availability    = IN_STOCK
-      , discount        = Discount
-                            { discount_code = "UXDS9y3"
-                            , name          = "seafood giveaway"
-                            , value         = "15"
-                            , items         = ["CHKCCS1233"]
-                            }
-      }
 -}
 produce_new_summary_from_data : Data -> Result ValidationErr Model
 produce_new_summary_from_data data =
   case validate_summary_data data of
     Err err -> Err err
     Ok validData -> 
-      Ok
-        <| Summary
-             { name            = validData.name
-             , id              = validData.id
-             , imageThumbnail  = validData.imageThumbnail
-             , brand           = validData.brand
-             , variant         = validData.variant
-             , listPrice       = validData.listPrice
-                                   |> String.toFloat
-                                   |> Maybe.withDefault 0
-             , size            =
-               Size.attempt_size_interpretation_of_string
-                 validData.size
-                 |> Result.withDefault Size.produce_large
-             , departmentTags  = List.map
-                                   DepartmentTag
-                                   validData.departmentTags
-             , categoryTags    = List.map
-                                   CategoryTag
-                                   validData.departmentTags
-             , subCategoryTags = List.map
-                                   SubCategoryTag
-                                   validData.departmentTags
-             , searchTags      = List.map
-                                   SearchTag
-                                   validData.departmentTags
-             , availability    = maybe_produce_availability_from_string
-                                   validData.availability
-                                   |> Maybe.withDefault OUT_STOCK
-             , discount        = maybe_produce_discount_from_data
-                                   validData.discount
-             }
+      let discount = 
+            case validData.discount of
+              Nothing -> Nothing
+              Just discount_ ->
+                Just (Discount.produce_discount_from_valid_data discount_)
+      in Ok
+           <| Summary
+                { name            = validData.name
+                , id              = validData.id
+                , imageThumbnail  = validData.imageThumbnail
+                , brand           = validData.brand
+                , variant         = validData.variant
+                , listPrice       = validData.listPrice
+                                      |> String.toFloat
+                                      |> Maybe.withDefault 0
+                , size            =
+                  Size.attempt_size_interpretation_of_string
+                    validData.size
+                    |> Result.withDefault Size.produce_large
+                , departmentTags  = List.map
+                                      DepartmentTag
+                                      validData.departmentTags
+                , categoryTags    = List.map
+                                      CategoryTag
+                                      validData.departmentTags
+                , subCategoryTags = List.map
+                                      SubCategoryTag
+                                      validData.departmentTags
+                , searchTags      = List.map
+                                      SearchTag
+                                      validData.departmentTags
+                , availability    = produce_possible_availability_from_string
+                                      validData.availability
+                                      |> Maybe.withDefault OUT_STOCK
+                , discount        = discount
+                }
 
 
 
 convert_to_data : Model -> Data
 convert_to_data item =
   let (Summary record) = item
+      possibleDiscount = produce_possible_discount_on item
+      to_discount_data = Discount.produce_data_from
+      mapped_to_possible_discount_data = Maybe.map to_discount_data
+      sizeData = Size.produce_string_representation_of (item |> size)
   in
     { name            = item |> produce_name_of
     , id              = item |> produce_id_of
-    , imageThumbnail  = item |> produce_thumbnail_url
+    , imageThumbnail  = item |> produce_thumbnail_url_of
     , brand           = item |> produce_brand_of
     , variant         = item |> produce_variant_of
-    , listPrice       = item |> produce_list_price >> String.fromFloat
-    , size            =
-      Size.produce_string_representation_of (item |> size)
+    , listPrice       = item |> produce_list_price_of >> String.fromFloat
+    , size            = sizeData
     , departmentTags  = map_tags_to_data record.departmentTags
     , categoryTags    = map_tags_to_data record.categoryTags
     , subCategoryTags = map_tags_to_data record.subCategoryTags
     , searchTags      = map_tags_to_data record.searchTags
-    , availability    = item |> produce_availability_as_string
-    , discount        = item |> maybe_produce_discount_data
+    , availability    = item |> produce_availability_of_as_string
+    , discount        = possibleDiscount
+                          |> mapped_to_possible_discount_data
     }
 
 
 
-produce_availability_as_string : Model -> String
-produce_availability_as_string item =
-  case item |> produce_availability of
+produce_availability_of_as_string : Model -> String
+produce_availability_of_as_string item =
+  case item |> produce_availability_of of
     IN_STOCK    ->  "in_stock"    
     OUT_STOCK   ->  "out_stock"   
     ORDER_ONLY  ->  "order_only"  
@@ -477,55 +301,39 @@ map_tags_to_data tags =
 
 
 
-maybe_produce_discount_data : Model -> Maybe DiscountData
-maybe_produce_discount_data item =
-  let maybeDiscount = item |> maybe_produce_discount
-  in case maybeDiscount of
-       Nothing -> Nothing
-       Just (Discount discountR) -> 
-         Just { discount_code = discountR.discount_code
-              , name = discountR.name
-              , value = String.fromInt discountR.value
-              , items = discountR.items
-              }
-
-
-
-maybe_produce_discount_from_data : Maybe DiscountData -> Maybe Discount
-maybe_produce_discount_from_data maybeData =
-  case maybeData of
-    Nothing -> Nothing
-    Just data ->
-      Just <| Discount { discount_code = .discount_code data
-                       , name          = .name data
-                       , value         = .value data
-                                           |> String.toInt
-                                           |> Maybe.withDefault 0
-                       , items         = .items data
-                       }
-
-
 validate_summary_data : Data -> Result ValidationErr Data
 validate_summary_data data =
     data
-      |> validate_data_id
-      |> Result.andThen validate_price_data
-      |> Result.andThen validate_size_data
-      |> Result.andThen validate_availability_data
-      |> Result.andThen validate_discount_percentage_data
+      |> validate_data_id_of
+      |> Result.andThen validate_price_data_of
+      |> Result.andThen validate_size_data_of
+      |> Result.andThen validate_availability_data_of
+      |> Result.andThen validate_discount_data_of
 
 
 
-validate_data_id : Data -> Result ValidationErr Data
-validate_data_id data =
+validate_discount_data_of : Data -> Result ValidationErr Data
+validate_discount_data_of data =
+  let possibleDiscount = .discount data
+  in case possibleDiscount of
+       Nothing -> Ok data
+       Just discountData ->
+         case Discount.validate_discount_data discountData of
+           Err error -> Err <| DiscountError error
+           Ok validData -> Ok data
+
+
+
+validate_data_id_of : Data -> Result ValidationErr Data
+validate_data_id_of data =
   if (data.id |> String.length) <= 0
     then Err <| NullId
     else Ok data
 
 
 
-validate_price_data : Data -> Result ValidationErr Data
-validate_price_data data = 
+validate_price_data_of : Data -> Result ValidationErr Data
+validate_price_data_of data = 
   case .listPrice data |> String.toFloat of
     Nothing -> Err <| NaNPrice data.id (.listPrice data)
     Just listPriceAsFloat ->
@@ -535,8 +343,8 @@ validate_price_data data =
 
 
 
-validate_size_data : Data -> Result ValidationErr Data
-validate_size_data data =
+validate_size_data_of : Data -> Result ValidationErr Data
+validate_size_data_of data =
   let possibleSize =
         Size.attempt_size_interpretation_of_string (.size data)
   in case possibleSize  of
@@ -545,36 +353,19 @@ validate_size_data data =
 
 
 
-validate_availability_data : Data -> Result ValidationErr Data
-validate_availability_data data = 
-  let maybeAvailability =
-        maybe_produce_availability_from_string (.availability data)
-  in case maybeAvailability of
+validate_availability_data_of : Data -> Result ValidationErr Data
+validate_availability_data_of data = 
+  let possibleAvailability =
+        produce_possible_availability_from_string (.availability data)
+  in case possibleAvailability of
        Nothing ->
          Err <| InvalidAvailability data.id (.availability data)
-       Just availability ->
-         Ok data
+       Just availability -> Ok data
 
 
 
-validate_discount_percentage_data : Data -> Result ValidationErr Data
-validate_discount_percentage_data data = 
-  let maybeDiscountData = .discount data
-  in case maybeDiscountData of
-       Nothing -> Ok data
-       Just discountData ->
-         let maybeDiscountPercentage =
-               discountData.value |> String.toInt
-             invalidDiscountPercentage =
-               InvalidDiscount data.id discountData.value "value"
-         in case maybeDiscountPercentage of
-              Nothing -> Err invalidDiscountPercentage
-              Just discountPercentage -> Ok data
-
-
-
-maybe_produce_availability_from_string : String -> Maybe Availability
-maybe_produce_availability_from_string strAvailability =
+produce_possible_availability_from_string : String -> Maybe Availability
+produce_possible_availability_from_string strAvailability =
   case strAvailability |> String.toLower >> String.trim of
     "in_stock"    -> Just IN_STOCK
     "out_stock"   -> Just OUT_STOCK
@@ -603,8 +394,8 @@ produce_variant_of (Summary item) =  item.variant
 
 
 
-produce_availability : Model -> Availability
-produce_availability (Summary item) = item.availability
+produce_availability_of : Model -> Availability
+produce_availability_of (Summary item) = item.availability
 
 
 
@@ -614,36 +405,40 @@ size = produce_size_of
 
 
 
-produce_thumbnail_url : Model -> String
-produce_thumbnail_url (Summary item) = item.imageThumbnail
+produce_thumbnail_url_of : Model -> String
+produce_thumbnail_url_of (Summary item) = item.imageThumbnail
 
 
 
-produce_list_price : Model -> Float
-produce_list_price (Summary item) = item.listPrice
+produce_list_price_of : Model -> Float
+produce_list_price_of (Summary item) = item.listPrice
 
 
 
-produce_sale_price : Model -> Float
-produce_sale_price item =
-  let discountPercentage =
-        item |> produce_discount_percentage >> toFloat
-      listPrice = item |> produce_list_price
-  in Round.roundNum 2 (listPrice * (discountPercentage/100))
+produce_sale_price_of : Model -> Float
+produce_sale_price_of item =
+  let listPrice =  produce_list_price_of item
+      possibleDiscount = produce_possible_discount_on item
+  in case possibleDiscount of
+       Nothing -> listPrice
+       Just discount ->
+         Round.roundNum
+           2
+           (Discount.apply_discount_to_price listPrice discount)
 
 
 
-maybe_produce_discount : Model -> Maybe Discount 
-maybe_produce_discount (Summary item) = item.discount
+produce_possible_discount_on : Model -> Maybe Discount.Model
+produce_possible_discount_on (Summary item) = item.discount
 
 
 
-produce_discount_percentage : Model -> Int
-produce_discount_percentage item =
-  case item |> maybe_produce_discount of
-    Nothing -> 0
-    Just (Discount discount) ->
-      discount.value
+produce_discount_percentage_on : Model -> Int
+produce_discount_percentage_on item =
+  let possibleDiscount = produce_possible_discount_on item
+  in case possibleDiscount of
+       Nothing -> 0
+       Just discount -> Discount.produce_percentage_of discount
 
 
 
@@ -743,32 +538,10 @@ produce_random_availability_string seed =
 
 
 
-produce_random_id : Int -> String
-produce_random_id seed =
-  Random.step UUID.generator (Random.initialSeed seed)
-    |> Tuple.first
-    |> UUID.toString
-
-
-
-produce_random_discount : Int -> DiscountData
-produce_random_discount seed =
-  { discount_code    = produce_random_id seed
-  , name             = produce_random_variant seed
-  , value            = String.fromInt (SRandom.randomInt 1 25 seed)
-  , items            = List.map
-                         (\i ->
-                           let seed_ = seed+i
-                           in produce_random_id seed_
-                         ) <| List.range 0 8
-  }
-
-
-
 produce_random_data : Int -> Data
 produce_random_data seed =
   { name            = produce_random_name seed
-  , id              = produce_random_id seed
+  , id              = SRandom.produce_random_id seed
   , imageThumbnail  = produce_random_thumbnail_url seed
   , brand           = produce_random_brand seed
   , variant         = produce_random_variant seed
@@ -795,9 +568,10 @@ produce_random_data seed =
                           }
                       ]
   , availability    = produce_random_availability_string seed
-  , discount        = if SRandom.randomInt 0 1 seed == 1
-                        then Just (produce_random_discount seed)
-                        else Nothing
+  , discount        =
+    if SRandom.randomInt 0 1 seed == 1
+      then Just (Discount.produce_random_data_from_seed seed)
+      else Nothing
   }
 
 

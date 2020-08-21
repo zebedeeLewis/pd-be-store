@@ -38,3 +38,23 @@ randomInt min max seed =
   (Random.initialSeed seed)
   |> Tuple.first
 
+
+
+produce_random_id : Int -> String
+produce_random_id seed =
+  Random.step UUID.generator (Random.initialSeed seed)
+    |> Tuple.first
+    |> UUID.toString
+
+
+produce_random_description : Int -> String
+produce_random_description seed =
+  let mapper x =
+        case x of
+          0 -> "bag"
+          1 -> "can"
+          2 -> "green"
+          _ -> "red"
+      generator = Random.map mapper (Random.int 0 3)
+  in Random.step generator (Random.initialSeed seed) |> Tuple.first
+

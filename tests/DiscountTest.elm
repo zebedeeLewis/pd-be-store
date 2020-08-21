@@ -1,14 +1,13 @@
-module UseCaseTest exposing (..)
+module DiscountTest exposing (..)
 
 import Expect exposing (Expectation)
 import Test exposing (..)
 
-import Item
-import UseCase
+import Discount
 
 
 -------------------------------------------------------------------------
--- SAMPLE DATA
+-- CONSTANTS DATA
 -------------------------------------------------------------------------
 
 it = test
@@ -19,15 +18,11 @@ it = test
 -- SAMPLE DATA
 -------------------------------------------------------------------------
 
+enable = todo "Enable Item Tests"
+
 
 
 -------------------------------------------------------------------------
 -- TESTS
 -------------------------------------------------------------------------
-
-viewCart =
-  describe "User should be able to view contents of shopping list"
-    [ todo ""
-    ]
-
 

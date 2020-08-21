@@ -189,9 +189,9 @@ entryToViewD entry =
   let item = ShoppingList.item entry
       qty = ShoppingList.qty entry
       listTotal = Round.roundNum 2
-                    <| (toFloat qty) * (item |> Item.produce_list_price)
+                    <| (toFloat qty) * (item |> Item.produce_list_price_of)
       saleTotal = Round.roundNum 2
-                    <| (toFloat qty) * (item |> Item.produce_sale_price)
+                    <| (toFloat qty) * (item |> Item.produce_sale_price_of)
   in
     { qty        = qty
     , listTotal  = listTotal
@@ -208,10 +208,10 @@ itemToViewD item =
      , brand        = Item.produce_brand_of item
      , variant      = Item.produce_variant_of item
      , size         = Size.produce_string_representation_of itemSize
-     , image        = item |> Item.produce_thumbnail_url
-     , listPrice    = item |> Item.produce_list_price
-     , salePrice    = item |> Item.produce_sale_price
-     , discountPct  = Item.produce_discount_percentage item
+     , image        = Item.produce_thumbnail_url_of item
+     , listPrice    = Item.produce_list_price_of item
+     , salePrice    = Item.produce_sale_price_of item
+     , discountPct  = Item.produce_discount_percentage_on item
      }
 
 

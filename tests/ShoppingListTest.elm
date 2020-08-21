@@ -49,10 +49,11 @@ itemSummaryData =
                         }
                       ]
   , availability    = "in_stock"
-  , discount        = Just { discount_code = "UXDS9y3"
-                           , name          = "seafood giveaway"
-                           , value         = "15"
-                           , items         = ["CHKCCS1233"]
+  , discount        = Just { code            = "UXDS9y3"
+                           , description     = "seafood giveaway"
+                           , percentage      = "15"
+                           , scope           = ["CHKCCS1233"]
+                           , expiration_date = "999999"
                            }
   }
 
