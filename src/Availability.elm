@@ -2,18 +2,24 @@ module Availability exposing
   ( Model
   , Error
   , stringify
-  , parse_string
+  , parse
+  , forcefully_parse
   , out_of_stock
   , produce_random_availability_from_seed
+  , unknown
   )
 
 import Random
 
 
+{-| The availability status of an item lets users know if an item is in
+stock, out of stock, or if its available on an order only basis.
+-}
 type Model
   = IN_STOCK
   | ORDER_ONLY
   | OUT_STOCK
+  | Unknown
 
 
 
@@ -32,23 +38,39 @@ order_only = ORDER_ONLY
 
 
 
+unknown : Model
+unknown = Unknown
+
+
+
 stringify : Model -> String
 stringify availability =
   case availability of
-    IN_STOCK    ->  "in_stock"    
-    OUT_STOCK   ->  "out_stock"   
-    ORDER_ONLY  ->  "order_only"  
+    IN_STOCK      -> "in_stock"    
+    OUT_STOCK     -> "out_stock"   
+    ORDER_ONLY    -> "order_only"  
+    Unknown -> "out_stock" 
 
 
 
-parse_string : String -> Result Error Model
-parse_string availabilityData =
+parse : String -> Result Error Model
+parse availabilityData =
   let errorMessage = "I can't parse an availability from this string"
   in case availabilityData |> String.toLower |> String.trim of
        "in_stock"    -> Ok IN_STOCK
        "out_stock"   -> Ok OUT_STOCK
        "order_only"  -> Ok ORDER_ONLY
        _             -> Err <| ParseError errorMessage availabilityData
+
+
+
+forcefully_parse : String -> Model
+forcefully_parse availabilityData =
+  case availabilityData |> String.toLower |> String.trim of
+    "in_stock"    -> IN_STOCK
+    "order_only"  -> ORDER_ONLY
+    "out_stock"   -> OUT_STOCK
+    _             -> Unknown
 
 
 

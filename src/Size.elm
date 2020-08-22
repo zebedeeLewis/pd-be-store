@@ -1,12 +1,13 @@
 module Size exposing
   ( Model
   , Error(..)
-  , parse_mg_from_float
-  , parse_mm_from_float
-  , parse_cc_from_float
-  , parse_ml_from_float
+  , produce_mg_interpretation_of_float
+  , produce_mm_interpretation_of_float
+  , produce_cc_interpretation_of_float
+  , produce_ml_interpretation_of_float
   , attempt_litre_convertion_of
-  , parse_string
+  , parse
+  , forcefully_parse
   , produce_litre_convertion_of_ml_value
   , stringify
   , produce_extra_small
@@ -16,6 +17,7 @@ module Size exposing
   , produce_extra_large
   , produce_random_size
   , produce_random_size_string
+  , unknown
   )
 
 import Random
@@ -54,11 +56,12 @@ type Model
   | M
   | LG
   | XL
+  | Unknown
 
 
 
-parse_string : String -> Result Error Model
-parse_string strSize =
+parse : String -> Result Error Model
+parse strSize =
   case String.trim <| String.toLower strSize of 
     "large"  -> Ok LG
     "lg"     -> Ok LG
@@ -70,17 +73,23 @@ parse_string strSize =
 
 
 
+forcefully_parse : String -> Model
+forcefully_parse strSize =
+  parse strSize |> Result.withDefault LG
+
+
+
 parse_measure_from_string : String -> Result Error Model
 parse_measure_from_string size_string =
   let
-    attempt_to_interpret_float_from possiblyFloat =
-      possiblyFloat |> String.toFloat
+    parse_float_from string =
+      string |> String.toFloat
 
     first_word_in size_string_ =
       size_string_ |> String.words >> List.head >> Maybe.withDefault ""
 
-    attempt_to_interpret_unit_from possiblyUnit =
-      case possiblyUnit of
+    parse_unit_from string =
+      case string of
         "ml" -> Just ML
         "mm" -> Just MM
         "cc" -> Just CC
@@ -96,19 +105,18 @@ parse_measure_from_string size_string =
 
     error_message = convertion_error_message size_string "size"
   in
-    case attempt_to_interpret_float_from (first_word_in size_string) of
+    case parse_float_from (first_word_in size_string) of
       Nothing -> Err (ConvertionError error_message)
       Just value ->
-        case attempt_to_interpret_unit_from
-               (second_word_in size_string) of
+        case parse_unit_from (second_word_in size_string) of
           Nothing -> Err (ConvertionError error_message)
           Just unit ->
             Ok (unit value)
 
 
 
-parse_ml_from_float : Float -> Model
-parse_ml_from_float value = value |> ML
+produce_ml_interpretation_of_float : Float -> Model
+produce_ml_interpretation_of_float value = value |> ML
 
 
 
@@ -135,18 +143,18 @@ produce_litre_convertion_of_ml_value mlValue =
 
 
 
-parse_mm_from_float : Float -> Model
-parse_mm_from_float value = value |> MM
+produce_mm_interpretation_of_float : Float -> Model
+produce_mm_interpretation_of_float value = value |> MM
 
 
 
-parse_mg_from_float : Float -> Model
-parse_mg_from_float value = value |> MG
+produce_mg_interpretation_of_float : Float -> Model
+produce_mg_interpretation_of_float value = value |> MG
 
 
 
-parse_cc_from_float : Float -> Model
-parse_cc_from_float value = value |> CC
+produce_cc_interpretation_of_float : Float -> Model
+produce_cc_interpretation_of_float value = value |> CC
 
 
 
@@ -175,6 +183,11 @@ produce_extra_large = XL
 
 
 
+unknown : Model
+unknown = Unknown
+
+
+
 stringify : Model -> String
 stringify size =
   case size of
@@ -182,11 +195,12 @@ stringify size =
     CC value -> (String.fromFloat value) ++ " cc"
     MG value -> (String.fromFloat value) ++ " mg"
     MM value -> (String.fromFloat value) ++ " mm"
-    LG -> "LG"
-    XL -> "XL"
-    SM -> "SM"
-    XS -> "XS"
-    M  -> "M"
+    LG       -> "LG"
+    XL       -> "XL"
+    SM       -> "SM"
+    XS       -> "XS"
+    M        -> "M"
+    Unknown  -> "unknown"
 
 
 
@@ -212,10 +226,10 @@ produce_random_size seed =
     randomFloat = (SRandom.randomFloat2 1.0 1000.00 seed)
     mapper random  =
       case random of
-        1 -> parse_cc_from_float randomFloat
-        2 -> parse_mm_from_float randomFloat
-        3 -> parse_ml_from_float randomFloat
-        4 -> parse_mg_from_float randomFloat
+        1 -> produce_cc_interpretation_of_float randomFloat
+        2 -> produce_mm_interpretation_of_float randomFloat
+        3 -> produce_ml_interpretation_of_float randomFloat
+        4 -> produce_mg_interpretation_of_float randomFloat
         5 -> produce_large
         6 -> produce_extra_large
         7 -> produce_small

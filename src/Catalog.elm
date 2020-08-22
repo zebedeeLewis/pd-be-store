@@ -93,7 +93,7 @@ produce_item_with_id id catalog =
         in case head of
              Nothing -> Nothing
              Just item_ ->
-               if (Item.produce_id_of item_) == id
+               if (Item.get_id_of item_) == id
                  then Just item_
                  else produce_item_with_id_ (List.drop 1 items)
   in produce_item_with_id_ (catalog |> produce_page_items)
@@ -142,7 +142,7 @@ random seed =
   let loi = List.map
               (\i ->
                 let seed_ = seed+i
-                in Item.produce_random_summary seed_
+                in Item.produce_random_item seed_
               ) <| List.range 1 30
       pageNumber = SRandom.randomInt 1 20 seed
   in generate_new_page 20 pageNumber loi

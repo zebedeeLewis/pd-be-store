@@ -5,8 +5,8 @@ module Discount exposing
   , Error(..)
   , create_new_discount
   , produce_data_from
-  , produce_discount_from_valid_data
-  , validate_discount_data
+  , forcefully_encode_data
+  , validate_data
   , produce_percentage_of
   , apply_discount_to_price
   , produce_random_discount_from_seed
@@ -143,8 +143,8 @@ produce_data_from discount =
 
 
 
-produce_discount_from_valid_data : Data -> Model
-produce_discount_from_valid_data data = 
+forcefully_encode_data : Data -> Model
+forcefully_encode_data data = 
   let should_we_get_invalid_data = -999  -- random number
       just_unwrap_value we_assume_its_valid = 
         case we_assume_its_valid of
@@ -169,8 +169,16 @@ produce_discount_from_valid_data data =
 
 
 
-validate_discount_data : Data -> Result Error Data
-validate_discount_data data =
+encode_data : Data -> Result Error Model
+encode_data data = 
+  case validate_data data of
+    Err error -> Err error
+    Ok _ -> Ok <| forcefully_encode_data data
+
+
+
+validate_data : Data -> Result Error Data
+validate_data data =
   let percentage_error =
         ValueError "Discount value needs to be an Integer."
       expiration_date_error =

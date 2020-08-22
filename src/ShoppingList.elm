@@ -138,14 +138,14 @@ remove itemId list =
       ShoppingList (tax list)
         <| List.filter
              (\entry_ ->
-               not (Item.produce_id_of (entry_ |> item ) == itemId_)
+               not (Item.get_id_of (entry_ |> item ) == itemId_)
              ) (entries list)
 
     dec itemId_ =
       ShoppingList (tax list)
         <| List.map
           (\entry_ ->
-            if (Item.produce_id_of (entry_ |> item)) == itemId_ 
+            if (Item.get_id_of (entry_ |> item)) == itemId_ 
               then Entry ((qty entry_) - 1) (item entry_)
               else Entry (qty entry_) (item entry_)
           ) (entries list)
@@ -154,8 +154,8 @@ remove itemId list =
       Nothing -> list
       Just entry_ ->
         if (qty entry_) > 1
-          then dec (Item.produce_id_of (entry_ |> item))
-          else remove_ (Item.produce_id_of (entry_ |> item))
+          then dec (Item.get_id_of (entry_ |> item))
+          else remove_ (Item.get_id_of (entry_ |> item))
 
 
 {-| produce a new ShoppingList with a new entry for the given item
@@ -163,7 +163,7 @@ remove itemId list =
 add : Item.Model -> Model -> Model
 add item_ list =
   let
-    itemId = Item.produce_id_of item_
+    itemId = Item.get_id_of item_
     add_ =
       ShoppingList (tax list) <| (singletonEntry item_)::(entries list)
 
@@ -171,7 +171,7 @@ add item_ list =
       ShoppingList (tax list)
         <| List.map
           (\entry_ ->
-            if (Item.produce_id_of (entry_ |> item)) == itemId
+            if (Item.get_id_of (entry_ |> item)) == itemId
               then Entry ((qty entry_) + 1) (item entry_)
               else Entry (qty entry_) (item entry_)
           ) (entries list)
@@ -193,7 +193,7 @@ maybeEntry itemId list =
       case List.head entries_ of
         Nothing -> Nothing
         Just entry_ -> 
-          if (Item.produce_id_of (entry_ |> item) ) == itemId
+          if (Item.get_id_of (entry_ |> item) ) == itemId
             then Just entry_
             else maybeEntry_ <| List.drop 1 entries_
   in maybeEntry_ (entries list)
@@ -228,7 +228,7 @@ qty (Entry qty_  _) = qty_
 randomEntry : Int -> Entry
 randomEntry seed =
   let qty_ = SRandom.randomInt 0 6 seed
-      item_ = Item.produce_random_summary seed
+      item_ = Item.produce_random_item seed
   in newEntry qty_ item_
 
 

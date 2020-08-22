@@ -189,9 +189,9 @@ entryToViewD entry =
   let item = ShoppingList.item entry
       qty = ShoppingList.qty entry
       listTotal = Round.roundNum 2
-                    <| (toFloat qty) * (item |> Item.produce_list_price_of)
+                    <| (toFloat qty) * (item |> Item.get_list_price_of)
       saleTotal = Round.roundNum 2
-                    <| (toFloat qty) * (item |> Item.produce_sale_price_of)
+                    <| (toFloat qty) * (item |> Item.get_sale_price_of)
   in
     { qty        = qty
     , listTotal  = listTotal
@@ -202,16 +202,16 @@ entryToViewD entry =
 
 itemToViewD : Item.Model -> ItemViewD
 itemToViewD item =
-  let itemSize = Item.produce_size_of item
-  in { id           = Item.produce_id_of item
-     , name         = Item.produce_name_of item
-     , brand        = Item.produce_brand_of item
-     , variant      = Item.produce_variant_of item
+  let itemSize = Item.get_size_of item
+  in { id           = Item.get_id_of item
+     , name         = Item.get_name_of item
+     , brand        = Item.get_brand_of item
+     , variant      = Item.get_variant_of item
      , size         = Size.stringify itemSize
-     , image        = Item.produce_thumbnail_url_of item
-     , listPrice    = Item.produce_list_price_of item
-     , salePrice    = Item.produce_sale_price_of item
-     , discountPct  = Item.produce_discount_percentage_on item
+     , image        = Item.get_thumbnail_url_of item
+     , listPrice    = Item.get_list_price_of item
+     , salePrice    = Item.get_sale_price_of item
+     , discountPct  = Item.get_discount_percentage_on item
      }
 
 
