@@ -1,14 +1,14 @@
 module Size exposing
   ( Model
   , Error(..)
-  , produce_mg_interpretation_of_float
-  , produce_mm_interpretation_of_float
-  , produce_cc_interpretation_of_float
-  , produce_ml_interpretation_of_float
+  , parse_mg_from_float
+  , parse_mm_from_float
+  , parse_cc_from_float
+  , parse_ml_from_float
   , attempt_litre_convertion_of
-  , attempt_size_interpretation_of_string
+  , parse_string
   , produce_litre_convertion_of_ml_value
-  , produce_string_representation_of
+  , stringify
   , produce_extra_small
   , produce_small
   , produce_medium
@@ -57,8 +57,8 @@ type Model
 
 
 
-attempt_size_interpretation_of_string : String -> Result Error Model
-attempt_size_interpretation_of_string strSize =
+parse_string : String -> Result Error Model
+parse_string strSize =
   case String.trim <| String.toLower strSize of 
     "large"  -> Ok LG
     "lg"     -> Ok LG
@@ -66,12 +66,12 @@ attempt_size_interpretation_of_string strSize =
     "xs"     -> Ok XS
     "sm"     -> Ok SM
     "m"      -> Ok M
-    measure  -> attempt_to_interpret_measure_from_string measure
+    measure  -> parse_measure_from_string measure
 
 
 
-attempt_to_interpret_measure_from_string : String -> Result Error Model
-attempt_to_interpret_measure_from_string size_string =
+parse_measure_from_string : String -> Result Error Model
+parse_measure_from_string size_string =
   let
     attempt_to_interpret_float_from possiblyFloat =
       possiblyFloat |> String.toFloat
@@ -107,8 +107,8 @@ attempt_to_interpret_measure_from_string size_string =
 
 
 
-produce_ml_interpretation_of_float : Float -> Model
-produce_ml_interpretation_of_float value = value |> ML
+parse_ml_from_float : Float -> Model
+parse_ml_from_float value = value |> ML
 
 
 
@@ -123,7 +123,7 @@ attempt_litre_convertion_of size =
     _ ->
       let error_message =
             convertion_error_message
-              (produce_string_representation_of size)
+              (stringify size)
               "litre"
       in Err <| ConvertionError error_message
 
@@ -135,18 +135,18 @@ produce_litre_convertion_of_ml_value mlValue =
 
 
 
-produce_mm_interpretation_of_float : Float -> Model
-produce_mm_interpretation_of_float value = value |> MM
+parse_mm_from_float : Float -> Model
+parse_mm_from_float value = value |> MM
 
 
 
-produce_mg_interpretation_of_float : Float -> Model
-produce_mg_interpretation_of_float value = value |> MG
+parse_mg_from_float : Float -> Model
+parse_mg_from_float value = value |> MG
 
 
 
-produce_cc_interpretation_of_float : Float -> Model
-produce_cc_interpretation_of_float value = value |> CC
+parse_cc_from_float : Float -> Model
+parse_cc_from_float value = value |> CC
 
 
 
@@ -175,8 +175,8 @@ produce_extra_large = XL
 
 
 
-produce_string_representation_of : Model -> String
-produce_string_representation_of size =
+stringify : Model -> String
+stringify size =
   case size of
     ML value -> (String.fromFloat value) ++ " ml" 
     CC value -> (String.fromFloat value) ++ " cc"
@@ -212,10 +212,10 @@ produce_random_size seed =
     randomFloat = (SRandom.randomFloat2 1.0 1000.00 seed)
     mapper random  =
       case random of
-        1 -> produce_cc_interpretation_of_float randomFloat
-        2 -> produce_mm_interpretation_of_float randomFloat
-        3 -> produce_ml_interpretation_of_float randomFloat
-        4 -> produce_mg_interpretation_of_float randomFloat
+        1 -> parse_cc_from_float randomFloat
+        2 -> parse_mm_from_float randomFloat
+        3 -> parse_ml_from_float randomFloat
+        4 -> parse_mg_from_float randomFloat
         5 -> produce_large
         6 -> produce_extra_large
         7 -> produce_small
@@ -229,5 +229,5 @@ produce_random_size seed =
 produce_random_size_string : Int -> String
 produce_random_size_string seed =
   let randomSize = produce_random_size seed
-  in produce_string_representation_of randomSize
+  in stringify randomSize
 

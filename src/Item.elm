@@ -1,7 +1,6 @@
 module Item exposing
   ( Model
   , Data
-  , Availability
   , ValidationErr(..)
   , produce_new_summary_from_data
   , blankSummary
@@ -25,6 +24,7 @@ import SRandom
 import UUID
 import Size
 import Discount
+import Availability
 
 
 -----------------------------------------------------------------------
@@ -44,7 +44,7 @@ blankSummaryRecord =
   , categoryTags    = []
   , subCategoryTags = []
   , searchTags      = []
-  , availability    = OUT_STOCK
+  , availability    = Availability.out_of_stock
   , discount        = Nothing
   }
 
@@ -94,7 +94,7 @@ type alias SummaryRecord =
   , categoryTags    : List Tag
   , subCategoryTags : List Tag
   , searchTags      : List Tag
-  , availability    : Availability
+  , availability    : Availability.Model
   , discount        : Maybe Discount.Model
   }
 
@@ -142,37 +142,10 @@ example:
 type ValidationErr
   = NaNPrice             String String
   | NegativePrice        String String
-  | InvalidAvailability  String String
+  | AvailabilityError    Availability.Error
   | NullId
   | DiscountError        Discount.Error
   | SizeError            Size.Error
-
-
-
-{-| represents the availability of inventory items of a given type.
-
-**IN_STOCK**   - represents a type of item that is currently in stock.
-
-**OUT_STOCK**  - represents a type of item that is currently out of
-stock.
-**ORDER_ONLY** - represents a type of item that is available on a
-per order basis.
-
-  examples:
-
-  availability1 : Availability
-  availability1 = IN_STOCK
-  
-  availability2 : Availability
-  availability2 = OUT_STOCK
-  
-  availability3 : Availability
-  availability3 = ORDER_ONLY
--}
-type Availability
-  = IN_STOCK
-  | ORDER_ONLY
-  | OUT_STOCK
 
 
 
@@ -211,44 +184,43 @@ is invalid.
 
 -}
 produce_new_summary_from_data : Data -> Result ValidationErr Model
-produce_new_summary_from_data data =
-  case validate_summary_data data of
+produce_new_summary_from_data unvalidatedData =
+  case validate_summary_data unvalidatedData of
     Err err -> Err err
-    Ok validData -> 
+    Ok data -> 
       let discount = 
-            case validData.discount of
+            case .discount data of
               Nothing -> Nothing
-              Just discount_ ->
-                Just (Discount.produce_discount_from_valid_data discount_)
+              Just discountData ->
+                Just (Discount.produce_discount_from_valid_data
+                        discountData
+                     )
       in Ok
            <| Summary
-                { name            = validData.name
-                , id              = validData.id
-                , imageThumbnail  = validData.imageThumbnail
-                , brand           = validData.brand
-                , variant         = validData.variant
-                , listPrice       = validData.listPrice
+                { name            = .name data
+                , id              = data.id
+                , imageThumbnail  = .imageThumbnail data
+                , brand           = .brand data
+                , variant         = .variant data
+                , listPrice       = .listPrice data
                                       |> String.toFloat
                                       |> Maybe.withDefault 0
                 , size            =
-                  Size.attempt_size_interpretation_of_string
-                    validData.size
+                  Size.parse_string (.size data)
                     |> Result.withDefault Size.produce_large
                 , departmentTags  = List.map
-                                      DepartmentTag
-                                      validData.departmentTags
+                                      DepartmentTag (.departmentTags data)
                 , categoryTags    = List.map
-                                      CategoryTag
-                                      validData.departmentTags
+                                      CategoryTag (.categoryTags data)
                 , subCategoryTags = List.map
                                       SubCategoryTag
-                                      validData.departmentTags
+                                      (.subCategoryTags data)
                 , searchTags      = List.map
                                       SearchTag
-                                      validData.departmentTags
-                , availability    = produce_possible_availability_from_string
-                                      validData.availability
-                                      |> Maybe.withDefault OUT_STOCK
+                                      (.searchTags data)
+                , availability    =
+                    Availability.parse_string (.availability data)
+                      |> Result.withDefault Availability.out_of_stock
                 , discount        = discount
                 }
 
@@ -260,7 +232,7 @@ convert_to_data item =
       possibleDiscount = produce_possible_discount_on item
       to_discount_data = Discount.produce_data_from
       mapped_to_possible_discount_data = Maybe.map to_discount_data
-      sizeData = Size.produce_string_representation_of (item |> size)
+      sizeData = Size.stringify (item |> size)
   in
     { name            = item |> produce_name_of
     , id              = item |> produce_id_of
@@ -273,19 +245,11 @@ convert_to_data item =
     , categoryTags    = map_tags_to_data record.categoryTags
     , subCategoryTags = map_tags_to_data record.subCategoryTags
     , searchTags      = map_tags_to_data record.searchTags
-    , availability    = item |> produce_availability_of_as_string
+    , availability    = produce_availability_of item 
+                          |> Availability.stringify
     , discount        = possibleDiscount
                           |> mapped_to_possible_discount_data
     }
-
-
-
-produce_availability_of_as_string : Model -> String
-produce_availability_of_as_string item =
-  case item |> produce_availability_of of
-    IN_STOCK    ->  "in_stock"    
-    OUT_STOCK   ->  "out_stock"   
-    ORDER_ONLY  ->  "order_only"  
 
 
 
@@ -346,7 +310,7 @@ validate_price_data_of data =
 validate_size_data_of : Data -> Result ValidationErr Data
 validate_size_data_of data =
   let possibleSize =
-        Size.attempt_size_interpretation_of_string (.size data)
+        Size.parse_string (.size data)
   in case possibleSize  of
        Err error -> Err <| SizeError error
        Ok _ -> Ok data
@@ -356,21 +320,11 @@ validate_size_data_of data =
 validate_availability_data_of : Data -> Result ValidationErr Data
 validate_availability_data_of data = 
   let possibleAvailability =
-        produce_possible_availability_from_string (.availability data)
+        Availability.parse_string (.availability data)
   in case possibleAvailability of
-       Nothing ->
-         Err <| InvalidAvailability data.id (.availability data)
-       Just availability -> Ok data
-
-
-
-produce_possible_availability_from_string : String -> Maybe Availability
-produce_possible_availability_from_string strAvailability =
-  case strAvailability |> String.toLower >> String.trim of
-    "in_stock"    -> Just IN_STOCK
-    "out_stock"   -> Just OUT_STOCK
-    "order_only"  -> Just ORDER_ONLY
-    _             -> Nothing
+       Err availabilityError ->
+         Err <| AvailabilityError availabilityError
+       Ok _ -> Ok data
 
 
 
@@ -394,7 +348,7 @@ produce_variant_of (Summary item) =  item.variant
 
 
 
-produce_availability_of : Model -> Availability
+produce_availability_of : Model -> Availability.Model
 produce_availability_of (Summary item) = item.availability
 
 
@@ -514,30 +468,6 @@ produce_random_variant seed =
 
 
 
-produce_random_availability : Int -> Availability
-produce_random_availability seed =
-  let mapper x =
-        case x of
-          1 -> IN_STOCK
-          2 -> OUT_STOCK
-          _ -> ORDER_ONLY
-      generator = Random.map mapper (Random.int 1 3)
-  in Random.step generator (Random.initialSeed seed) |> Tuple.first
-
-
-
-produce_random_availability_string : Int -> String
-produce_random_availability_string seed =
-  let mapper x =
-        case x of
-          1 -> "IN_STOCK"
-          2 -> "OUT_STOCK"
-          _ -> "ORDER_ONLY"
-      generator = Random.map mapper (Random.int 1 3)
-  in Random.step generator (Random.initialSeed seed) |> Tuple.first
-
-
-
 produce_random_data : Int -> Data
 produce_random_data seed =
   { name            = produce_random_name seed
@@ -567,7 +497,9 @@ produce_random_data seed =
                           , name = "searchTag"
                           }
                       ]
-  , availability    = produce_random_availability_string seed
+  , availability    =
+    Availability.stringify
+      <| Availability.produce_random_availability_from_seed seed
   , discount        =
     if SRandom.randomInt 0 1 seed == 1
       then Just (Discount.produce_random_data_from_seed seed)
