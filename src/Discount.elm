@@ -1,19 +1,23 @@
 module Discount exposing
   ( Model
-  , DataV1
   , Data
   , Error(..)
   , create_new_discount
   , produce_data_from
-  , forcefully_encode_data
+  , forcefully_produce_discount_from_data
   , validate_data
   , produce_percentage_of
   , apply_discount_to_price
   , produce_random_discount_from_seed
   , produce_random_data_from_seed
+  , json_encode
+  , decode_json
+  , get_code_for
   )
 
 
+import Json.Encode as Encode
+import Json.Decode as Decode
 import Time
 import UUID
 import Random
@@ -41,22 +45,13 @@ example:
   itemDiscount =
     Discount "UXDS9y3" "seafood giveaway" 15 ["CHKCCS1233"] expires
 -}
-type Model = Discount Code Description Percentage Scope Expires
+type Model = Discount Code Description Percentage Scope ExpirationDate
 
 type alias Code = String
 type alias Description = String
 type alias Percentage = Int
 type alias Scope = List String
-type alias Expires = Time.Posix
-
-
-
-type alias DataV1 =
-  { discount_code    : Code
-  , name             : Description
-  , value            : String
-  , items            : Scope
-  }
+type alias ExpirationDate = Time.Posix
 
 
 
@@ -71,63 +66,14 @@ type alias Data =
 
 
 create_new_discount
-  : Int
+  :  Code
   -> Description
   -> Percentage
   -> Scope
-  -> Expires
+  -> Int
   -> Model
-create_new_discount seed description discount_percentage scope date = 
-  create_blank_discount
-    |> give_it_a_random_code_from_seed seed
-    |> give_it_a_percentage_of discount_percentage
-    |> describe_it_as description
-    |> make_it_expire_on date
-    |> apply_it_to_items_indicated_by_ids_in scope
-
-
-
-create_blank_discount : Model
-create_blank_discount =
-  Discount "" "" 0 [] (Time.millisToPosix 0)
-
-
-
-describe_it_as : Description -> Model -> Model
-describe_it_as description discount =
-  let (Discount code _ percentage scope expires) = discount
-  in Discount code description percentage scope expires
-
-
-
-give_it_a_percentage_of : Percentage -> Model -> Model
-give_it_a_percentage_of discount_percentage discount =
-  let (Discount code description _ scope expires) = discount
-  in Discount code description discount_percentage scope expires
-
-
-
-give_it_a_random_code_from_seed : Int -> Model -> Model
-give_it_a_random_code_from_seed seed_value discount =
-  let (Discount _ description percentage scope expires) = discount
-      code = Random.step UUID.generator (Random.initialSeed seed_value)
-               |> Tuple.first
-               |> UUID.toString
-  in Discount code description percentage scope expires
-
-
-
-make_it_expire_on : Expires -> Model -> Model
-make_it_expire_on expiration_date discount =
-  let (Discount code description percentage scope _) = discount
-  in Discount code description percentage scope expiration_date
-
-
-
-apply_it_to_items_indicated_by_ids_in : Scope -> Model -> Model
-apply_it_to_items_indicated_by_ids_in scope discount =
-  let (Discount code description percentage _ expire) = discount
-  in Discount code description percentage scope expire
+create_new_discount code description percentage scope date = 
+  Discount code description percentage scope (Time.millisToPosix date)
 
 
 
@@ -143,11 +89,11 @@ produce_data_from discount =
 
 
 
-forcefully_encode_data : Data -> Model
-forcefully_encode_data data = 
+forcefully_produce_discount_from_data : Data -> Model
+forcefully_produce_discount_from_data data = 
   let should_we_get_invalid_data = -999  -- random number
-      just_unwrap_value we_assume_its_valid = 
-        case we_assume_its_valid of
+      just_unwrap_value assumedToBeValid = 
+        case assumedToBeValid of
           Just value -> value
           Nothing -> should_we_get_invalid_data
 
@@ -169,11 +115,59 @@ forcefully_encode_data data =
 
 
 
-encode_data : Data -> Result Error Model
-encode_data data = 
+produce_discount_from_data : Data -> Result Error Model
+produce_discount_from_data data = 
   case validate_data data of
     Err error -> Err error
-    Ok _ -> Ok <| forcefully_encode_data data
+    Ok _ -> Ok <| forcefully_produce_discount_from_data data
+
+
+
+encoder : Model -> Encode.Value
+encoder discount = 
+  let (Discount code description percentage scope expires) = discount
+  in Encode.object
+       [ ( "code", Encode.string code )
+       , ( "description", Encode.string description )
+       , ( "percentage", Encode.int percentage )
+       , ( "scope", Encode.list Encode.string scope )
+       , ( "expiration_date"
+         , Encode.int <| Time.posixToMillis expires
+         )
+       ]
+
+
+
+json_encode : Model -> String
+json_encode discount =
+  let (Discount code description percentage scope expires) = discount
+      value = encoder discount
+  in Encode.encode 0 value
+
+
+
+scopeDecoder : Decode.Decoder (List String)
+scopeDecoder = Decode.list Decode.string
+
+
+
+decoder : Decode.Decoder Model
+decoder = Decode.map5
+            create_new_discount
+            ( Decode.field "code" Decode.string )
+            ( Decode.field "description" Decode.string )
+            ( Decode.field "percentage" Decode.int )
+            ( Decode.field "scope" scopeDecoder )
+            ( Decode.field "expiration_date" Decode.int )
+              
+
+
+decode_json : String -> Result Error Model
+decode_json jsonDiscount =
+  let decodeResult = Decode.decodeString decoder jsonDiscount
+  in case decodeResult of
+       Err error -> Err <| JsonDecodeError error
+       Ok discount -> Ok discount
 
 
 
@@ -189,6 +183,13 @@ validate_data data =
          case .expiration_date data |> String.toInt of
            Nothing -> Err expiration_date_error
            Just expiration_date -> Ok data
+
+
+
+get_code_for : Model -> String
+get_code_for discount =
+  let (Discount code description percentage scope expires) = discount
+  in code
 
 
 
@@ -219,6 +220,7 @@ produce_discounted_amount_on_price price discount =
 
 type Error
   = ValueError String
+  | JsonDecodeError Decode.Error
   | DateError String
 
 
@@ -227,16 +229,8 @@ type Error
 
 produce_random_data_from_seed : Int -> Data
 produce_random_data_from_seed seed =
-  { code             = SRandom.produce_random_id seed
-  , description      = SRandom.produce_random_description seed
-  , percentage       = String.fromInt (SRandom.randomInt 1 25 seed)
-  , scope            = List.map
-                         (\i ->
-                           let seed_ = seed+i
-                           in SRandom.produce_random_id seed_
-                         ) <| List.range 0 8
-  , expiration_date  = String.fromInt (SRandom.randomInt 8888 9999 seed)
-  }
+  let discount = produce_random_discount_from_seed seed
+  in produce_data_from discount
 
 
 

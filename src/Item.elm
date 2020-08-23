@@ -193,7 +193,8 @@ produce_new_item_from_data data =
             case .discount data of
               Nothing -> Nothing
               Just discountData ->
-                Just (Discount.forcefully_encode_data discountData)
+                Just (Discount.forcefully_produce_discount_from_data
+                        discountData)
 
       in Ok <| Summary { name            = .name data
                        , id              = data.id
