@@ -123,8 +123,8 @@ produce_discount_from_data data =
 
 
 
-encoder : Model -> Encode.Value
-encoder discount = 
+javascript_representation_of : Model -> Encode.Value
+javascript_representation_of discount = 
   let (Discount code description percentage scope expires) = discount
   in Encode.object
        [ ( "code", Encode.string code )
@@ -141,7 +141,7 @@ encoder discount =
 json_encode : Model -> String
 json_encode discount =
   let (Discount code description percentage scope expires) = discount
-      value = encoder discount
+      value = javascript_representation_of discount
   in Encode.encode 0 value
 
 
@@ -162,12 +162,9 @@ decoder = Decode.map5
               
 
 
-decode_json : String -> Result Error Model
+decode_json : String -> Result Decode.Error Model
 decode_json jsonDiscount =
-  let decodeResult = Decode.decodeString decoder jsonDiscount
-  in case decodeResult of
-       Err error -> Err <| JsonDecodeError error
-       Ok discount -> Ok discount
+  Decode.decodeString decoder jsonDiscount
 
 
 
@@ -220,7 +217,6 @@ produce_discounted_amount_on_price price discount =
 
 type Error
   = ValueError String
-  | JsonDecodeError Decode.Error
   | DateError String
 
 

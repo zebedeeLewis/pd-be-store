@@ -1,14 +1,14 @@
 module Availability exposing
   ( Model
-  , Error
   , stringify
   , parse
-  , forcefully_parse
   , out_of_stock
   , produce_random_availability_from_seed
   , unknown
   )
 
+import Json.Encode as Encode
+import Json.Decode as Decode
 import Random
 
 
@@ -53,28 +53,38 @@ stringify availability =
 
 
 
-parse : String -> Result Error Model
+javascript_representation_of : Model -> Encode.Value
+javascript_representation_of availability =
+  let availabilityString = stringify availability
+  in Encode.string availabilityString
+
+
+
+json_encode : Model -> String
+json_encode availability =
+  let value = javascript_representation_of availability
+  in Encode.encode 0 value
+
+
+
+decoder : Decode.Decoder Model
+decoder = Decode.map parse Decode.string
+
+
+
+decode_json : String -> Result Decode.Error Model
+decode_json jsonAvailability =
+  Decode.decodeString decoder jsonAvailability
+
+
+
+parse : String -> Model
 parse availabilityData =
-  let errorMessage = "I can't parse an availability from this string"
-  in case availabilityData |> String.toLower |> String.trim of
-       "in_stock"    -> Ok IN_STOCK
-       "out_stock"   -> Ok OUT_STOCK
-       "order_only"  -> Ok ORDER_ONLY
-       _             -> Err <| ParseError errorMessage availabilityData
-
-
-
-forcefully_parse : String -> Model
-forcefully_parse availabilityData =
   case availabilityData |> String.toLower |> String.trim of
     "in_stock"    -> IN_STOCK
-    "order_only"  -> ORDER_ONLY
     "out_stock"   -> OUT_STOCK
+    "order_only"  -> ORDER_ONLY
     _             -> Unknown
-
-
-
-type Error = ParseError String String
 
 
 

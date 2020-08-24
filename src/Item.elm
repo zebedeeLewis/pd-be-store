@@ -133,7 +133,6 @@ example:
 type ValidationErr
   = NaNPrice             String String
   | NegativePrice        String String
-  | AvailabilityError    Availability.Error
   | NullId
   | TagError             Tag.Error
   | DiscountError        Discount.Error
@@ -145,39 +144,6 @@ type ValidationErr
 -- FUNCTION DEFINITIONS
 -----------------------------------------------------------------------
 
--- produce_new_item_from_data : Data -> Result ValidationErr Model
--- produce_new_item_from_data unvalidatedData =
---   case validate_data unvalidatedData of
---     Err err -> Err err
---     Ok data -> 
---       let discount = 
---             case .discount data of
---               Nothing -> Nothing
---               Just discountData ->
---                 Just (Discount.produce_discount_from_valid_data
---                         discountData
---                      )
---           tags = List.map Tag.forcefully_encode_data (.tags data)
---           size_ = Size.forcefully_parse (.size data)
---           availability =
---             Availability.forcefully_parse (.availability data)
--- 
---       in Ok <| Summary { name            = .name data
---                        , id              = data.id
---                        , imageThumbnail  = .imageThumbnail data
---                        , brand           = .brand data
---                        , variant         = .variant data
---                        , listPrice       = .listPrice data
---                                              |> String.toFloat
---                                              |> Maybe.withDefault 0
---                        , size            = size_
---                        , tags            = tags
---                        , availability    = availability
---                        , discount        = discount
---                        }
-
-
-
 produce_new_item_from_data : Data -> Result ValidationErr Model
 produce_new_item_from_data data =
   case validate data of
@@ -188,7 +154,7 @@ produce_new_item_from_data data =
           listPrice =
             String.toFloat (.listPrice data) |> Maybe.withDefault 0.0
           availability =
-            Availability.forcefully_parse (.availability data)
+            Availability.parse (.availability data)
           discount =
             case .discount data of
               Nothing -> Nothing
@@ -218,13 +184,13 @@ convert_to_data item =
       mapped_to_possible_discount_data = Maybe.map to_discount_data
       sizeData = Size.stringify (item |> size)
   in
-    { name            = item |> get_name_of
-    , id              = item |> get_id_of
-    , imageThumbnail  = item |> get_thumbnail_url_of
-    , brand           = item |> get_brand_of
-    , variant         = item |> get_variant_of
-    , listPrice       = item |> get_list_price_of >> String.fromFloat
-    , size            = sizeData 
+    { name            = get_name_of item
+    , id              = get_id_of item
+    , imageThumbnail  = get_thumbnail_url_of item
+    , brand           = get_brand_of item
+    , variant         = get_variant_of item
+    , listPrice       = get_list_price_of item |> String.fromFloat
+    , size            = sizeData
     , tags            = List.map Tag.decode_tag record.tags
     , availability    = get_availability_of item 
                           |> Availability.stringify
@@ -240,7 +206,6 @@ validate data =
       |> validate_data_id_of
       |> Result.andThen validate_price_data_of
       |> Result.andThen validate_size_data_of
-      |> Result.andThen validate_availability_data_of
       |> Result.andThen validate_discount_data_of
 
 
@@ -282,16 +247,6 @@ validate_size_data_of data =
         Size.parse (.size data)
   in case possibleSize  of
        Err error -> Err <| SizeError error
-       Ok _ -> Ok data
-
-
-
-validate_availability_data_of : Data -> Result ValidationErr Data
-validate_availability_data_of data = 
-  let possibleAvailability = Availability.parse (.availability data)
-  in case possibleAvailability of
-       Err availabilityError ->
-         Err <| AvailabilityError availabilityError
        Ok _ -> Ok data
 
 
