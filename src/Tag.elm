@@ -8,6 +8,8 @@ module Tag exposing
   , produce_random_tag_from_seed
   )
 
+import Json.Encode as Encode
+import Json.Decode as Decode
 import Random
 import SRandom
 
@@ -35,6 +37,11 @@ type alias Data =
 
 
 
+create_tag : UniqueName -> Class -> Description -> Model
+create_tag name class description = Tag name class description
+
+
+
 encode_data : Data -> Result Error Model
 encode_data data =
   if (.name data |> String.length) < 1
@@ -55,6 +62,39 @@ decode_tag (Tag name class description) =
   , class       = class
   , description = description
   }
+
+
+
+javascript_representation_of : Model -> Encode.Value
+javascript_representation_of tag = 
+  let (Tag name class description) = tag
+  in Encode.object
+       [ ( "name", Encode.string name )
+       , ( "class", Encode.string class )
+       , ( "description", Encode.string description )
+       ]
+
+
+
+json_encode : Model -> String
+json_encode tag =
+  let value = javascript_representation_of tag
+  in Encode.encode 0 value
+
+
+
+decoder : Decode.Decoder Model
+decoder = Decode.map3
+            create_tag
+            ( Decode.field "name" Decode.string )
+            ( Decode.field "class" Decode.string )
+            ( Decode.field "description" Decode.string )
+              
+
+
+decode_json : String -> Result Decode.Error Model
+decode_json jsonTag =
+  Decode.decodeString decoder jsonTag
 
 
 

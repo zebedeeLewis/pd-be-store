@@ -140,8 +140,7 @@ javascript_representation_of discount =
 
 json_encode : Model -> String
 json_encode discount =
-  let (Discount code description percentage scope expires) = discount
-      value = javascript_representation_of discount
+  let value = javascript_representation_of discount
   in Encode.encode 0 value
 
 
