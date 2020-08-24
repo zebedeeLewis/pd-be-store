@@ -7,7 +7,6 @@ module Size exposing
   , produce_ml_interpretation_of_float
   , attempt_litre_convertion_of
   , parse
-  , forcefully_parse
   , produce_litre_convertion_of_ml_value
   , stringify
   , produce_extra_small
@@ -17,9 +16,11 @@ module Size exposing
   , produce_extra_large
   , produce_random_size
   , produce_random_size_string
-  , unknown
+  , produce_unknown
   )
 
+import Json.Encode as Encode
+import Json.Decode as Decode
 import Random
 import SRandom
 
@@ -56,62 +57,102 @@ type Model
   | M
   | LG
   | XL
+  | NA
   | Unknown
 
 
 
-parse : String -> Result Error Model
+{-| TODO: refactor this function to make the compiler help us
+should we add need to a new size constructor. As is right now, we need
+to remember to add the new size here whenever we create a new size
+constructor.-}
+parse : String -> Model
 parse strSize =
   case String.trim <| String.toLower strSize of 
-    "large"  -> Ok LG
-    "lg"     -> Ok LG
-    "xl"     -> Ok XL
-    "xs"     -> Ok XS
-    "sm"     -> Ok SM
-    "m"      -> Ok M
+    "large"  -> LG
+    "lg"     -> LG
+    "xl"     -> XL
+    "xs"     -> XS
+    "sm"     -> SM
+    "m"      -> M
+    "n/a"    -> NA
     measure  -> parse_measure_from_string measure
 
 
 
-forcefully_parse : String -> Model
-forcefully_parse strSize =
-  parse strSize |> Result.withDefault LG
-
-
-
-parse_measure_from_string : String -> Result Error Model
+parse_measure_from_string : String -> Model
 parse_measure_from_string size_string =
   let
     parse_float_from string =
       string |> String.toFloat
 
-    first_word_in size_string_ =
-      size_string_ |> String.words >> List.head >> Maybe.withDefault ""
+    firstWord =
+      size_string
+        |> String.words
+        |> List.head
+        |> Maybe.withDefault ""
 
-    parse_unit_from string =
-      case string of
-        "ml" -> Just ML
-        "mm" -> Just MM
-        "cc" -> Just CC
-        "mg" -> Just MG
-        _    -> Nothing
+    unit =
+      case size_string of
+        "ml" -> ML
+        "mm" -> MM
+        "cc" -> CC
+        "mg" -> MG
+        _    -> \_ -> Unknown
 
-    second_word_in size_string_ = 
-      size_string_
+    secondWord = 
+      size_string
         |> String.words
         |> (List.drop 1)
         |> List.head
         |> Maybe.withDefault ""
 
-    error_message = convertion_error_message size_string "size"
   in
-    case parse_float_from (first_word_in size_string) of
-      Nothing -> Err (ConvertionError error_message)
-      Just value ->
-        case parse_unit_from (second_word_in size_string) of
-          Nothing -> Err (ConvertionError error_message)
-          Just unit ->
-            Ok (unit value)
+    case parse_float_from firstWord of
+      Nothing -> Unknown
+      Just value -> unit value
+
+
+
+stringify : Model -> String
+stringify size =
+  case size of
+    ML value -> (String.fromFloat value) ++ " ml" 
+    CC value -> (String.fromFloat value) ++ " cc"
+    MG value -> (String.fromFloat value) ++ " mg"
+    MM value -> (String.fromFloat value) ++ " mm"
+    LG       -> "LG"
+    XL       -> "XL"
+    SM       -> "SM"
+    XS       -> "XS"
+    M        -> "M"
+    NA       -> "N/A"
+    Unknown  -> "unknown"
+
+
+
+javascript_representation_of : Model -> Encode.Value
+javascript_representation_of size =
+  let sizeString = stringify size
+  in Encode.string sizeString
+
+
+
+json_encode : Model -> String
+json_encode size =
+  let value = javascript_representation_of size
+  in Encode.encode 0 value
+
+
+
+decoder : Decode.Decoder Model
+decoder = Decode.map parse Decode.string
+
+
+
+decode_json : String -> Result Decode.Error Model
+decode_json jsonSize =
+  Decode.decodeString decoder jsonSize
 
 
 
@@ -183,25 +224,8 @@ produce_extra_large = XL
 
 
 
-unknown : Model
-unknown = Unknown
-
-
-
-stringify : Model -> String
-stringify size =
-  case size of
-    ML value -> (String.fromFloat value) ++ " ml" 
-    CC value -> (String.fromFloat value) ++ " cc"
-    MG value -> (String.fromFloat value) ++ " mg"
-    MM value -> (String.fromFloat value) ++ " mm"
-    LG       -> "LG"
-    XL       -> "XL"
-    SM       -> "SM"
-    XS       -> "XS"
-    M        -> "M"
-    Unknown  -> "unknown"
-
+produce_unknown : Model
+produce_unknown = Unknown
 
 
 

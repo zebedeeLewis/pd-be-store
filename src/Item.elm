@@ -39,7 +39,7 @@ blankRecord =
   , brand           = ""
   , variant         = ""
   , listPrice       = 0.0
-  , size            = Size.unknown
+  , size            = Size.produce_unknown
   , tags            = []
   , availability    = Availability.unknown
   , discount        = Nothing
@@ -149,7 +149,7 @@ produce_new_item_from_data data =
   case validate data of
     Err error -> Err error
     Ok _ ->
-      let size_ = Size.forcefully_parse (.size data)
+      let size_ = Size.parse (.size data)
           tags = List.map Tag.forcefully_encode_data (.tags data)
           listPrice =
             String.toFloat (.listPrice data) |> Maybe.withDefault 0.0
@@ -205,7 +205,6 @@ validate data =
     data
       |> validate_data_id_of
       |> Result.andThen validate_price_data_of
-      |> Result.andThen validate_size_data_of
       |> Result.andThen validate_discount_data_of
 
 
@@ -238,16 +237,6 @@ validate_price_data_of data =
       if listPriceAsFloat < 0
         then Err <| NegativePrice data.id (.listPrice data)
         else Ok data
-
-
-
-validate_size_data_of : Data -> Result ValidationErr Data
-validate_size_data_of data =
-  let possibleSize =
-        Size.parse (.size data)
-  in case possibleSize  of
-       Err error -> Err <| SizeError error
-       Ok _ -> Ok data
 
 
 
