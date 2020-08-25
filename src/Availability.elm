@@ -4,7 +4,9 @@ module Availability exposing
   , parse
   , out_of_stock
   , produce_random_availability_from_seed
+  , javascript_representation_of
   , unknown
+  , decoder
   )
 
 import Json.Encode as Encode

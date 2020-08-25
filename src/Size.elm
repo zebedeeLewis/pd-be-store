@@ -17,6 +17,8 @@ module Size exposing
   , produce_random_size
   , produce_random_size_string
   , produce_unknown
+  , javascript_representation_of
+  , decoder
   )
 
 import Json.Encode as Encode

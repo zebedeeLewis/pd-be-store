@@ -1,18 +1,15 @@
 module Discount exposing
   ( Model
-  , Data
   , Error(..)
   , create_new_discount
-  , produce_data_from
-  , forcefully_produce_discount_from_data
-  , validate_data
   , produce_percentage_of
   , apply_discount_to_price
   , produce_random_discount_from_seed
-  , produce_random_data_from_seed
   , json_encode
   , decode_json
   , get_code_for
+  , javascript_representation_of
+  , decoder
   )
 
 
@@ -55,16 +52,6 @@ type alias ExpirationDate = Time.Posix
 
 
 
-type alias Data =
-  { code            : Code
-  , description     : Description
-  , percentage      : String
-  , scope           : Scope
-  , expiration_date : String
-  }
-
-
-
 create_new_discount
   :  Code
   -> Description
@@ -74,52 +61,6 @@ create_new_discount
   -> Model
 create_new_discount code description percentage scope date = 
   Discount code description percentage scope (Time.millisToPosix date)
-
-
-
-produce_data_from : Model -> Data
-produce_data_from discount =
-  let (Discount code description percentage scope expire) = discount
-  in { code            = code
-     , description     = description
-     , percentage      = String.fromInt percentage
-     , scope           = scope
-     , expiration_date = String.fromInt <| Time.posixToMillis expire
-     }
-
-
-
-forcefully_produce_discount_from_data : Data -> Model
-forcefully_produce_discount_from_data data = 
-  let should_we_get_invalid_data = -999  -- random number
-      just_unwrap_value assumedToBeValid = 
-        case assumedToBeValid of
-          Just value -> value
-          Nothing -> should_we_get_invalid_data
-
-      percentage =
-        .percentage data |> String.toInt |> just_unwrap_value
-
-      expiration_date =
-        .expiration_date data
-          |> String.toInt
-          |> just_unwrap_value
-          |> Time.millisToPosix
-
-  in Discount
-       (.code data)
-       (.description data)
-       (percentage) 
-       (.scope data)
-       (expiration_date)
-
-
-
-produce_discount_from_data : Data -> Result Error Model
-produce_discount_from_data data = 
-  case validate_data data of
-    Err error -> Err error
-    Ok _ -> Ok <| forcefully_produce_discount_from_data data
 
 
 
@@ -167,21 +108,6 @@ decode_json jsonDiscount =
 
 
 
-validate_data : Data -> Result Error Data
-validate_data data =
-  let percentage_error =
-        ValueError "Discount value needs to be an Integer."
-      expiration_date_error =
-        DateError "Discount expiration date needs to be an Integer."
-  in case .percentage data |> String.toInt of
-       Nothing -> Err percentage_error
-       Just percentage ->
-         case .expiration_date data |> String.toInt of
-           Nothing -> Err expiration_date_error
-           Just expiration_date -> Ok data
-
-
-
 get_code_for : Model -> String
 get_code_for discount =
   let (Discount code description percentage scope expires) = discount
@@ -221,13 +147,6 @@ type Error
 
 
 -- DUMMY DATA
-
-produce_random_data_from_seed : Int -> Data
-produce_random_data_from_seed seed =
-  let discount = produce_random_discount_from_seed seed
-  in produce_data_from discount
-
-
 
 produce_random_discount_from_seed : Int -> Model
 produce_random_discount_from_seed seed =

@@ -6,6 +6,8 @@ module Tag exposing
   , decode_tag
   , forcefully_encode_data
   , produce_random_tag_from_seed
+  , javascript_representation_of
+  , decoder
   )
 
 import Json.Encode as Encode

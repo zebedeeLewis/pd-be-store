@@ -1,8 +1,5 @@
 module Item exposing
   ( Model
-  , Data
-  , ValidationErr(..)
-  , produce_new_item_from_data
   , get_id_of
   , get_name_of
   , get_thumbnail_url_of
@@ -12,10 +9,12 @@ module Item exposing
   , get_sale_price_of
   , get_discount_percentage_on
   , get_brand_of
-  , convert_to_data
   , produce_random_item
   )
 
+import Json.Encode as Encode
+import Json.Decode as Decode
+import Json.Decode.Pipeline as Pipeline
 import Time
 import Round
 import Random
@@ -27,57 +26,11 @@ import Availability
 import Tag
 
 
------------------------------------------------------------------------
--- CONSTANT DEFINITIONS
------------------------------------------------------------------------
-
-blankRecord : Record
-blankRecord =
-  { name            = ""
-  , id              = "0"
-  , imageThumbnail  = ""
-  , brand           = ""
-  , variant         = ""
-  , listPrice       = 0.0
-  , size            = Size.produce_unknown
-  , tags            = []
-  , availability    = Availability.unknown
-  , discount        = Nothing
-  }
-
-
-blankSummary : Model
-blankSummary = Summary blankRecord
-
-
------------------------------------------------------------------------
--- DATA DEFINITIONS
------------------------------------------------------------------------
 
 {-| represents a summary descriptions of a single type of inventory
 item.
-
-**size:** the item size can be either an exact size like "50 mg" or
-a vague size such as "large".
-
-**listPrice:** the item price before a discount is applied.
-
-**availability:** the items availability in stock.
-
-**departmentTags:** a collection of tags, each representing a department
-the item should be in.
-
-**categoryTags:** A collections of tags, each representing a department
-category the item should be in. This serves to sub-devides individual
-departments.
-
-**subCategoryTags:** A collection of tags, each representing a
-department sub-category the item should be in. This serves to further
-sub-devide individual departments.
-
-**searchTags:** these are tags used to aid in searching for this item.
 -}
-type Model = Summary Record
+type Model = Class Record
 
 type alias Record =
   { name            : String
@@ -94,190 +47,306 @@ type alias Record =
 
 
 
-{-| Represents the information necessary to build a new Record. All
-fields hold simple string data or "subrecords" of string data.
-
-All fields match one to one with the fields in Record.
--}
-type alias Data =
-  { name            : String
-  , id              : String
-  , imageThumbnail  : String
-  , brand           : String
-  , variant         : String
-  , listPrice       : String
-  , size            : String
-  , tags            : List Tag.Data
-  , availability    : String
-  , discount        : Maybe Discount.Data
-  }
-
-
-
-{-| If a user of this module attempts to create a new item with
-invalid data, that will result in an ValidationErr. The first
-field of ValidationErr is the id of the data item used in the
-attempt, the second is the errant value used in the attempt.
-Whenever a third field is present it represents the field name
-holding the errant data.
-
-example:
-  priceErr = NaNPrice "ID123" "$124"
-
-  avErr = InvalidAvailability "ID123" "out of stock"
-
-  --                            item id  value  field
-  discountErr = InvalidDiscount String   "so"   "value"
-
--}
-type ValidationErr
-  = NaNPrice             String String
-  | NegativePrice        String String
-  | NullId
-  | TagError             Tag.Error
-  | DiscountError        Discount.Error
-  | SizeError            Size.Error
-
-
-
------------------------------------------------------------------------
--- FUNCTION DEFINITIONS
------------------------------------------------------------------------
-
-produce_new_item_from_data : Data -> Result ValidationErr Model
-produce_new_item_from_data data =
-  case validate data of
-    Err error -> Err error
-    Ok _ ->
-      let size_ = Size.parse (.size data)
-          tags = List.map Tag.forcefully_encode_data (.tags data)
-          listPrice =
-            String.toFloat (.listPrice data) |> Maybe.withDefault 0.0
-          availability =
-            Availability.parse (.availability data)
-          discount =
-            case .discount data of
-              Nothing -> Nothing
-              Just discountData ->
-                Just (Discount.forcefully_produce_discount_from_data
-                        discountData)
-
-      in Ok <| Summary { name            = .name data
-                       , id              = data.id
-                       , imageThumbnail  = .imageThumbnail data
-                       , brand           = .brand data
-                       , variant         = .variant data
-                       , listPrice       = listPrice
-                       , size            = size_
-                       , tags            = tags
-                       , availability    = availability
-                       , discount        = discount
-                       }
-
-
-
-convert_to_data : Model -> Data
-convert_to_data item =
-  let (Summary record) = item
+javascript_representation_of : Model -> Encode.Value
+javascript_representation_of item = 
+  let name             = get_name_of item
+      id               = get_id_of item
+      imageThumbnail   = get_thumbnail_url_of item
+      brand            = get_brand_of item
+      variant          = get_variant_of item
+      listPrice        = get_list_price_of item
+      size             = get_size_of item
+      tags             = get_tags_on item
+      availability     = get_availability_of item
       possibleDiscount = get_possible_discount_on item
-      to_discount_data = Discount.produce_data_from
-      mapped_to_possible_discount_data = Maybe.map to_discount_data
-      sizeData = Size.stringify (item |> size)
-  in
-    { name            = get_name_of item
-    , id              = get_id_of item
-    , imageThumbnail  = get_thumbnail_url_of item
-    , brand           = get_brand_of item
-    , variant         = get_variant_of item
-    , listPrice       = get_list_price_of item |> String.fromFloat
-    , size            = sizeData
-    , tags            = List.map Tag.decode_tag record.tags
-    , availability    = get_availability_of item 
-                          |> Availability.stringify
-    , discount        = possibleDiscount
-                          |> mapped_to_possible_discount_data
+      discountValue  =
+        case possibleDiscount of
+          Nothing -> Encode.null
+          Just discount ->
+            Discount.javascript_representation_of discount
+
+  in Encode.object
+       [ ( "name", Encode.string name)
+       , ( "id", Encode.string id )
+       , ( "thumbnail_url", Encode.string imageThumbnail )
+       , ( "brand", Encode.string brand )
+       , ( "variant", Encode.string variant )
+       , ( "list_price", Encode.float listPrice )
+       , ( "size", Size.javascript_representation_of size )
+       , ( "tags", Encode.list Tag.javascript_representation_of tags )
+       , ( "availability"
+         , Availability.javascript_representation_of availability
+         )
+       , ( "discount", discountValue )
+       ]
+
+
+
+json_encode : Model -> String
+json_encode item =
+  let value = javascript_representation_of item
+  in Encode.encode 0 value
+
+
+
+record_decoder : Decode.Decoder Record
+record_decoder =
+  Decode.succeed Record
+    |> Pipeline.required "name" Decode.string
+    |> Pipeline.required "id" Decode.string
+    |> Pipeline.required "thumbnail_url" Decode.string
+    |> Pipeline.required "brand" Decode.string
+    |> Pipeline.required "variant" Decode.string
+    |> Pipeline.required "list_price" Decode.float
+    |> Pipeline.required "size" Size.decoder
+    |> Pipeline.required "tags" (Decode.list Tag.decoder)
+    |> Pipeline.required "availability" Availability.decoder
+    |> Pipeline.required "discount" (Decode.maybe Discount.decoder)
+
+
+
+decoder : Decode.Decoder Model
+decoder =
+  Decode.map Class record_decoder
+
+
+
+decode_json : String -> Result Decode.Error Model
+decode_json jsonItem =
+  Decode.decodeString decoder jsonItem
+
+
+
+blankClass : Model
+blankClass =
+  Class
+    { name            = ""
+    , id              = ""
+    , imageThumbnail  = ""
+    , brand           = ""
+    , variant         = ""
+    , listPrice       = 0.0
+    , size            = Size.produce_unknown
+    , tags            = []
+    , availability    = Availability.unknown
+    , discount        = Nothing
     }
 
 
 
-validate : Data -> Result ValidationErr Data
-validate data =
-    data
-      |> validate_data_id_of
-      |> Result.andThen validate_price_data_of
-      |> Result.andThen validate_discount_data_of
+set_name_to : String -> Model -> Model
+set_name_to newName (Class record) =
+  Class
+    { name            = newName
+    , id              = record.id
+    , imageThumbnail  = record.imageThumbnail
+    , brand           = record.brand
+    , variant         = record.variant
+    , listPrice       = record.listPrice
+    , size            = record.size
+    , tags            = record.tags
+    , availability    = record.availability
+    , discount        = record.discount
+    }
 
 
 
-validate_discount_data_of : Data -> Result ValidationErr Data
-validate_discount_data_of data =
-  let possibleDiscount = .discount data
-  in case possibleDiscount of
-       Nothing -> Ok data
-       Just discountData ->
-         case Discount.validate_data discountData of
-           Err error -> Err <| DiscountError error
-           Ok validData -> Ok data
+set_id_to : String -> Model -> Model
+set_id_to newId (Class record) =
+  Class
+    { name            = record.id
+    , id              = newId
+    , imageThumbnail  = record.imageThumbnail
+    , brand           = record.brand
+    , variant         = record.variant
+    , listPrice       = record.listPrice
+    , size            = record.size
+    , tags            = record.tags
+    , availability    = record.availability
+    , discount        = record.discount
+    }
 
 
 
-validate_data_id_of : Data -> Result ValidationErr Data
-validate_data_id_of data =
-  if (data.id |> String.length) <= 0
-    then Err <| NullId
-    else Ok data
+set_thumbnail_to : String -> Model -> Model
+set_thumbnail_to newUrl (Class record) =
+  Class
+    { name            = record.name
+    , id              = record.id
+    , imageThumbnail  = newUrl 
+    , brand           = record.brand
+    , variant         = record.variant
+    , listPrice       = record.listPrice
+    , size            = record.size
+    , tags            = record.tags
+    , availability    = record.availability
+    , discount        = record.discount
+    }
 
 
 
-validate_price_data_of : Data -> Result ValidationErr Data
-validate_price_data_of data = 
-  case .listPrice data |> String.toFloat of
-    Nothing -> Err <| NaNPrice data.id (.listPrice data)
-    Just listPriceAsFloat ->
-      if listPriceAsFloat < 0
-        then Err <| NegativePrice data.id (.listPrice data)
-        else Ok data
+set_brand_to : String -> Model -> Model
+set_brand_to newBrand (Class record) =
+  Class
+    { name            = record.name
+    , id              = record.id
+    , imageThumbnail  = record.imageThumbnail 
+    , brand           = newBrand
+    , variant         = record.variant
+    , listPrice       = record.listPrice
+    , size            = record.size
+    , tags            = record.tags
+    , availability    = record.availability
+    , discount        = record.discount
+    }
 
+
+
+set_variant_to : String -> Model -> Model
+set_variant_to newVariant (Class record) =
+  Class
+    { name            = record.name
+    , id              = record.id
+    , imageThumbnail  = record.imageThumbnail 
+    , brand           = record.brand
+    , variant         = newVariant
+    , listPrice       = record.listPrice
+    , size            = record.size
+    , tags            = record.tags
+    , availability    = record.availability
+    , discount        = record.discount
+    }
+
+
+
+set_list_price_to : Float -> Model -> Model
+set_list_price_to newListPrice (Class record) =
+  Class
+    { name            = record.name
+    , id              = record.id
+    , imageThumbnail  = record.imageThumbnail 
+    , brand           = record.brand
+    , variant         = record.variant
+    , listPrice       = newListPrice
+    , size            = record.size
+    , tags            = record.tags
+    , availability    = record.availability
+    , discount        = record.discount
+    }
+
+
+
+set_size_to : Size.Model -> Model -> Model
+set_size_to size (Class record) =
+  Class
+    { name            = record.name
+    , id              = record.id
+    , imageThumbnail  = record.imageThumbnail 
+    , brand           = record.brand
+    , variant         = record.variant
+    , listPrice       = record.listPrice
+    , size            = size
+    , tags            = record.tags
+    , availability    = record.availability
+    , discount        = record.discount
+    }
+
+
+
+set_tags_to : List Tag.Model -> Model -> Model
+set_tags_to tags (Class record) =
+  Class
+    { name            = record.name
+    , id              = record.id
+    , imageThumbnail  = record.imageThumbnail 
+    , brand           = record.brand
+    , variant         = record.variant
+    , listPrice       = record.listPrice
+    , size            = record.size
+    , tags            = tags
+    , availability    = record.availability
+    , discount        = record.discount
+    }
+
+
+
+set_availability_to : Availability.Model -> Model -> Model
+set_availability_to availability (Class record) =
+  Class
+    { name            = record.name
+    , id              = record.id
+    , imageThumbnail  = record.imageThumbnail 
+    , brand           = record.brand
+    , variant         = record.variant
+    , listPrice       = record.listPrice
+    , size            = record.size
+    , tags            = record.tags
+    , availability    = availability
+    , discount        = record.discount
+    }
+
+
+
+set_discount_to : Maybe Discount.Model -> Model -> Model
+set_discount_to discount (Class record) =
+  Class
+    { name            = record.name
+    , id              = record.id
+    , imageThumbnail  = record.imageThumbnail 
+    , brand           = record.brand
+    , variant         = record.variant
+    , listPrice       = record.listPrice
+    , size            = record.size
+    , tags            = record.tags
+    , availability    = record.availability
+    , discount        = discount
+    }
+  
 
 
 get_id_of : Model -> String
-get_id_of (Summary item) = item.id
+get_id_of (Class item) = item.id
 
 
 
 get_name_of : Model -> String
-get_name_of (Summary item) = item.name
+get_name_of (Class item) = item.name
 
 
 
 get_brand_of : Model -> String
-get_brand_of (Summary item) = item.brand
+get_brand_of (Class item) = item.brand
 
 
 
 get_variant_of : Model -> String
-get_variant_of (Summary item) =  item.variant
+get_variant_of (Class item) =  item.variant
 
 
 
 get_availability_of : Model -> Availability.Model
-get_availability_of (Summary item) = item.availability
+get_availability_of (Class item) = item.availability
 
 
 
 get_size_of : Model -> Size.Model
-get_size_of (Summary item) = item.size
-size = get_size_of
+get_size_of (Class item) = item.size
 
 
 
 get_thumbnail_url_of : Model -> String
-get_thumbnail_url_of (Summary item) = item.imageThumbnail
+get_thumbnail_url_of (Class item) = item.imageThumbnail
 
 
 
 get_list_price_of : Model -> Float
-get_list_price_of (Summary item) = item.listPrice
+get_list_price_of (Class item) = item.listPrice
+
+
+
+get_tags_on : Model -> List Tag.Model
+get_tags_on (Class item) = item.tags
+
 
 
 
@@ -295,7 +364,7 @@ get_sale_price_of item =
 
 
 get_possible_discount_on : Model -> Maybe Discount.Model
-get_possible_discount_on (Summary item) = item.discount
+get_possible_discount_on (Class item) = item.discount
 
 
 
@@ -380,13 +449,6 @@ produce_random_variant_from_seed seed =
 
 
 
-produce_random_data : Int -> Data
-produce_random_data seed =
-  let item = produce_random_item seed
-  in convert_to_data item
-
-
-
 produce_random_item : Int -> Model
 produce_random_item seed =
   let tags = List.map
@@ -399,7 +461,7 @@ produce_random_item seed =
           then Just (Discount.produce_random_discount_from_seed seed)
           else Nothing
 
-  in Summary { name            = produce_random_name_from_seed seed
+  in Class   { name            = produce_random_name_from_seed seed
              , id              = SRandom.produce_random_id seed
              , imageThumbnail  = produce_random_thumbnail_url_from_seed
                                    seed
