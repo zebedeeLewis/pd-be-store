@@ -14,6 +14,7 @@ module UseCase exposing
 
 import Round
 
+import Dict
 import Item
 import Size
 import Catalog
@@ -103,7 +104,7 @@ type alias ItemViewD =
 
 startShopping : Float -> Store
 startShopping gst =
-  let cart = ShoppingList.empty gst 
+  let cart = ShoppingList.empty
       catalog = Catalog.create_new_page 1 20 []
   in Store gst cart catalog
 
@@ -132,7 +133,9 @@ removeItemFromCart : String -> Store -> Store
 removeItemFromCart itemId store =
   let cart = getCartFrom store
       catalog = getCatalogFrom store
-  in Store (getGstFrom store) (ShoppingList.remove itemId cart) catalog
+  in Store (getGstFrom store)
+           (ShoppingList.remove_one_item_with_id itemId cart)
+           catalog
 
 
 addItemToCart : String -> Store -> Result Catalog.Error Store
@@ -145,23 +148,27 @@ addItemToCart itemId store =
      Nothing -> Err (Catalog.ItemNotInCatalog itemId)
      Just item ->
        Ok <| Store (getGstFrom store)
-                   (ShoppingList.add item cart)
+                   (ShoppingList.insert_item item cart)
                    (getCatalogFrom store)
 
 
 viewCart : CartView view -> Store -> view
 viewCart cartView store =
   let cart = getCartFrom store
-      taxPct = ShoppingList.tax cart
+      taxPct = getGstFrom store
       subtotal unitPriceFn =
         Round.roundNum 2
           <| List.foldl
                (\entry acc ->
-                 let unitPrice = unitPriceFn (ShoppingList.item entry)
+                 let unitPrice =
+                       unitPriceFn (ShoppingList.get_item_from_entry entry)
                      subtotal_ =
-                       (toFloat <| ShoppingList.qty entry)*unitPrice
+                       (toFloat
+                          <| ShoppingList.get_quantity_from_entry
+                             entry
+                       )*unitPrice
                  in acc + subtotal_
-               ) 0 (ShoppingList.entries cart)
+               ) 0 (ShoppingList.get_entries_from cart |> Dict.values)
 
       saleSubTotal = 1000.00 -- subtotal Item.salePrice
       saleTax = Round.roundNum 2 (saleSubTotal * taxPct/100)
@@ -171,7 +178,8 @@ viewCart cartView store =
       listTotal = listSubTotal + listTax
       totalSavings = listTotal - saleTotal
       cartEntries =
-        List.map entryToViewD (ShoppingList.entries cart)
+        List.map entryToViewD
+                 (ShoppingList.get_entries_from cart |> Dict.values)
 
   in cartView saleSubTotal
               taxPct
@@ -186,8 +194,8 @@ list entry.
 -}
 entryToViewD : ShoppingList.Entry -> EntryViewD
 entryToViewD entry =
-  let item = ShoppingList.item entry
-      qty = ShoppingList.qty entry
+  let item = ShoppingList.get_item_from_entry entry
+      qty = ShoppingList.get_quantity_from_entry entry
       listTotal = Round.roundNum 2
                     <| (toFloat qty) * (item |> Item.get_list_price_of)
       saleTotal = Round.roundNum 2
@@ -220,7 +228,7 @@ itemToViewD item =
 dummyStore : Int -> Store
 dummyStore seed =
   Store (SRandom.randomFloat2 12 15 seed)
-        (ShoppingList.randomList seed)
+        (ShoppingList.produce_random_list_from_seed seed)
         (Catalog.random seed)
 
 

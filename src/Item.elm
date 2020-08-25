@@ -1,5 +1,6 @@
 module Item exposing
   ( Model
+  , Id
   , get_id_of
   , get_name_of
   , get_thumbnail_url_of
@@ -34,7 +35,7 @@ type Model = Class Record
 
 type alias Record =
   { name            : String
-  , id              : String
+  , id              : Id
   , imageThumbnail  : String
   , brand           : String
   , variant         : String
@@ -44,6 +45,8 @@ type alias Record =
   , availability    : Availability.Model
   , discount        : Maybe Discount.Model
   }
+
+type alias Id = String
 
 
 
