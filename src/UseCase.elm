@@ -104,7 +104,7 @@ type alias ItemViewD =
 startShopping : Float -> Store
 startShopping gst =
   let cart = ShoppingList.empty gst 
-      catalog = Catalog.generate_new_page 1 20 []
+      catalog = Catalog.create_new_page 1 20 []
   in Store gst cart catalog
 
 
@@ -122,8 +122,8 @@ getGstFrom (Store gst _ _) = gst
 
 browseCatalog : CatalogView view -> Store -> view
 browseCatalog catalogView store =
-  let catalog = getCatalogFrom store
-      loi = Catalog.produce_page_items catalog
+  let currentPage = getCatalogFrom store
+      loi = Catalog.get_items_on currentPage
       viewData = List.map itemToViewD loi
   in catalogView viewData
 
@@ -138,8 +138,8 @@ removeItemFromCart itemId store =
 addItemToCart : String -> Store -> Result Catalog.Error Store
 addItemToCart itemId store =
   let cart = getCartFrom store
-      maybeItem =
-        getCatalogFrom store |> Catalog.produce_item_with_id itemId
+      maybeItem = getCatalogFrom store
+                    |> Catalog.try_getting_item_with_id itemId
   in
    case maybeItem of
      Nothing -> Err (Catalog.ItemNotInCatalog itemId)
