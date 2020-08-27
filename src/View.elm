@@ -47,6 +47,7 @@ import App
 
 type Model
   = ItemBrowser Config ItemBrowserV
+  | Dummy
 
 
 type Msg
@@ -192,6 +193,10 @@ type alias NavItem =
 -----------------------------------------------------------------------
 -- FUNCTION DEFINITIONS
 -----------------------------------------------------------------------
+
+
+loadingView : Model
+loadingView = Dummy
 
 {-| set up view configuration and produce a function that implements
 UseCase.ItemViewD.
@@ -597,6 +602,7 @@ update msg model =
   case msg of
     ToggleNavdrawer ->
       case model of
+        Dummy -> Dummy
         ItemBrowser config modelView ->
           let modelView_ =
                 { modelView
@@ -606,6 +612,7 @@ update msg model =
 
     ViewCart ->
       case model of
+        Dummy -> Dummy
         ItemBrowser config modelView ->
           let header = toggleCart modelView.header
               modelView_ =
@@ -616,6 +623,7 @@ update msg model =
 
     ToggleFullscreenCart ->
       case model of
+        Dummy -> Dummy
         ItemBrowser config modelView ->
           let header = toggleFullscreenCart modelView.header
               modelView_ =
@@ -626,6 +634,7 @@ update msg model =
 
     ViewCartSubTotal ->
       case model of
+        Dummy -> Dummy
         ItemBrowser config modelView ->
           let modelView_ =
                 { modelView
@@ -635,6 +644,7 @@ update msg model =
 
     NextPage pagination ->
       case model of
+        Dummy -> Dummy
         ItemBrowser config modelView ->
           let catalog = modelView.catalog
               pagination_ = nextPage pagination
@@ -649,6 +659,7 @@ update msg model =
 
     PrevPage pagination ->
       case model of
+        Dummy -> Dummy
         ItemBrowser config modelView ->
           let catalog = modelView.catalog
               pagination_ = prevPage pagination
@@ -664,6 +675,7 @@ update msg model =
 
     SetPageJump page pagination ->
       case model of
+        Dummy -> Dummy
         ItemBrowser config modelView ->
           let catalog = modelView.catalog
               pagination_ = setPageJump page pagination
@@ -678,6 +690,7 @@ update msg model =
 
     GotoPage page pagination ->
       case model of
+        Dummy -> Dummy
         ItemBrowser config modelView ->
           let catalog = modelView.catalog
               pagination_ = gotoPage page pagination
@@ -825,6 +838,7 @@ floatToMoney price = "$ " ++ Round.round 2 price
 renderItemBrowser : App.Model -> Model -> Html Msg
 renderItemBrowser app_ model =
   case model of
+    Dummy -> div [] []
     ItemBrowser config browserView ->
       let header = browserView.header
           catalog = browserView.catalog
