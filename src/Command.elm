@@ -1,6 +1,7 @@
 module Command exposing
   ( Msg
   , Arguments
+  , Action
   , new
   , execute
   , unwrap_url_changed_arguments
@@ -17,7 +18,8 @@ import Browser
 
 type Msg model = Command (Action model) Arguments
 
-type alias Action model = Arguments -> model -> model
+type alias Action model =
+  Arguments -> model -> ( model, Cmd (Msg model))
 
 type Arguments
   = UrlChangedArgs Url.Url
@@ -30,7 +32,7 @@ new action args = Command action args
 
 
 
-execute : Msg model -> model -> model
+execute : Msg model -> model -> (model, Cmd (Msg model))
 execute command model =
   let (Command action arguments) = command
   in action arguments model

@@ -1,10 +1,7 @@
 module Main exposing (..)
 
 import Url
-import Time
-import Task
 import Html exposing (Html)
-import Html.Styled exposing (toUnstyled)
 import Browser
 import Browser.Navigation as Nav
 
@@ -19,6 +16,7 @@ type alias Model =
   { story  : Story.Model
   , view   : View.Model
   , route  : Route.Model
+  , navKey : Nav.Key
   }
 
 
@@ -36,14 +34,23 @@ main =
 
 
 
+defaultTax = 12.4
+
+
+
 init : () -> Url.Url -> Nav.Key -> (Model, Cmd (Command.Msg Model))
 init  _ url key =
-  ( { story = Story.create_blank_story
-    , view  = View.loadingView
-    , route = Route.produce_route_to_search_results_page
-    }
-  , Cmd.none
-  )
+  let currentRoute = Route.parse_route_from url
+      startingStory = Story.create_blank_story
+                        |> Story.use_gst defaultTax
+
+  in  ( { story  = startingStory
+        , view   = View.loadingView
+        , route  = currentRoute
+        , navKey = key
+        }
+      , Cmd.none
+      )
 
 
 
@@ -56,9 +63,7 @@ view model =
 
 update : Command.Msg Model -> Model -> (Model, Cmd (Command.Msg Model))
 update command model =
-  ( Command.execute command model
-  , Cmd.none
-  )
+  Command.execute command model
 
 
 
@@ -72,31 +77,50 @@ url_change_command url =
 link_clicked_command : Browser.UrlRequest -> Command.Msg Model
 link_clicked_command urlRequest =
   let linkClickedArgs = Command.wrap_link_clicked_arguments urlRequest
-  in Command.new handle_link_clicked linkClickedArgs
+  in Command.new handle_link_click linkClickedArgs
 
 
 
-{-| TODO!!! -}
-handle_url_change : Command.Arguments -> Model -> Model
+handle_url_change : Command.Action Model
 handle_url_change args model =
   let possibleUrl = Command.unwrap_url_changed_arguments args
   in case possibleUrl of
-       Nothing -> Command.debug_log_command_argument_mismatch model
-       Just url -> model
+       Nothing -> 
+         ( Command.debug_log_command_argument_mismatch model
+         , Cmd.none
+         )
+
+       Just url ->
+         let newRoute = Route.parse_route_from url
+         in ( model |> set_route_to newRoute , Cmd.none )
 
 
 
-{-| TODO!!! -}
-handle_link_clicked : Command.Arguments -> Model -> Model
-handle_link_clicked args model =
+handle_link_click : Command.Action Model
+handle_link_click args model =
   let possibleUrlRequest = Command.unwrap_link_clicked_arguments args
   in case possibleUrlRequest of
-       Nothing -> Command.debug_log_command_argument_mismatch model
-       Just urlRequest -> model
+       Nothing -> 
+         ( Command.debug_log_command_argument_mismatch model
+         , Cmd.none
+         )
+
+       Just urlRequest ->
+         case urlRequest of
+           Browser.External url -> ( model, Nav.load url )
+
+           Browser.Internal url ->
+             let newRoute = Route.parse_route_from url
+             in  ( model |> set_route_to newRoute
+                 , Nav.pushUrl model.navKey (Url.toString url)
+                 )
 
 
 
-defaultTax = 12.4
+set_route_to : Route.Model -> Model -> Model
+set_route_to newRoute model =
+  Model model.story model.view newRoute model.navKey
+
 
 
 
