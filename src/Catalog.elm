@@ -2,6 +2,7 @@ module Catalog exposing
   ( Model
   , Msg
   , Error(..)
+  , PageNumber
   , View
   , create_new_page
   , get_pages_count_from
@@ -24,9 +25,10 @@ Catalog simulates a set of pages and items in the pages.
 -}
 type Model = Page CurrentPageNumber PagesCount NextPageNumber Items
 
-type alias CurrentPageNumber = Int
+type alias PageNumber = Int
+type alias CurrentPageNumber = PageNumber
 type alias PagesCount = Int
-type alias NextPageNumber = Int
+type alias NextPageNumber = PageNumber
 type alias Items = List Item.Model
 
 
@@ -77,7 +79,7 @@ set_next_page_number_to tentativeNextPageNumber page =
 
 
 type Msg
-  = SetNextPage Int
+  = SetNextPage NextPageNumber
   | GotoNextPage
 
 

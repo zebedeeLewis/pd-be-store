@@ -1,9 +1,9 @@
-module CommandTest exposing (..)
+module MessageTest exposing (..)
 
 import Expect exposing (Expectation)
 import Test exposing (..)
 
-import Command
+import Message
 
 
 -------------------------------------------------------------------------

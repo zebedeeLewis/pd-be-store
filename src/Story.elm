@@ -6,7 +6,7 @@ module Story exposing
 
 import User
 import ShoppingList
-import Command
+import Message
 import Store
 import Catalog
 
@@ -20,6 +20,28 @@ create_blank_story : Model
 create_blank_story =
   Story Store.create_new_empty_store
         User.create_new_guest_with_empty_cart
+
+
+
+dispatch_catalog_page_request_message
+  :  (Model -> rootModel -> rootModel)
+  -> Catalog.PageNumber
+  -> Message.Model rootModel
+dispatch_catalog_page_request_message update_root_model pageNumber =
+  let messageArguments =
+        Message.wrap_catalog_page_request_arguments pageNumber
+      handle_catalog_page_request_ = 
+        handle_catalog_page_request update_root_model
+
+  in Message.new handle_catalog_page_request_ messageArguments
+
+
+
+handle_catalog_page_request
+  : (Model -> rootModel -> rootModel)
+  -> Message.Handler rootModel
+handle_catalog_page_request update_root_model args rootModel =
+  Debug.todo "TODO!!!"
 
 
 
