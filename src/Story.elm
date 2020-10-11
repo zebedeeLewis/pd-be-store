@@ -9,10 +9,18 @@ import ShoppingList
 import Message
 import Store
 import Catalog
+import Api
+import Api.Query as Query
 
 
 
+-- type Model = Story State Store.Model User.Model
 type Model = Story Store.Model User.Model
+
+
+
+type State 
+  = WaitingForRequestedCatalog
 
 
 
@@ -23,24 +31,37 @@ create_blank_story =
 
 
 
-dispatch_catalog_page_request_message
-  :  (Model -> rootModel -> rootModel)
+dispatch_request_catalog_page_message
+  :  (rootModel -> Model)
+  -> (Model -> rootModel)
   -> Catalog.PageNumber
-  -> Message.Model rootModel
-dispatch_catalog_page_request_message update_root_model pageNumber =
-  let messageArguments =
-        Message.wrap_catalog_page_request_arguments pageNumber
-      handle_catalog_page_request_ = 
-        handle_catalog_page_request update_root_model
-
-  in Message.new handle_catalog_page_request_ messageArguments
+  -> Message.Msg rootModel
+dispatch_request_catalog_page_message
+  get_story_from
+  set_story_to
+  pageNumber =
+  let handler =
+        handle_catalog_page_request get_story_from set_story_to
+  in Message.dispatch_request_catalog_page_message handler pageNumber
 
 
 
 handle_catalog_page_request
-  : (Model -> rootModel -> rootModel)
-  -> Message.Handler rootModel
-handle_catalog_page_request update_root_model args rootModel =
+  :  (rootModel -> Model)
+  -> (Model -> rootModel)
+  -> Message.RequestCatalogPageHandler rootModel
+handle_catalog_page_request
+  get_story_from
+  set_story_to
+  pageNumber
+  rootModel =
+  -- Api.get_items_where Query.page_number_equals 
+  Debug.todo "TODO!!!"
+
+
+
+set_state_to : State -> Model -> Model
+set_state_to state story =
   Debug.todo "TODO!!!"
 
 

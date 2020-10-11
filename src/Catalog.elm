@@ -1,9 +1,13 @@
 module Catalog exposing
   ( Model
   , Msg
+  , View
   , Error(..)
   , PageNumber
-  , View
+  , CurrentPageNumber
+  , PagesCount
+  , NextPageNumber
+  , Items
   , create_new_page
   , get_pages_count_from
   , goto_next_page

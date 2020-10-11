@@ -22,12 +22,12 @@ type alias Model =
 
 
 
-main : Program () Model (Message.Model Model)
+main : Program () Model (Message.Msg Model)
 main =
   Browser.application
     { init = init
     , view = view
-    , update = update
+    , update = Message.update_rootModel
     , subscriptions = (\_ -> Sub.none)
     , onUrlChange = dispatch_url_changed_message
     , onUrlRequest = dispatch_link_clicked_message
@@ -39,7 +39,7 @@ defaultTax = 12.4
 
 
 
-init : () -> Url.Url -> Nav.Key -> (Model, Cmd (Message.Model Model))
+init : () -> Url.Url -> Nav.Key -> (Model, Cmd (Message.Msg Model))
 init  _ url key =
   let currentRoute = Route.parse_route_from url
       startingStory = Story.create_blank_story
@@ -55,70 +55,42 @@ init  _ url key =
 
 
 
-view : Model -> Browser.Document (Message.Model Model)
+view : Model -> Browser.Document (Message.Msg Model)
 view model =
   { title = "test" , body = [ Html.div [] [] ] }
   -- { title = "test" , body = View.viewBody model.view model.story }
 
 
 
-update
-  :  Message.Model Model
-  -> Model
-  -> (Model, Cmd (Message.Model Model))
-update updateMessage model =
-  Message.handle updateMessage model
-
-
-
-dispatch_url_changed_message : Url.Url -> Message.Model Model
-dispatch_url_changed_message url =
-  let urlChangedArgs = Message.wrap_url_changed_arguments url
-  in Message.new handle_url_change urlChangedArgs
-
-
-
-dispatch_link_clicked_message : Browser.UrlRequest -> Message.Model Model
+dispatch_link_clicked_message : Browser.UrlRequest -> Message.Msg Model
 dispatch_link_clicked_message urlRequest =
-  let linkClickedArgs = Message.wrap_link_clicked_arguments urlRequest
-  in Message.new handle_link_click linkClickedArgs
+  Message.dispatch_link_clicked_message handle_link_click urlRequest
 
 
 
-handle_url_change : Message.Handler Model
-handle_url_change arguments model =
-  let possibleUrl = Message.unwrap_url_changed_arguments arguments
-  in case possibleUrl of
-       Nothing -> 
-         ( Message.debug_log_message_argument_mismatch model
-         , Cmd.none
-         )
-
-       Just url ->
-         let newRoute = Route.parse_route_from url
-         in ( model |> set_route_to newRoute , Cmd.none )
+dispatch_url_changed_message : Url.Url -> Message.Msg Model
+dispatch_url_changed_message url =
+  Message.dispatch_url_changed_message handle_url_change url
 
 
 
-handle_link_click : Message.Handler Model
-handle_link_click arguments model =
-  let possibleUrlRequest =
-        Message.unwrap_link_clicked_arguments arguments
-  in case possibleUrlRequest of
-       Nothing -> 
-         ( Message.debug_log_message_argument_mismatch model
-         , Cmd.none
-         )
+handle_url_change : Message.UrlChangedHandler Model
+handle_url_change url model =
+  let newRoute = Route.parse_route_from url
+  in ( model |> set_route_to newRoute , Cmd.none )
 
-       Just urlRequest ->
-         case urlRequest of
-           Browser.External url -> ( model, Nav.load url )
 
-           Browser.Internal url ->
-             let newRoute = Route.parse_route_from url
-             in  ( model |> set_route_to newRoute
-                 , Nav.pushUrl model.navKey (Url.toString url)
-                 )
+
+handle_link_click : Message.LinkClickedHandler Model
+handle_link_click urlRequest model =
+  case urlRequest of
+    Browser.External url -> ( model, Nav.load url )
+  
+    Browser.Internal url ->
+      let newRoute = Route.parse_route_from url
+      in  ( model |> set_route_to newRoute
+          , Nav.pushUrl model.navKey (Url.toString url)
+          )
 
 
 
