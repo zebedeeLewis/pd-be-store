@@ -5,15 +5,6 @@ import Random
 import UUID
 
 
------------------------------------------------------------------------
--- CONSTANT DEFINITIONS
------------------------------------------------------------------------
-
-
-
------------------------------------------------------------------------
--- FUNCTION DEFINITIONS
------------------------------------------------------------------------
 
 randomFloat : Int -> Float
 randomFloat seed =
@@ -23,12 +14,14 @@ randomFloat seed =
   |> Tuple.first
 
 
+
 randomFloat2 : Float -> Float -> Int -> Float
 randomFloat2 min max seed =
   Random.step
   (Random.float min max)
   (Random.initialSeed seed)
   |> Tuple.first
+
 
 
 randomInt : Int -> Int -> Int -> Int
@@ -45,6 +38,7 @@ produce_random_id seed =
   Random.step UUID.generator (Random.initialSeed seed)
     |> Tuple.first
     |> UUID.toString
+
 
 
 produce_random_description : Int -> String

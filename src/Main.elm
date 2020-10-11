@@ -46,7 +46,7 @@ init  _ url key =
                         |> Story.use_gst defaultTax
 
   in  ( { story  = startingStory
-        , view   = View.loadingView
+        , view   = View.initView
         , route  = currentRoute
         , navKey = key
         }
