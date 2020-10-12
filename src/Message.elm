@@ -4,9 +4,9 @@ module Message exposing
   , LinkClickedHandler
   , RequestCatalogPageHandler
   , update_rootModel
-  , dispatch_link_clicked_message
-  , dispatch_url_changed_message
-  , dispatch_request_catalog_page_message
+  , dispatch_message__linkClicked
+  , dispatch_message__urlChanged
+  , dispatch_message__catalogPageRequest
   )
 
 import Url
@@ -32,6 +32,7 @@ type Msg rootModel
       Catalog.PageNumber
 
 
+-- Message Handler Aliases
 
 type alias UrlChangedHandler rootModel =
  (Url.Url -> rootModel -> (rootModel, Cmd (Msg rootModel)))
@@ -71,106 +72,29 @@ update_rootModel message rootModel =
 
 
 
-dispatch_url_changed_message
+-- Message Dispatch Functions
+
+dispatch_message__urlChanged
   :  UrlChangedHandler rootModel
   -> Url.Url 
   -> Msg rootModel
-dispatch_url_changed_message handler url =
+dispatch_message__urlChanged handler url =
   UrlChanged handler url
 
 
 
-dispatch_link_clicked_message
+dispatch_message__linkClicked
   :  LinkClickedHandler rootModel
   -> Browser.UrlRequest 
   -> Msg rootModel
-dispatch_link_clicked_message handler urlRequest =
+dispatch_message__linkClicked handler urlRequest =
   LinkClicked handler urlRequest
 
 
 
--- TODO change name to dispatch_message__request_catalog_page
-dispatch_request_catalog_page_message
+dispatch_message__catalogPageRequest
   :  RequestCatalogPageHandler rootModel
   -> Catalog.PageNumber 
   -> Msg rootModel
-dispatch_request_catalog_page_message handler pageNumber =
+dispatch_message__catalogPageRequest handler pageNumber =
   RequestCatalogPage handler pageNumber
-
-
-
-
-
-
-
--- type Model model = Msg (Handler model) Arguments
--- 
--- type alias Handler model =
---   Arguments -> model -> ( model, Cmd (Model model))
--- 
--- type Arguments
---   = UrlChangedArgs Url.Url
---   | LinkClickedArgs Browser.UrlRequest
---   | RequestCatalogPageArgs Int
--- 
--- 
--- 
--- new : Handler model -> Arguments -> Model model
--- new handler arguments = Msg handler arguments
--- 
--- 
--- 
--- handle : Model model -> model -> (model, Cmd (Model model))
--- handle message model =
---   let (Msg action arguments) = message
---   in action arguments model
--- 
--- 
--- 
--- debug_log_message_argument_mismatch : model -> model
--- debug_log_message_argument_mismatch model =
---   Debug.log "Wrong Message.Argument passed to Message.Model" model
--- 
--- 
--- 
--- wrap_url_changed_arguments : Url.Url -> Arguments
--- wrap_url_changed_arguments url = UrlChangedArgs url
--- 
--- 
--- 
--- wrap_link_clicked_arguments : Browser.UrlRequest -> Arguments
--- wrap_link_clicked_arguments urlRequest = LinkClickedArgs urlRequest
--- 
--- 
--- 
--- wrap_catalog_page_request_arguments : Catalog.PageNumber -> Arguments
--- wrap_catalog_page_request_arguments pageNumber =
---   RequestCatalogPageArgs pageNumber
--- 
--- 
--- 
--- unwrap_catalog_page_request_arguments
---   :  Arguments
---   -> Maybe Catalog.PageNumber
--- unwrap_catalog_page_request_arguments arguments =
---   case arguments of
---     RequestCatalogPageArgs pageNumber -> Just pageNumber
---     _ -> Nothing
--- 
--- 
--- 
--- unwrap_url_changed_arguments : Arguments -> Maybe Url.Url
--- unwrap_url_changed_arguments arguments =
---   case arguments of
---     UrlChangedArgs url -> Just url
---     _ -> Nothing
--- 
--- 
--- 
--- unwrap_link_clicked_arguments : Arguments -> Maybe Browser.UrlRequest
--- unwrap_link_clicked_arguments arguments =
---   case arguments of
---     LinkClickedArgs urlRequest -> Just urlRequest
---     _ -> Nothing
--- 
--- 

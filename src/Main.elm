@@ -29,8 +29,8 @@ main =
     , view = view
     , update = Message.update_rootModel
     , subscriptions = (\_ -> Sub.none)
-    , onUrlChange = dispatch_url_changed_message
-    , onUrlRequest = dispatch_link_clicked_message
+    , onUrlChange = dispatch_message__urlChanged
+    , onUrlRequest = dispatch_message__linkClicked
     }
 
 
@@ -62,15 +62,15 @@ view model =
 
 
 
-dispatch_link_clicked_message : Browser.UrlRequest -> Message.Msg Model
-dispatch_link_clicked_message urlRequest =
-  Message.dispatch_link_clicked_message handle_link_click urlRequest
+dispatch_message__linkClicked : Browser.UrlRequest -> Message.Msg Model
+dispatch_message__linkClicked urlRequest =
+  Message.dispatch_message__linkClicked handle_link_click urlRequest
 
 
 
-dispatch_url_changed_message : Url.Url -> Message.Msg Model
-dispatch_url_changed_message url =
-  Message.dispatch_url_changed_message handle_url_change url
+dispatch_message__urlChanged : Url.Url -> Message.Msg Model
+dispatch_message__urlChanged url =
+  Message.dispatch_message__urlChanged handle_url_change url
 
 
 
